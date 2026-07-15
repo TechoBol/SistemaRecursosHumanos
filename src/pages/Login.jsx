@@ -1,89 +1,107 @@
-import React, { useState, useRef } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import useAuthentication from "../hooks/useAuthentication";
-
+import loginBackground from "../assets/login-backgroung.png";
 import {
-  Wrapper,
-  Brand,
-  Card,
-  Title,
+  FooterText,
+  FormContainer,
+  FormSection,
+  ImageSection,
   Input,
-  PasswordWrapper,
-  Button,
-  Field,
-  Label,
-  IconWrapper,
+  InputGroup,
+  LoginForm,
+  LoginPage,
+  LoginTitle,
+  PasswordButton,
+  SubmitButton,
 } from "../components/ui/Login.styles";
 
-function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
-  const { signIn, isLoading } = useAuthentication();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const passwordRef = useRef(null);
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    signIn(email, password);
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    console.log("Datos de inicio de sesión:", formData);
   };
 
   return (
-    <Wrapper>
-      {/* FORM */}
-      <Brand>Megadis</Brand>
+    <LoginPage>
+      <ImageSection
+        $background={loginBackground}
+        aria-hidden="true"
+      />
 
-      <Card as="form" onSubmit={handleSubmit}>
-        <Title>Bienvenido!</Title>
-        <Field>
-          <Label>Correo</Label>
-          <Input
-            type="email"
-            placeholder="Ingrese su correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoFocus
-            autoComplete="email"
-            enterKeyHint="next"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                passwordRef.current.focus();
-              }
-            }}
-          />
-        </Field>
+      <FormSection>
+        <FormContainer>
+          <LoginTitle>Inicia Sesión!</LoginTitle>
 
-        <Field>
-          <Label>Contraseña</Label>
-          <PasswordWrapper>
-            <Input
-              ref={passwordRef}
-              type={showPassword ? "text" : "password"}
-              placeholder="Ingrese su contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              enterKeyHint="go"
-            />
-            
-            <IconWrapper
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </IconWrapper>
-          </PasswordWrapper>
-        </Field>
+          <LoginForm onSubmit={handleSubmit}>
+            <InputGroup>
+              <Input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Correo"
+                autoComplete="email"
+                required
+              />
+            </InputGroup>
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Cargando..." : "Iniciar Sesión"}
-        </Button>
-      </Card>
-    </Wrapper>
+            <InputGroup>
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Contraseña"
+                autoComplete="current-password"
+                required
+              />
+
+              <PasswordButton
+                type="button"
+                onClick={() =>
+                  setShowPassword((currentValue) => !currentValue)
+                }
+                aria-label={
+                  showPassword
+                    ? "Ocultar contraseña"
+                    : "Mostrar contraseña"
+                }
+              >
+                {showPassword ? (
+                  <EyeOff size={18} strokeWidth={1.8} />
+                ) : (
+                  <Eye size={18} strokeWidth={1.8} />
+                )}
+              </PasswordButton>
+            </InputGroup>
+
+            <SubmitButton type="submit">
+              Iniciar Sesión
+            </SubmitButton>
+          </LoginForm>
+        </FormContainer>
+
+        <FooterText>Recursos Humanos</FooterText>
+      </FormSection>
+    </LoginPage>
   );
-}
+};
 
 export default Login;
