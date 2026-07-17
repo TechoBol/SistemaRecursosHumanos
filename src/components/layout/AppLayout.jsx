@@ -27,13 +27,9 @@ const AppLayout = () => {
     <LayoutContainer>
       <MobileHeader>
         <MobileBrand>
-          <img
-            src={logoMenu}
-            alt="Logo TechoBol"
-          />
+          <img src={logoMenu} alt="Logo TechoBol" />
           <span>TechoBol</span>
         </MobileBrand>
-
         <MobileMenuButton
           type="button"
           onClick={() => setMobileOpen(true)}

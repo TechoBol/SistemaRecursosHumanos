@@ -39,14 +39,35 @@ import {
 } from "../ui/layout/Sidebar.styles";
 import logoMenu from "../../assets/logo-menu.png";
 
+const MENU_ITEMS = [
+  {
+    id: "empleados", label: "Empleados", icon: UsersRound,
+    children: [
+      { id: "lista-empleados", label: "Lista", path: "/empleados", icon: List, },
+      { id: "empleados-consolidados", label: "Consolidados", path: "/empleados/consolidados", icon: WalletCards, },
+    ],
+  },
+  { id: "planillas", label: "Planillas", path: "/planillas", icon: DollarSign, },
+  { id: "sucursales", label: "Sucursales", path: "/sucursales", icon: Building2, },
+  {
+    id: "departamentos", label: "Departamentos", icon: Menu,
+    children: [
+      { id: "posiciones", label: "Posiciones", path: "/posiciones", icon: WalletCards, },
+    ],
+  },
+  { id: "usuarios", label: "Usuarios", path: "/usuarios", icon: UserRound, },
+];
+
 const Sidebar = ({
   collapsed,
   onToggleCollapse,
   mobileOpen,
   onCloseMobile,
 }) => {
-  const [employeesOpen, setEmployeesOpen] = useState(true);
-  const [departmentsOpen, setDepartmentsOpen] = useState(true);
+  const [openMenus, setOpenMenus] = useState({
+    empleados: true,
+    departamentos: true,
+  });
 
   const closeMobileMenu = () => {
     if (window.innerWidth <= 768) {
@@ -54,14 +75,99 @@ const Sidebar = ({
     }
   };
 
+  const toggleMenu = (menuId) => {
+    if (collapsed) {
+      onToggleCollapse();
+      setOpenMenus((currentMenus) => ({
+        ...currentMenus,
+        [menuId]: true,
+      }));
+      return;
+    }
+    setOpenMenus((currentMenus) => ({
+      ...currentMenus,
+      [menuId]: !currentMenus[menuId],
+    }));
+  };
+
+  const renderSimpleItem = (item) => {
+    const Icon = item.icon;
+    return (
+      <MenuLink
+        key={item.id}
+        to={item.path}
+        $collapsed={collapsed}
+        onClick={closeMobileMenu}
+        title={collapsed ? item.label : undefined}
+      >
+        <MenuIcon>
+          <Icon size={19} />
+        </MenuIcon>
+        <MenuLabel $collapsed={collapsed}>
+          {item.label}
+        </MenuLabel>
+      </MenuLink>
+    );
+  };
+
+  const renderGroupItem = (item) => {
+    const Icon = item.icon;
+    const isOpen = Boolean(openMenus[item.id]);
+    return (
+      <MenuGroup key={item.id}>
+        <MenuButton
+          type="button"
+          $collapsed={collapsed}
+          onClick={() => toggleMenu(item.id)}
+          aria-expanded={isOpen}
+          aria-label={`${isOpen ? "Cerrar" : "Abrir"} menú de ${
+            item.label
+          }`}
+        >
+          <MenuButtonContent>
+            <MenuIcon>
+              <Icon size={19} />
+            </MenuIcon>
+            <MenuLabel $collapsed={collapsed}>
+              {item.label}
+            </MenuLabel>
+          </MenuButtonContent>
+          {!collapsed && (
+            <ExpandIndicator $open={isOpen}>
+              <ChevronDown size={17} />
+            </ExpandIndicator>
+          )}
+        </MenuButton>
+
+        {!collapsed && (
+          <SubMenu
+            $open={isOpen}
+            $itemsCount={item.children.length}
+            $collapsed={collapsed}
+          >
+            {item.children.map((child) => {
+              const ChildIcon = child.icon;
+              return (
+                <SubMenuLink
+                  key={child.id}
+                  to={child.path}
+                  onClick={closeMobileMenu}
+                >
+                  <ChildIcon size={16} />
+                  {child.label}
+                </SubMenuLink>
+              );
+            })}
+          </SubMenu>
+        )}
+      </MenuGroup>
+    );
+  };
+
   return (
     <>
       <MobileOverlay $open={mobileOpen} onClick={onCloseMobile} />
-
-      <SidebarContainer
-        $collapsed={collapsed}
-        $mobileOpen={mobileOpen}
-      >
+      <SidebarContainer $collapsed={collapsed} $mobileOpen={mobileOpen}>
         <SidebarHeader $collapsed={collapsed}>
           {!collapsed && (
             <Brand>
@@ -75,7 +181,9 @@ const Sidebar = ({
             $collapsed={collapsed}
             onClick={onToggleCollapse}
             aria-label={
-              collapsed ? "Expandir menú" : "Contraer menú"
+              collapsed
+                ? "Expandir menú"
+                : "Contraer menú"
             }
           >
             {collapsed ? (
@@ -87,154 +195,11 @@ const Sidebar = ({
         </SidebarHeader>
 
         <Navigation>
-          <MenuGroup>
-            <MenuButton
-              type="button"
-              $collapsed={collapsed}
-              onClick={() => {
-                if (collapsed) {
-                  onToggleCollapse();
-                  setEmployeesOpen(true);
-                  return;
-                }
-
-                setEmployeesOpen((current) => !current);
-              }}
-            >
-              <MenuButtonContent>
-                <MenuIcon>
-                  <UsersRound size={19} />
-                </MenuIcon>
-
-                <MenuLabel $collapsed={collapsed}>
-                  Empleados
-                </MenuLabel>
-              </MenuButtonContent>
-
-              {!collapsed && (
-                <ExpandIndicator $open={employeesOpen}>
-                  <ChevronDown size={17} />
-                </ExpandIndicator>
-              )}
-            </MenuButton>
-
-            {!collapsed && (
-              <SubMenu
-                $open={employeesOpen}
-                $itemsCount={2}
-                $collapsed={collapsed}
-              >
-                <SubMenuLink
-                  to="/empleados"
-                  onClick={closeMobileMenu}
-                >
-                  <List size={16} />
-                  Lista
-                </SubMenuLink>
-
-                <SubMenuLink
-                  to="/empleados/consolidados"
-                  onClick={closeMobileMenu}
-                >
-                  <WalletCards size={16} />
-                  Consolidados
-                </SubMenuLink>
-              </SubMenu>
-            )}
-          </MenuGroup>
-
-          <MenuLink
-            to="/planillas"
-            $collapsed={collapsed}
-            onClick={closeMobileMenu}
-            title={collapsed ? "Planillas" : undefined}
-          >
-            <MenuIcon>
-              <DollarSign size={20} />
-            </MenuIcon>
-
-            <MenuLabel $collapsed={collapsed}>
-              Planillas
-            </MenuLabel>
-          </MenuLink>
-
-          <MenuLink
-            to="/sucursales"
-            $collapsed={collapsed}
-            onClick={closeMobileMenu}
-            title={collapsed ? "Sucursales" : undefined}
-          >
-            <MenuIcon>
-              <Building2 size={19} />
-            </MenuIcon>
-
-            <MenuLabel $collapsed={collapsed}>
-              Sucursales
-            </MenuLabel>
-          </MenuLink>
-
-          <MenuGroup>
-            <MenuButton
-              type="button"
-              $collapsed={collapsed}
-              onClick={() => {
-                if (collapsed) {
-                  onToggleCollapse();
-                  setDepartmentsOpen(true);
-                  return;
-                }
-
-                setDepartmentsOpen((current) => !current);
-              }}
-            >
-              <MenuButtonContent>
-                <MenuIcon>
-                  <Menu size={19} />
-                </MenuIcon>
-
-                <MenuLabel $collapsed={collapsed}>
-                  Dptos
-                </MenuLabel>
-              </MenuButtonContent>
-
-              {!collapsed && (
-                <ExpandIndicator $open={departmentsOpen}>
-                  <ChevronDown size={17} />
-                </ExpandIndicator>
-              )}
-            </MenuButton>
-
-            {!collapsed && (
-              <SubMenu
-                $open={departmentsOpen}
-                $itemsCount={1}
-                $collapsed={collapsed}
-              >
-                <SubMenuLink
-                  to="/posiciones"
-                  onClick={closeMobileMenu}
-                >
-                  <WalletCards size={16} />
-                  Posiciones
-                </SubMenuLink>
-              </SubMenu>
-            )}
-          </MenuGroup>
-
-          <MenuLink
-            to="/usuarios"
-            $collapsed={collapsed}
-            onClick={closeMobileMenu}
-            title={collapsed ? "Usuarios" : undefined}
-          >
-            <MenuIcon>
-              <UserRound size={19} />
-            </MenuIcon>
-
-            <MenuLabel $collapsed={collapsed}>
-              Usuarios
-            </MenuLabel>
-          </MenuLink>
+          {MENU_ITEMS.map((item) =>
+            item.children
+              ? renderGroupItem(item)
+              : renderSimpleItem(item),
+          )}
         </Navigation>
 
         <SidebarFooter>
@@ -245,20 +210,13 @@ const Sidebar = ({
             title={collapsed ? "Configuración" : undefined}
           >
             <Settings size={18} />
-
-            <MenuLabel $collapsed={collapsed}>
-              Configuración
-            </MenuLabel>
+            <MenuLabel $collapsed={collapsed}>Configuración</MenuLabel>
           </SettingsLink>
-
           <UserContainer $collapsed={collapsed}>
             <UserAvatar>
               <CircleUserRound size={17} />
             </UserAvatar>
-
-            <UserName $collapsed={collapsed}>
-              Ronald Paniagua
-            </UserName>
+            <UserName $collapsed={collapsed}>Simon San</UserName>
           </UserContainer>
         </SidebarFooter>
       </SidebarContainer>
