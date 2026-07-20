@@ -1,0 +1,309 @@
+import styled from "styled-components";
+import { theme } from "./Theme";
+
+export const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: ${theme.colors.overlay};
+`;
+
+export const ModalContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  width: min(800px, 100%);
+  max-height: calc(90vh - 48px);
+  overflow: hidden;
+  background-color: ${theme.colors.background};
+  border-radius: ${theme.radius.xl};
+  box-shadow: 0 18px 55px rgba(31, 31, 31, 0.25);
+  @media (max-width: 768px) {
+    max-width: 520px;
+    max-height: calc(100vh - 32px);
+    border-radius: ${theme.radius.lg};
+  }
+  @media (max-width: 480px) {
+    max-height: calc(90vh - 24px);
+    border-radius: ${theme.radius.md};
+  }
+`;
+
+export const ModalHeader = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px;
+  background-color: ${theme.colors.background};
+  border-bottom: 1px solid rgba(199, 199, 199, 0.4);
+`;
+
+export const ModalTitle = styled.h2`
+  margin: 0;
+  color: ${theme.colors.text};
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  @media (max-width: 600px) {
+    font-size: 20px;
+  }
+`;
+
+export const CloseButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: ${theme.colors.sidebar};
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  border-radius: ${theme.radius.round};
+  &:hover {
+    background-color: rgba(57, 62, 70, 0.08);
+  }
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
+export const ModalContent = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: 0 18px 18px 22px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 87, 60, 0.55) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(47, 87, 60, 0.55);
+    border-radius: ${theme.radius.round};
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(47, 87, 60, 0.78);
+  }
+  @media (max-width: 768px) {
+    padding: 0 12px 16px 16px;
+  }
+`;
+
+export const FormCard = styled.section`
+  padding: 24px 32px;
+  background-color: ${theme.colors.white};
+  border-radius: ${theme.radius.xl};
+  &:first-child {
+    margin-top: 18px;
+  }
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: ${theme.radius.lg};
+  }
+  @media (max-width: 480px) {
+    padding: 18px 16px;
+  }
+`;
+
+export const SectionTitle = styled.h3`
+  margin: 0 0 18px;
+  color: ${theme.colors.text};
+  font-size: 16px;
+  font-weight: 500;
+`;
+
+export const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(
+    ${({ $columns = 2 }) => $columns},
+    minmax(0, 1fr)
+  );
+  gap: 18px 24px;
+  & + & {
+    margin-top: 18px;
+  }
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+`;
+
+export const FormLabel = styled.label`
+  color: ${theme.colors.textMuted};
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const controlStyles = `
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  color: ${theme.colors.text};
+  font-family: inherit;
+  font-size: 14px;
+  background-color: ${theme.colors.white};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  outline: none;
+  &:focus {
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 2px rgba(47, 87, 60, 0.12);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    background-color: ${theme.colors.background};
+    opacity: 0.7;
+  }
+`;
+
+export const FormInput = styled.input`
+  ${controlStyles}
+  &[type="date"]::-webkit-calendar-picker-indicator,
+  &[type="date"]::-webkit-inner-spin-button {
+    display: none;
+  }
+`;
+
+export const FormSelect = styled.select`
+  ${controlStyles}
+  cursor: pointer;
+`;
+
+export const InputIconContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  ${FormInput} {
+    padding-right: 44px;
+  }
+  > svg {
+    position: absolute;
+    right: 12px;
+    color: ${theme.colors.textMuted};
+    pointer-events: none;
+  }
+`;
+
+export const CalendarButton = styled.button`
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: ${theme.colors.textMuted};
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  border-radius: ${theme.radius.sm};
+  &:hover {
+    color: ${theme.colors.primary};
+    background-color: rgba(47, 87, 60, 0.08);
+  }
+`;
+
+export const ToggleContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  min-height: 40px;
+  overflow: hidden;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.md};
+`;
+
+export const ToggleButton = styled.button`
+  padding: 0 16px;
+  color: ${({ $active }) => $active ? theme.colors.white : theme.colors.text};
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
+  border: none;
+  &:not(:last-child) {
+    border-right: 1px solid ${theme.colors.border};
+  }
+  &:hover {
+    background-color: ${({ $active }) =>
+      $active ? theme.colors.primary : theme.colors.background};
+  }
+`;
+
+// button action modal
+export const ModalActions = styled.footer`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+`;
+
+const BaseActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 24px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: ${theme.radius.round};
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 2px;
+  }
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+`;
+
+export const CancelButton = styled(BaseActionButton)`
+  min-width: 130px;
+  color: ${theme.colors.primary};
+  background-color: ${theme.colors.white};
+  border: 1px solid ${theme.colors.primary};
+  &:hover {
+    background-color: ${theme.colors.background};
+  }
+`;
+
+export const PrimaryButton = styled(BaseActionButton)`
+  min-width: 170px;
+  color: ${theme.colors.white};
+  background-color: ${theme.colors.primary};
+  border: 1px solid ${theme.colors.primary};
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+`;
