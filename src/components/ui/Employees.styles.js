@@ -251,7 +251,6 @@ export const TabContentCard = styled.section`
   flex-direction: column;
   gap: 22px;
   min-width: 0;
-  min-height: 430px;
   padding: 20px 24px;
   background-color: ${theme.colors.white};
   border-radius: ${theme.radius.lg};
