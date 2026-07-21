@@ -22,6 +22,7 @@ export const MainContent = styled.main`
 
 export const ContentShell = styled.div`
   min-height: 100vh;
+  padding: 32px;
   background-color: ${({ theme }) => theme.colors.background};
   border-top-left-radius: 34px;
   border-bottom-left-radius: 34px;

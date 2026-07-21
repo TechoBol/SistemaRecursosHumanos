@@ -2,7 +2,7 @@ import {
   GridWrapper,
   StyledDataGrid,
   TableContainer,
-} from "../ui/DataTable.styles";
+} from "../ui/table/DataTable.styles";
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 30, 50];
 
