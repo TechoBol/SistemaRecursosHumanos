@@ -26,14 +26,18 @@ import {
   EmployeeMetaItem,
   EmployeeName,
   EmployeeStatus,
-  EmptyTabContent,
   SectionTitle,
   SecondaryButton,
-  TabContentCard,
 } from "../../components/ui/Employees.styles";
 import EmployeeModal from "../../components/modals/EmployeeModal";
+import AdvancesInformation from "./AdvancesInformation";
+import MemorandumsInformation from "./MemorandumsInformation";
+import OtherEventsInformation from "./OtherEventsInformation";
+import PermissionsInformation from "./PermissionsInformation";
 import PersonalInformation from "./PersonalInformation";
 import SalaryInformation from "./SalaryInformation";
+import TerminationInformation from "./TerminationInformation";
+import VacationsInformation from "./VacationsInformation";
 
 const DETAIL_TABS = [
   {
@@ -124,13 +128,6 @@ const EmployeeDetail = () => {
     }`.trim();
   }, [employee.firstName, employee.lastName]);
 
-  const activeTabLabel = useMemo(() => {
-    return (
-      DETAIL_TABS.find((tab) => tab.id === activeTab)?.label ??
-      ""
-    );
-  }, [activeTab]);
-
   const handleSaveEmployee = (employeeData) => {
     setEmployee((currentEmployee) => ({
       ...currentEmployee,
@@ -156,20 +153,24 @@ const EmployeeDetail = () => {
     switch (activeTab) {
       case "personal":
         return <PersonalInformation employee={employee} />;
-
       case "salary":
         return <SalaryInformation employee={employee} />;
-
-      default:
+      case "memorandums":
+        return <MemorandumsInformation />;
+      case "permissions":
+        return <PermissionsInformation />;
+      case "vacations":
+        return <VacationsInformation />;
+      case "advances":
+        return <AdvancesInformation />;
+      case "others":
+        return <OtherEventsInformation />;
+      case "termination":
         return (
-          <TabContentCard>
-            <SectionTitle>{activeTabLabel}</SectionTitle>
-            <EmptyTabContent>
-              Esta sección está preparada para implementarse
-              posteriormente.
-            </EmptyTabContent>
-          </TabContentCard>
+          <TerminationInformation employee={employee} />
         );
+      default:
+        return null;
     }
   };
 
@@ -198,7 +199,8 @@ const EmployeeDetail = () => {
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <BriefcaseBusiness size={17} />
-                    {employee.positionCurrent || "Sin cargo actual"}
+                    {employee.positionCurrent ||
+                      "Sin cargo actual"}
                   </EmployeeMetaItem>
 
                   <EmployeeMetaDivider />
