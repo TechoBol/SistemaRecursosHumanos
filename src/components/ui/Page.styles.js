@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import { theme } from "./Theme";
+import { theme } from "../ui/Theme";
 
 export const PageContainer = styled.main`
   display: flex;
@@ -7,7 +7,6 @@ export const PageContainer = styled.main`
   gap: 32px;
   width: 100%;
   min-width: 0;
-  padding: 32px;
   @media (max-width: 768px) {
     gap: 24px;
     padding: 16px;

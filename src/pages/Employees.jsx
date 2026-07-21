@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   Pencil,
@@ -12,7 +13,7 @@ import {
   CellTitle,
   TableActionButton,
   TableActions,
-} from "../components/ui/TableCell.styles";
+} from "../components/ui/table/TableCell.styles";
 import {
   AddButton,
   PageActions,
@@ -92,6 +93,7 @@ const initialEmployeeRows = [
 ];
 
 const Employees = () => {
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState(initialEmployeeRows);
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,7 +113,9 @@ const Employees = () => {
   };
 
   const handleViewEmployee = (employee) => {
-    console.log("Ver empleado:", employee);
+    navigate(`/empleados/${employee.id}`, {
+      state: { employee },
+    });
   };
 
   const handleCloseModal = () => {
