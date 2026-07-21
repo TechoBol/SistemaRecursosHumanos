@@ -9,7 +9,7 @@ export const ProtectedRoute = ({ children, allowedLevels }) => {
   }
 
   if (allowedLevels && !allowedLevels.includes(Number(level))) {
-    return <Navigate to="/products" />;/
+    return <Navigate to="/products" />
   }
 
   return children;
