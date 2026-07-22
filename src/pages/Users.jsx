@@ -18,9 +18,10 @@ import {
   TableActionButton,
   TableActions,
 } from "../components/ui/table/TableCell.styles";
+import UserModal from "../components/modals/UserModal";
 import DataTable from "../components/table/DataTable";
 
-const USER_ROWS = [
+const INITIAL_USERS = [
   {
     id: 1,
     firstName: "Juan",
@@ -35,27 +36,81 @@ const USER_ROWS = [
   },
 ];
 
+const createId = () => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random()}`;
+};
+
 const Users = () => {
+  const [users, setUsers] = useState(INITIAL_USERS);
   const [searchValue, setSearchValue] = useState("");
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
     if (!search) {
-      return USER_ROWS;
+      return users;
     }
-    return USER_ROWS.filter((user) =>
-      Object.values(user).some((value) =>
-        String(value).toLowerCase().includes(search),
-      ),
-    );
-  }, [searchValue]);
+    return users.filter((user) => {
+      const searchableContent = [
+        user.firstName,
+        user.lastName,
+        user.email,
+      ]
+        .join(" ")
+        .toLowerCase();
 
-  const handleRegisterUser = () => {
-    console.log("Registrar usuario");
+      return searchableContent.includes(search);
+    });
+  }, [searchValue, users]);
+
+  const handleOpenCreateModal = () => {
+    setSelectedUser(null);
+    setModalMode("create");
+    setIsUserModalOpen(true);
   };
 
-  const handleEditUser = (user) => {
-    console.log("Editar usuario:", user);
+  const handleOpenEditModal = (user) => {
+    setSelectedUser(user);
+    setModalMode("edit");
+    setIsUserModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedUser(null);
+    setIsUserModalOpen(false);
+  };
+
+  const handleSaveUser = (userData) => {
+    if (modalMode === "edit" && selectedUser) {
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                ...userData,
+              }
+            : user,
+        ),
+      );
+    } else {
+      setUsers((currentUsers) => [
+        ...currentUsers,
+        {
+          id: createId(),
+          ...userData,
+        },
+      ]);
+    }
+
+    handleCloseModal();
   };
 
   const handleDeleteUser = (user) => {
@@ -65,7 +120,11 @@ const Users = () => {
     if (!shouldDelete) {
       return;
     }
-    console.log("Eliminar usuario:", user);
+    setUsers((currentUsers) =>
+      currentUsers.filter(
+        (currentUser) => currentUser.id !== user.id,
+      ),
+    );
   };
 
   const columns = useMemo(
@@ -103,7 +162,7 @@ const Users = () => {
               aria-label={`Editar a ${row.firstName} ${row.lastName}`}
               onClick={(event) => {
                 event.stopPropagation();
-                handleEditUser(row);
+                handleOpenEditModal(row);
               }}
             >
               <Pencil size={19} />
@@ -118,10 +177,7 @@ const Users = () => {
                 handleDeleteUser(row);
               }}
             >
-              <Trash2
-                size={19}
-                color="#FF2B2B"
-              />
+              <Trash2 size={19} color="#FF2B2B" />
             </TableActionButton>
           </TableActions>
         ),
@@ -131,43 +187,53 @@ const Users = () => {
   );
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageTitle>Usuarios</PageTitle>
-        <PageActions>
-          <SearchContainer>
-            <Search size={20} />
-            <SearchInput
-              type="search"
-              value={searchValue}
-              placeholder="Buscar"
-              aria-label="Buscar usuario"
-              onChange={(event) =>
-                setSearchValue(event.target.value)
-              }
-            />
-          </SearchContainer>
-          <AddButton
-            type="button"
-            onClick={handleRegisterUser}
-          >
-            <UserPlus size={18} />
-            Registrar usuario
-          </AddButton>
-        </PageActions>
-      </PageHeader>
+    <>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>Usuarios</PageTitle>
+          <PageActions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput
+                type="search"
+                value={searchValue}
+                placeholder="Buscar"
+                aria-label="Buscar usuario"
+                onChange={(event) =>
+                  setSearchValue(event.target.value)
+                }
+              />
+            </SearchContainer>
+            <AddButton
+              type="button"
+              onClick={handleOpenCreateModal}
+            >
+              <UserPlus size={18} />
+              Registrar usuario
+            </AddButton>
+          </PageActions>
+        </PageHeader>
 
-      <DataTable
-        rows={filteredRows}
-        columns={columns}
-        pageSize={10}
-        pageSizeOptions={[10, 25, 30, 50]}
-        height="610px"
-        rowHeight={70}
-        columnHeaderHeight={56}
-        disableColumnMenu
+        <DataTable
+          rows={filteredRows}
+          columns={columns}
+          pageSize={10}
+          pageSizeOptions={[10, 25, 30, 50]}
+          height="610px"
+          rowHeight={70}
+          columnHeaderHeight={56}
+          disableColumnMenu
+        />
+      </PageContainer>
+
+      <UserModal
+        isOpen={isUserModalOpen}
+        mode={modalMode}
+        user={selectedUser}
+        onClose={handleCloseModal}
+        onSubmit={handleSaveUser}
       />
-    </PageContainer>
+    </>
   );
 };
 
