@@ -252,14 +252,41 @@ export const ToggleButton = styled.button`
   font-family: inherit;
   font-size: 13px;
   cursor: pointer;
-  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
+  background-color: ${({ $active, $variant = "primary" }) => {
+    if (!$active) {
+      return theme.colors.white;
+    }
+    return $variant === "danger"
+      ? theme.colors.danger
+      : theme.colors.primary;
+  }};
   border: none;
+  transition:
+    color ${theme.transitions.fast},
+    background-color ${theme.transitions.fast};
   &:not(:last-child) {
     border-right: 1px solid ${theme.colors.border};
   }
   &:hover {
-    background-color: ${({ $active }) =>
-      $active ? theme.colors.primary : theme.colors.background};
+    background-color: ${({ $active, $variant = "primary" }) => {
+      if (!$active) {
+        return theme.colors.background;
+      }
+      return $variant === "danger"
+        ? theme.colors.danger
+        : theme.colors.primary;
+    }};
+  }
+  &:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid
+      ${({ $variant = "primary" }) =>
+        $variant === "danger"
+          ? theme.colors.danger
+          : theme.colors.primary};
+
+    outline-offset: -2px;
   }
 `;
 

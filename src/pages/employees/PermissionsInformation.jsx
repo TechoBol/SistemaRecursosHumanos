@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CalendarX2,
   ChevronDown,
@@ -6,13 +6,11 @@ import {
   CircleAlert,
   Clock3,
 } from "lucide-react";
-
 import {
   ActionButton,
   SectionTitle,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
-
 import {
   EmptyState,
   EmptyStateAction,
@@ -30,6 +28,7 @@ import {
   TabDescription,
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
+import PermissionAbsenceModal from "../../components/modals/PermissionAbsenceModal";
 
 const MONTHS = [
   { id: 1, label: "Junio de 2026" },
@@ -38,35 +37,95 @@ const MONTHS = [
   { id: 4, label: "Marzo de 2026" },
 ];
 
-const METRICS = [
-  {
-    id: "permissions",
-    label: "Permisos",
-    value: "0",
-    variant: "primary",
-    icon: Clock3,
-  },
-  {
-    id: "absences",
-    label: "Faltas",
-    value: "0",
-    variant: "success",
-    icon: CalendarX2,
-  },
-  {
-    id: "discount",
-    label: "Total descuento",
-    value: "Bs 0,00",
-    variant: "danger",
-    icon: CircleAlert,
-  },
-];
+const createId = () => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random()}`;
+};
+
+const formatCurrency = (amount = 0) => {
+  return new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
 
 const PermissionsInformation = () => {
   const [openMonthId, setOpenMonthId] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleRegister = () => {
-    console.log("Registrar permiso o falta");
+  const summary = useMemo(() => {
+    return records.reduce(
+      (result, record) => {
+        if (record.type === "permission") {
+          result.permissions += 1;
+        }
+        if (record.type === "absence") {
+          result.absences += 1;
+        }
+        result.totalDiscount += record.discount ?? 0;
+        return result;
+      },
+      {
+        permissions: 0,
+        absences: 0,
+        totalDiscount: 0,
+      },
+    );
+  }, [records]);
+
+  const metrics = useMemo(
+    () => [
+      {
+        id: "permissions",
+        label: "Permisos",
+        value: String(summary.permissions),
+        variant: "primary",
+        icon: Clock3,
+      },
+      {
+        id: "absences",
+        label: "Faltas",
+        value: String(summary.absences),
+        variant: "success",
+        icon: CalendarX2,
+      },
+      {
+        id: "discount",
+        label: "Total descuento",
+        value: `Bs ${formatCurrency(
+          summary.totalDiscount,
+        )}`,
+        variant: "danger",
+        icon: CircleAlert,
+      },
+    ],
+    [summary],
+  );
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSaveRecord = (recordData) => {
+    setRecords((currentRecords) => [
+      ...currentRecords,
+      {
+        id: createId(),
+        ...recordData,
+        discount: 0,
+      },
+    ]);
+    handleCloseModal();
   };
 
   const handleToggleMonth = (monthId) => {
@@ -81,21 +140,17 @@ const PermissionsInformation = () => {
         <TabHeader>
           <div>
             <SectionTitle>Permisos y faltas</SectionTitle>
-
-            <TabDescription>
-              Permisos y faltas del mes actual
-            </TabDescription>
+            <TabDescription>Permisos y faltas del mes actual</TabDescription>
           </div>
 
-          <ActionButton type="button" onClick={handleRegister}>
+          <ActionButton type="button" onClick={handleOpenModal}>
             Registrar permiso/falta
           </ActionButton>
         </TabHeader>
 
         <SummaryGrid $columns={3}>
-          {METRICS.map((metric) => {
+          {metrics.map((metric) => {
             const Icon = metric.icon;
-
             return (
               <SummaryCard
                 key={metric.id}
@@ -114,29 +169,42 @@ const PermissionsInformation = () => {
           })}
         </SummaryGrid>
 
-        <EmptyState>
-          <CalendarX2 size={48} strokeWidth={1.6} />
-
-          <strong>
-            No hay permisos o faltas registrados este mes
-          </strong>
-
-          <EmptyStateAction
-            type="button"
-            onClick={handleRegister}
-          >
-            + Registrar el primero
-          </EmptyStateAction>
-        </EmptyState>
+        {records.length === 0 ? (
+          <EmptyState>
+            <CalendarX2 size={48} strokeWidth={1.6} />
+            <strong>
+              No hay permisos o faltas registrados este mes
+            </strong>
+            <EmptyStateAction
+              type="button"
+              onClick={handleOpenModal}
+            >
+              + Registrar el primero
+            </EmptyStateAction>
+          </EmptyState>
+        ) : (
+          <HistoryContent>
+            {records.map((record) => (
+              <HistoryValue key={record.id}>
+                <span>
+                  {record.type === "permission"
+                    ? "Permiso"
+                    : "Falta"}
+                </span>
+                <strong>
+                  {record.reason} · {record.date}
+                </strong>
+              </HistoryValue>
+            ))}
+          </HistoryContent>
+        )}
       </TabContentCard>
 
       <TabContentCard>
         <SectionTitle>Meses anteriores</SectionTitle>
-
         <HistoryList>
           {MONTHS.map((month) => {
             const isOpen = openMonthId === month.id;
-
             return (
               <HistoryItem key={month.id}>
                 <HistoryHeader
@@ -147,7 +215,6 @@ const PermissionsInformation = () => {
                   }
                 >
                   <span>{month.label}</span>
-
                   {isOpen ? (
                     <ChevronUp size={19} />
                   ) : (
@@ -157,7 +224,7 @@ const PermissionsInformation = () => {
 
                 {isOpen && (
                   <HistoryContent>
-                    {METRICS.map((metric) => (
+                    {metrics.map((metric) => (
                       <HistoryValue key={metric.id}>
                         <span>{metric.label}</span>
                         <strong>{metric.value}</strong>
@@ -170,6 +237,12 @@ const PermissionsInformation = () => {
           })}
         </HistoryList>
       </TabContentCard>
+
+      <PermissionAbsenceModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleSaveRecord}
+      />
     </>
   );
 };
