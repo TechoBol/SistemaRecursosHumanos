@@ -4,42 +4,36 @@ import { persist } from 'zustand/middleware'
 interface Store {
   fullName: string;
   role: string;
-  level: number;
-  location: any;
-  selectedLocationId: number | null; // ← sucursal seleccionada actualmente
   isLoggedIn: boolean;
   token: string;
-  employeeId: number;
+  userId: number;
 
   setFullName: (fullName: string) => void;
   setRole: (role: string) => void;
-  setLevel: (level: number) => void;
-  setLocation: (location: any) => void;
-  setSelectedLocationId: (id: number | null) => void; // ← nuevo
   changeLogInState: () => void;
   setToken: (token: string) => void;
-  setEmployeeId: (id: number) => void;
+  setUserId: (id: number) => void;
+  resetLoginStore: () => void;
 }
+
+const initialState = {
+  fullName: '',
+  role: '',
+  isLoggedIn: false,
+  token: '',
+  userId: 0,
+};
 
 export const useLoginStore = create<Store>()(
   persist(
     (set, get) => ({
-      fullName: '',
-      role: '',
-      level: 0,
-      location: '',
-      selectedLocationId: null,
-      isLoggedIn: false,
-      token: '',
-      employeeId: 0,
+      ...initialState,
       setFullName: (fullName) => set({ fullName }),
       setRole: (role) => set({ role }),
-      setLevel: (level) => set({ level: Number(level) }),
-      setLocation: (location) => set({ location }),
-      setSelectedLocationId: (id) => set({ selectedLocationId: id }),
       changeLogInState: () => set({ isLoggedIn: !get().isLoggedIn }),
       setToken: (token) => set({ token }),
-      setEmployeeId: (id) => set({ employeeId: id }),
+      setUserId: (id) => set({ userId: id }),
+      resetLoginStore: () => set({ ...initialState }),
     }),
     { name: 'login-storage' }
   )
