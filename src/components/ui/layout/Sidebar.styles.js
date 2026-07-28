@@ -233,6 +233,29 @@ export const SettingsLink = styled(NavLink)`
   }
 `;
 
+export const LogoutButton = styled.button`
+  min-height: 34px;
+  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: ${({ $collapsed }) => $collapsed ? "center" : "flex-start"};
+  gap: 12px;
+  border-radius: ${({ theme }) => theme.radius.round};
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.textLight};
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.menuHover};
+    color: #ff4d4f;
+  }
+`;
+
 export const UserContainer = styled.div`
   min-height: 36px;
   padding: 6px 10px;

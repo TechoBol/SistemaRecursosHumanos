@@ -12,6 +12,7 @@ import {
   UserRound,
   UsersRound,
   WalletCards,
+  LogOut,
 } from "lucide-react";
 import {
   Brand,
@@ -36,7 +37,10 @@ import {
   UserAvatar,
   UserContainer,
   UserName,
+  LogoutButton,
 } from "../ui/layout/Sidebar.styles";
+import { useLoginStore } from "../store/loginStore";
+import useAuthentication from "../../hooks/useAuthentication";
 import logoMenu from "../../assets/logo-menu.png";
 
 const MENU_ITEMS = [
@@ -64,6 +68,9 @@ const Sidebar = ({
   mobileOpen,
   onCloseMobile,
 }) => {
+  const { fullName } = useLoginStore();
+  const { logOut } = useAuthentication();
+
   const [openMenus, setOpenMenus] = useState({
     empleados: true,
     departamentos: true,
@@ -203,6 +210,7 @@ const Sidebar = ({
         </Navigation>
 
         <SidebarFooter>
+          {/* configuracion */}
           <SettingsLink
             to="/configuracion"
             $collapsed={collapsed}
@@ -212,12 +220,22 @@ const Sidebar = ({
             <Settings size={18} />
             <MenuLabel $collapsed={collapsed}>Configuración</MenuLabel>
           </SettingsLink>
+          {/* usuario autenticado */}
           <UserContainer $collapsed={collapsed}>
             <UserAvatar>
               <CircleUserRound size={17} />
             </UserAvatar>
-            <UserName $collapsed={collapsed}>Simon San</UserName>
+            <UserName $collapsed={collapsed}>{fullName || "Usuario"}</UserName>
           </UserContainer>
+          {/* cerrar sesion */}
+          <LogoutButton
+            $collapsed={collapsed}
+            onClick={logOut}
+            title={collapsed ? "Cerrar Sesión" : undefined}
+          >
+            <LogOut size={18} />
+            <MenuLabel $collapsed={collapsed}>Cerrar Sesión</MenuLabel>
+          </LogoutButton>
         </SidebarFooter>
       </SidebarContainer>
     </>
