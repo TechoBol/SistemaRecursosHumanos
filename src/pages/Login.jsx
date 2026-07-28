@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { Navigate } from "react-router-dom";
 import loginBackground from "../assets/login-backgroung.png";
 import {
   FooterText,
@@ -15,24 +16,19 @@ import {
   SubmitButton,
 } from "../components/ui/Login.styles";
 import useAuthentication from "../hooks/useAuthentication";
+import { useLoginStore } from "../components/store/loginStore";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-
   const { signIn, isLoading } = useAuthentication();
-
+  const { isLoggedIn } = useLoginStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const passwordRef = useRef(null);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
-  };
+  if (isLoggedIn) {
+    return <Navigate to="/empleados" replace />;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();

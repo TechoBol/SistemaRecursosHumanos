@@ -37,18 +37,14 @@ const useAuthentication = () => {
 
       setFullName(response.name);
       setToken(response.token);
-      setRole(response.role);
+      setRole(response.role.name);
       setUserId(response.id);
       changeLogInState();
 
       successToast("¡Bienvenido!");
 
-      // REDIRECCIÓN según rol
-      if (response.role === "VENTAS") {
-        navigate("/products");
-      } else {
-        navigate("/dashboard");
-      }
+      // REDIRECCIÓN
+      navigate("/usuarios");
 
       socket.emit("joinUserRoom", response.id);
     } catch (error) {
@@ -63,17 +59,12 @@ const useAuthentication = () => {
   const logOut = () => {
     resetLoginStore();
     successToast("Sesión cerrada");
-    navigate("/login");
-  };
-
-  const redirect = () => {
-    window.location.href = import.meta.env.VITE_FRONTED_DOMAIN_TESORERIA;
+    navigate("/");
   };
 
   return {
     signIn,
     logOut,
-    redirect,
     isLoading,
   };
 };
