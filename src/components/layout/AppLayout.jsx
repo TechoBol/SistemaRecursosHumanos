@@ -11,8 +11,12 @@ import {
   MobileMenuButton,
 } from "../ui/layout/AppLayout.styles";
 import logoMenu from "../../assets/logo-menu.png";
+import { useSessionTimeout } from "../../hooks/useSessionTimeout";
 
 const AppLayout = () => {
+  // Activa el monitoreo de inactividad
+  useSessionTimeout();
+
   const [collapsed, setCollapsed] = useState(() => {
     return localStorage.getItem("sidebar-collapsed") === "true";
   });

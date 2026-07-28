@@ -3,6 +3,7 @@ import { ThemeProvider } from "styled-components";
 import AppLayout from "./components/layout/AppLayout";
 import { GlobalStyles } from "./components/ui/GlobalStyles";
 import { theme } from "./components/ui/Theme";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
 // PAGES
 import Login from "./pages/Login";
 import Employees from "./pages/Employees";
@@ -19,24 +20,25 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <GlobalStyles />
       <Routes>
-        {/* Vista sin sidebar */}
-        <Route path="/login" element={<Login />} />
+        {/* sin rutas protegidas */}
+        <Route path="/" element={<Login />} />
 
-        {/* Vistas con sidebar */}
-        <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/usuarios" replace />} />
-          <Route path="empleados" element={<Employees />} />
-          <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
-          <Route path="empleados/consolidados" element={<ConsolidatedEmployees />} />
-          <Route path="planillas" element={<Payrolls />} />
-          <Route path="sucursales" element={<Branches />} />
-          <Route path="posiciones" element={<Positions />} />
-          <Route path="usuarios" element={<Users />} />
-          <Route path="configuracion" element={<Settings />} />
+        {/* con rutas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="empleados" element={<Employees />} />
+            <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
+            <Route path="empleados/consolidados" element={<ConsolidatedEmployees />} />
+            <Route path="planillas" element={<Payrolls />} />
+            <Route path="sucursales" element={<Branches />} />
+            <Route path="posiciones" element={<Positions />} />
+            <Route path="usuarios" element={<Users />} />
+            <Route path="configuracion" element={<Settings />} />
+          </Route>
         </Route>
 
         {/* Ruta inexistente */}
-        <Route path="*" element={<Navigate to="/usuarios" replace />} />
+        <Route path="*" element={<Navigate to="/empleados" replace />} />
       </Routes>
     </ThemeProvider>
   );
