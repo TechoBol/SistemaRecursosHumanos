@@ -5,6 +5,7 @@ import {
   FormGrid,
   FormInput,
   FormLabel,
+  FormSelect,
   InputIconButton,
   InputIconContainer,
   ModalActions,
@@ -24,14 +25,33 @@ const INITIAL_FORM = {
   firstName: "",
   lastName: "",
   email: "",
+  roleId: "",
   password: "",
   confirmPassword: "",
+};
+
+const ErrorMessage = ({ message }) => {
+  if (!message) return null;
+  return (
+    <span
+      role="alert"
+      style={{
+        color: "#FF2B2B",
+        fontSize: "11px",
+        marginTop: "3px",
+        display: "block",
+      }}
+    >
+      {message}
+    </span>
+  );
 };
 
 const UserModal = ({
   isOpen,
   mode = "create",
   user = null,
+  roles = [],
   onClose,
   onSubmit,
 }) => {
@@ -40,7 +60,7 @@ const UserModal = ({
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,6 +71,7 @@ const UserModal = ({
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
         email: user.email ?? "",
+        roleId: user.role?.id ?? "",
         password: "",
         confirmPassword: "",
       });
@@ -59,7 +80,7 @@ const UserModal = ({
     }
     setShowPassword(false);
     setShowConfirmPassword(false);
-    setErrorMessage("");
+    setErrors({});
   }, [isOpen, isEditMode, user]);
 
   useEffect(() => {
@@ -87,66 +108,69 @@ const UserModal = ({
       ...currentData,
       [name]: value,
     }));
-    if (errorMessage) {
-      setErrorMessage("");
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const normalizedData = {
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      email: formData.email.trim(),
-      password: formData.password,
-      confirmPassword: formData.confirmPassword,
-    };
+    const newErrors = {};
+    const firstName = formData.firstName.trim();
+    const lastName = formData.lastName.trim();
+    const email = formData.email.trim();
+    const roleId = formData.roleId;
+    const password = formData.password;
+    const confirmPassword = formData.confirmPassword;
 
-    if (
-      !normalizedData.firstName ||
-      !normalizedData.lastName ||
-      !normalizedData.email
-    ) {
-      setErrorMessage(
-        "Completa el nombre, apellido y correo electrónico.",
-      );
-      return;
+    if (!firstName) {
+      newErrors.firstName = "El nombre es obligatorio.";
+    }
+    if (!lastName) {
+      newErrors.lastName = "El apellido es obligatorio.";
+    }
+    if (!email) {
+      newErrors.email = "El correo electrónico es obligatorio.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = "El formato de correo no es válido.";
+      }
+    }
+    if (!roleId) {
+      newErrors.roleId = "El rol de usuario es obligatorio.";
     }
 
-    if (!isEditMode && !normalizedData.password) {
-      setErrorMessage("La contraseña es obligatoria.");
-      return;
+    if (!isEditMode && !password) {
+      newErrors.password = "La contraseña es obligatoria.";
     }
 
-    if (
-      normalizedData.password ||
-      normalizedData.confirmPassword
-    ) {
-      if (
-        normalizedData.password !==
-        normalizedData.confirmPassword
-      ) {
-        setErrorMessage("Las contraseñas no coinciden.");
-        return;
+    if (password || confirmPassword) {
+      if (password && password.length < 6) {
+        newErrors.password = "Debe tener al menos 6 caracteres.";
       }
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = "Las contraseñas no coinciden.";
+      }
+    }
 
-      if (normalizedData.password.length < 6) {
-        setErrorMessage(
-          "La contraseña debe tener al menos 6 caracteres.",
-        );
-        return;
-      }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
     const submittedData = {
-      firstName: normalizedData.firstName,
-      lastName: normalizedData.lastName,
-      email: normalizedData.email,
+      firstName,
+      lastName,
+      email,
+      roleId: Number(roleId),
     };
 
-    /* En edición, la contraseña solo se envía cuando el usuario escribió una nueva */
-    if (normalizedData.password) {
-      submittedData.password = normalizedData.password;
+    if (password) {
+      submittedData.password = password;
     }
 
     onSubmit(submittedData);
@@ -201,7 +225,9 @@ const UserModal = ({
                     value={formData.firstName}
                     autoComplete="given-name"
                     onChange={handleChange}
+                    style={{ borderColor: errors.firstName ? "#FF2B2B" : undefined }}
                   />
+                  <ErrorMessage message={errors.firstName} />
                 </FormField>
 
                 <FormField>
@@ -213,7 +239,9 @@ const UserModal = ({
                     value={formData.lastName}
                     autoComplete="family-name"
                     onChange={handleChange}
+                    style={{ borderColor: errors.lastName ? "#FF2B2B" : undefined }}
                   />
+                  <ErrorMessage message={errors.lastName} />
                 </FormField>
               </FormGrid>
 
@@ -227,13 +255,34 @@ const UserModal = ({
                     value={formData.email}
                     autoComplete="email"
                     onChange={handleChange}
+                    style={{ borderColor: errors.email ? "#FF2B2B" : undefined }}
                   />
+                  <ErrorMessage message={errors.email} />
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="user-role">Rol de usuario</FormLabel>
+                  <FormSelect
+                    id="user-role"
+                    name="roleId"
+                    value={formData.roleId}
+                    onChange={handleChange}
+                    style={{ borderColor: errors.roleId ? "#FF2B2B" : undefined }}
+                  >
+                    <option value="">Selecciona un rol</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                  <ErrorMessage message={errors.roleId} />
                 </FormField>
 
                 <FormField>
                   <FormLabel htmlFor="user-password">
                     {isEditMode
-                      ? "Nueva contraseña"
+                      ? "Nueva contraseña (opcional)"
                       : "Contraseña"}
                   </FormLabel>
 
@@ -247,6 +296,7 @@ const UserModal = ({
                       value={formData.password}
                       autoComplete="new-password"
                       onChange={handleChange}
+                      style={{ borderColor: errors.password ? "#FF2B2B" : undefined }}
                     />
 
                     <InputIconButton
@@ -272,6 +322,7 @@ const UserModal = ({
                       )}
                     </InputIconButton>
                   </InputIconContainer>
+                  <ErrorMessage message={errors.password} />
                 </FormField>
 
                 <FormField>
@@ -288,6 +339,7 @@ const UserModal = ({
                       value={formData.confirmPassword}
                       autoComplete="new-password"
                       onChange={handleChange}
+                      style={{ borderColor: errors.confirmPassword ? "#FF2B2B" : undefined }}
                     />
 
                     <InputIconButton
@@ -315,20 +367,8 @@ const UserModal = ({
                       )}
                     </InputIconButton>
                   </InputIconContainer>
+                  <ErrorMessage message={errors.confirmPassword} />
                 </FormField>
-
-                {errorMessage && (
-                  <p
-                    role="alert"
-                    style={{
-                      margin: 0,
-                      color: "#FF2B2B",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {errorMessage}
-                  </p>
-                )}
               </FormGrid>
             </ModalSection>
           </ModalContent>

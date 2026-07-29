@@ -19,9 +19,9 @@ export const PageHeader = styled.header`
   justify-content: space-between;
   gap: 24px;
   width: 100%;
-  @media (max-width: 900px) {
-    align-items: stretch;
+  @media (max-width: 800px) {
     flex-direction: column;
+    align-items: start;
   }
 `;
 
@@ -50,8 +50,8 @@ export const PageActions = styled.div`
   gap: 16px;
   width: 100%;
   max-width: 550px;
-  @media (max-width: 900px) {
-    justify-content: flex-start;
+  @media (max-width: 800px) {
+    justify-content: space-between;
     max-width: none;
   }
   @media (max-width: 600px) {

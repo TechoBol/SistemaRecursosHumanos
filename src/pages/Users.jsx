@@ -5,6 +5,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import {
   AddButton,
   PageActions,
@@ -20,34 +21,12 @@ import {
 } from "../components/ui/table/TableCell.styles";
 import UserModal from "../components/modals/UserModal";
 import DataTable from "../components/table/DataTable";
-
-const INITIAL_USERS = [
-  {
-    id: 1,
-    firstName: "Juan",
-    lastName: "Perez",
-    email: "juan@gmail.com",
-  },
-  {
-    id: 2,
-    firstName: "Lucia",
-    lastName: "Garcia",
-    email: "lucia@gmail.com",
-  },
-];
-
-const createId = () => {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random()}`;
-};
+import { useUsers } from "../hooks/useUsers";
+import { useRoles } from "../hooks/useRoles";
 
 const Users = () => {
-  const [users, setUsers] = useState(INITIAL_USERS);
+  const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
+  const { roles } = useRoles();
   const [searchValue, setSearchValue] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -63,6 +42,7 @@ const Users = () => {
         user.firstName,
         user.lastName,
         user.email,
+        user.role?.name,
       ]
         .join(" ")
         .toLowerCase();
@@ -88,43 +68,30 @@ const Users = () => {
     setIsUserModalOpen(false);
   };
 
-  const handleSaveUser = (userData) => {
+  const handleSaveUser = async (userData) => {
     if (modalMode === "edit" && selectedUser) {
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === selectedUser.id
-            ? {
-                ...user,
-                ...userData,
-              }
-            : user,
-        ),
-      );
+      await updateUser(selectedUser.id, userData);
     } else {
-      setUsers((currentUsers) => [
-        ...currentUsers,
-        {
-          id: createId(),
-          ...userData,
-        },
-      ]);
+      await createUser(userData);
     }
-
     handleCloseModal();
   };
 
   const handleDeleteUser = (user) => {
-    const shouldDelete = window.confirm(
-      `¿Deseas eliminar al usuario ${user.firstName} ${user.lastName}?`,
-    );
-    if (!shouldDelete) {
-      return;
-    }
-    setUsers((currentUsers) =>
-      currentUsers.filter(
-        (currentUser) => currentUser.id !== user.id,
-      ),
-    );
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: `¿Deseas eliminar al usuario ${user.firstName} ${user.lastName}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2F573C",
+      cancelButtonColor: "#D32F2F",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await deleteUser(user.id);
+      }
+    });
   };
 
   const columns = useMemo(
@@ -132,20 +99,43 @@ const Users = () => {
       {
         field: "firstName",
         headerName: "Nombre",
-        minWidth: 180,
+        minWidth: 160,
         flex: 0.8,
       },
       {
         field: "lastName",
         headerName: "Apellido",
-        minWidth: 220,
+        minWidth: 180,
         flex: 1,
       },
       {
         field: "email",
         headerName: "Correo",
-        minWidth: 280,
-        flex: 1.4,
+        minWidth: 260,
+        flex: 1.3,
+      },
+      {
+        field: "role",
+        headerName: "Rol",
+        minWidth: 160,
+        flex: 0.8,
+        renderCell: ({ row }) => row.role?.name || "Sin Rol",
+      },
+      {
+        field: "isActive",
+        headerName: "Estado",
+        minWidth: 120,
+        flex: 0.6,
+        renderCell: ({ row }) => (
+          <span
+            style={{
+              color: row.isActive ? "#2E7D32" : "#D32F2F",
+              fontWeight: "600",
+            }}
+          >
+            {row.isActive ? "Activo" : "Inactivo"}
+          </span>
+        ),
       },
       {
         field: "actions",
@@ -168,17 +158,19 @@ const Users = () => {
               <Pencil size={19} />
             </TableActionButton>
 
-            <TableActionButton
-              type="button"
-              title="Eliminar usuario"
-              aria-label={`Eliminar a ${row.firstName} ${row.lastName}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleDeleteUser(row);
-              }}
-            >
-              <Trash2 size={19} color="#FF2B2B" />
-            </TableActionButton>
+            {row.isActive && (
+              <TableActionButton
+                type="button"
+                title="Eliminar usuario"
+                aria-label={`Desactivar a ${row.firstName} ${row.lastName}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleDeleteUser(row);
+                }}
+              >
+                <Trash2 size={19} color="#FF2B2B" />
+              </TableActionButton>
+            )}
           </TableActions>
         ),
       },
@@ -217,6 +209,7 @@ const Users = () => {
         <DataTable
           rows={filteredRows}
           columns={columns}
+          loading={isLoading}
           pageSize={10}
           pageSizeOptions={[10, 25, 30, 50]}
           height="610px"
@@ -230,6 +223,7 @@ const Users = () => {
         isOpen={isUserModalOpen}
         mode={modalMode}
         user={selectedUser}
+        roles={roles}
         onClose={handleCloseModal}
         onSubmit={handleSaveUser}
       />
