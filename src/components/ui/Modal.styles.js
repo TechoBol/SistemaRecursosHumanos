@@ -197,6 +197,14 @@ export const FormInput = styled.input`
   }
 `;
 
+export const FormTextarea = styled.textarea`
+  ${controlStyles}
+  min-height: 78px;
+  padding: 10px 12px;
+  line-height: 1.4;
+  resize: vertical;
+`;
+
 export const FormSelect = styled.select`
   ${controlStyles}
   cursor: pointer;

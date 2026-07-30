@@ -31,6 +31,7 @@ import {
   CatalogTable,
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
+import AreaModal from "../components/modals/AreaModal";
 
 const INITIAL_AREAS = [
   {
@@ -59,6 +60,9 @@ const getAreaIcon = (icon) => {
 const Areas = () => {
   const [areas, setAreas] = useState(INITIAL_AREAS);
   const [searchValue, setSearchValue] = useState("");
+  const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedArea, setSelectedArea] = useState(null);
 
   const filteredAreas = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
@@ -77,11 +81,46 @@ const Areas = () => {
   }, [areas, searchValue]);
 
   const handleAddArea = () => {
-    console.log("Agregar área");
+    setSelectedArea(null);
+    setModalMode("create");
+    setIsAreaModalOpen(true);
   };
 
   const handleEditArea = (area) => {
-    console.log("Editar área:", area);
+    setSelectedArea(area);
+    setModalMode("edit");
+    setIsAreaModalOpen(true);
+  };
+
+  const handleCloseAreaModal = () => {
+    setIsAreaModalOpen(false);
+    setSelectedArea(null);
+  };
+
+  const handleSaveArea = (areaData) => {
+    if (modalMode === "edit" && selectedArea) {
+      setAreas((currentAreas) =>
+        currentAreas.map((area) =>
+          area.id === selectedArea.id
+            ? {
+                ...area,
+                ...areaData,
+              }
+            : area,
+        ),
+      );
+    } else {
+      const nextId = Math.max(0, ...areas.map((area) => area.id)) + 1;
+      setAreas((currentAreas) => [
+        ...currentAreas,
+        {
+          id: nextId,
+          icon: "operations",
+          ...areaData,
+        },
+      ]);
+    }
+    handleCloseAreaModal();
   };
 
   const handleDeleteArea = (area) => {
@@ -99,86 +138,96 @@ const Areas = () => {
   };
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageTitle>Áreas</PageTitle>
-        <PageActions>
-          <SearchContainer>
-            <Search size={20} />
-            <SearchInput
-              type="search"
-              value={searchValue}
-              placeholder="Buscar"
-              aria-label="Buscar área"
-              onChange={(event) =>
-                setSearchValue(event.target.value)
-              }
-            />
-          </SearchContainer>
-          <AddButton
-            type="button"
-            onClick={handleAddArea}
-          >
-            <Plus size={18} />
-            Agregar área
-          </AddButton>
-        </PageActions>
-      </PageHeader>
+    <>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>Áreas</PageTitle>
+          <PageActions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput
+                type="search"
+                value={searchValue}
+                placeholder="Buscar"
+                aria-label="Buscar área"
+                onChange={(event) =>
+                  setSearchValue(event.target.value)
+                }
+              />
+            </SearchContainer>
+            <AddButton
+              type="button"
+              onClick={handleAddArea}
+            >
+              <Plus size={18} />
+              Agregar área
+            </AddButton>
+          </PageActions>
+        </PageHeader>
 
-      <CatalogContainer>
-        <CatalogTable $minWidth="900px">
-          <CatalogHeader
-            $columns="minmax(0, 1fr) 110px"
-            aria-hidden="true"
-          >
-            <span>Área</span>
-            <span>Acciones</span>
-          </CatalogHeader>
+        <CatalogContainer>
+          <CatalogTable $minWidth="900px">
+            <CatalogHeader
+              $columns="minmax(0, 1fr) 110px"
+              aria-hidden="true"
+            >
+              <span>Área</span>
+              <span>Acciones</span>
+            </CatalogHeader>
 
-          {filteredAreas.length === 0 ? (
-            <CatalogEmpty>No se encontraron áreas.</CatalogEmpty>
-          ) : (
-            <CatalogList>
-              {filteredAreas.map((area) => (
-                <CatalogRow
-                  key={area.id}
-                  $columns="minmax(0, 1fr) 110px"
-                >
-                  <CatalogMain>
-                    <CatalogIcon>{getAreaIcon(area.icon)}</CatalogIcon>
-                    <CatalogInfo>
-                      <CatalogTitle>{area.name}</CatalogTitle>
-                      <CatalogDescription>{area.description}</CatalogDescription>
-                    </CatalogInfo>
-                  </CatalogMain>
+            {filteredAreas.length === 0 ? (
+              <CatalogEmpty>No se encontraron áreas.</CatalogEmpty>
+            ) : (
+              <CatalogList>
+                {filteredAreas.map((area) => (
+                  <CatalogRow
+                    key={area.id}
+                    $columns="minmax(0, 1fr) 110px"
+                  >
+                    <CatalogMain>
+                      <CatalogIcon>{getAreaIcon(area.icon)}</CatalogIcon>
+                      <CatalogInfo>
+                        <CatalogTitle>{area.name}</CatalogTitle>
+                        <CatalogDescription>{area.description}</CatalogDescription>
+                      </CatalogInfo>
+                    </CatalogMain>
 
-                  <CatalogActions>
-                    <CatalogActionButton
-                      type="button"
-                      title="Editar área"
-                      aria-label={`Editar área ${area.name}`}
-                      onClick={() => handleEditArea(area)}
-                    >
-                      <Pencil size={19} />
-                    </CatalogActionButton>
+                    <CatalogActions>
+                      <CatalogActionButton
+                        type="button"
+                        title="Editar área"
+                        aria-label={`Editar área ${area.name}`}
+                        onClick={() => handleEditArea(area)}
+                      >
+                        <Pencil size={19} />
+                      </CatalogActionButton>
 
-                    <CatalogActionButton
-                      type="button"
-                      $danger
-                      title="Eliminar área"
-                      aria-label={`Eliminar área ${area.name}`}
-                      onClick={() => handleDeleteArea(area)}
-                    >
-                      <Trash2 size={19} />
-                    </CatalogActionButton>
-                  </CatalogActions>
-                </CatalogRow>
-              ))}
-            </CatalogList>
-          )}
-        </CatalogTable>
-      </CatalogContainer>
-    </PageContainer>
+                      <CatalogActionButton
+                        type="button"
+                        $danger
+                        title="Eliminar área"
+                        aria-label={`Eliminar área ${area.name}`}
+                        onClick={() => handleDeleteArea(area)}
+                      >
+                        <Trash2 size={19} />
+                      </CatalogActionButton>
+                    </CatalogActions>
+                  </CatalogRow>
+                ))}
+              </CatalogList>
+            )}
+          </CatalogTable>
+        </CatalogContainer>
+      </PageContainer>
+
+      <AreaModal
+        isOpen={isAreaModalOpen}
+        mode={modalMode}
+        area={selectedArea}
+        onClose={handleCloseAreaModal}
+        onSubmit={handleSaveArea}
+      />
+    </>
   );
 };
 
