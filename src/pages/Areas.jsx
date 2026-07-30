@@ -4,15 +4,15 @@ import {
   PageTitle,
 } from "../components/ui/Page.styles";
 
-const Positions = () => {
+const Areas = () => {
   return (
     <PageContainer>
-      <PageTitle>Posiciones</PageTitle>
+      <PageTitle>Areas</PageTitle>
       <PageDescription>
-        Administración de departamentos y posiciones.
+        Administración de Areas de trabajo
       </PageDescription>
     </PageContainer>
   );
 };
 
-export default Positions;
+export default Areas;

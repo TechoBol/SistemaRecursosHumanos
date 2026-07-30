@@ -11,7 +11,8 @@ import EmployeeDetail from "./pages/employees/EmployeeDetail";
 import ConsolidatedEmployees from "./pages/ConsolidatedEmployees";
 import Payrolls from "./pages/Payrolls";
 import Branches from "./pages/Branches";
-import Positions from "./pages/Positions";
+import Areas from "./pages/Areas";
+import JobTitles from "./pages/JobTitles";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 
@@ -31,7 +32,8 @@ const App = () => {
             <Route path="empleados/consolidados" element={<ConsolidatedEmployees />} />
             <Route path="planillas" element={<Payrolls />} />
             <Route path="sucursales" element={<Branches />} />
-            <Route path="posiciones" element={<Positions />} />
+            <Route path="areas" element={<Areas />} />
+            <Route path="cargos" element={<JobTitles />} />
             <Route path="usuarios" element={<Users />} />
             <Route path="configuracion" element={<Settings />} />
           </Route>

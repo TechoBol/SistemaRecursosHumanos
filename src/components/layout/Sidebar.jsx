@@ -53,12 +53,8 @@ const MENU_ITEMS = [
   },
   { id: "planillas", label: "Planillas", path: "/planillas", icon: DollarSign, },
   { id: "sucursales", label: "Sucursales", path: "/sucursales", icon: Building2, },
-  {
-    id: "departamentos", label: "Departamentos", icon: Menu,
-    children: [
-      { id: "posiciones", label: "Posiciones", path: "/posiciones", icon: WalletCards, },
-    ],
-  },
+  { id: "areas", label: "Áreas", path: "/areas", icon: Menu, },
+  { id: "cargos", label: "Cargos", path: "/cargos", icon: WalletCards, },
   { id: "usuarios", label: "Usuarios", path: "/usuarios", icon: UserRound, },
 ];
 
