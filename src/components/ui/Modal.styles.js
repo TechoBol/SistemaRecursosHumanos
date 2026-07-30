@@ -90,7 +90,7 @@ export const ModalContent = styled.div`
   flex-direction: column;
   gap: 18px;
   min-height: 0;
-  padding: 0 18px 18px 22px;
+  padding: 0 18px 0px 22px;
   overflow-x: hidden;
   overflow-y: ${({ $scrollable = true }) => $scrollable ? "auto" : "visible"};
   scrollbar-width: thin;
@@ -346,4 +346,58 @@ export const PrimaryButton = styled(BaseActionButton)`
     cursor: not-allowed;
     opacity: 0.55;
   }
+`;
+
+export const FormStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+export const SelectableOptions = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+export const SelectableOptionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  color: ${({ $active }) => $active ? theme.colors.white : theme.colors.textMuted};
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
+  border: 1px solid ${({ $active }) => $active ? theme.colors.primary : theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  transition:
+    color ${theme.transitions.fast},
+    background-color ${theme.transitions.fast},
+    border-color ${theme.transitions.fast};
+  &:hover {
+    color: ${({ $active }) => $active ? theme.colors.white : theme.colors.primary};
+    border-color: ${theme.colors.primary};
+  }
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
+export const FormHelperText = styled.span`
+  color: ${theme.colors.textMuted};
+  font-size: 11px;
+  line-height: 1.4;
+`;
+
+export const FormErrorText = styled.span`
+  color: ${theme.colors.danger};
+  font-size: 11px;
+  line-height: 1.4;
 `;

@@ -37,6 +37,7 @@ import {
   CatalogTable,
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
+import BranchModal from "../components/modals/BranchModal";
 
 const INITIAL_BRANCHES = [
   {
@@ -91,19 +92,30 @@ const BRANCH_COLUMNS = `
   110px
 `;
 
+const createId = () => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random()}`;
+};
+
 const Branches = () => {
   const [branches, setBranches] = useState(INITIAL_BRANCHES);
   const [searchValue, setSearchValue] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedBranch, setSelectedBranch] = useState(null);
 
   const filteredBranches = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
-
     return branches.filter((branch) => {
       const matchesCity =
         selectedCity === "all" ||
         branch.city === selectedCity;
-
       const searchableContent = [
         branch.name,
         branch.description,
@@ -120,11 +132,44 @@ const Branches = () => {
   }, [branches, searchValue, selectedCity]);
 
   const handleAddBranch = () => {
-    console.log("Añadir sucursal");
+    setSelectedBranch(null);
+    setModalMode("create");
+    setIsBranchModalOpen(true);
   };
 
   const handleEditBranch = (branch) => {
-    console.log("Editar sucursal:", branch);
+    setSelectedBranch(branch);
+    setModalMode("edit");
+    setIsBranchModalOpen(true);
+  };
+
+  const handleCloseBranchModal = () => {
+    setIsBranchModalOpen(false);
+    setSelectedBranch(null);
+  };
+
+  const handleSaveBranch = (branchData) => {
+    if (modalMode === "edit" && selectedBranch) {
+      setBranches((currentBranches) =>
+        currentBranches.map((branch) =>
+          branch.id === selectedBranch.id
+            ? {
+                ...branch,
+                ...branchData,
+              }
+            : branch,
+        ),
+      );
+    } else {
+      setBranches((currentBranches) => [
+        ...currentBranches,
+        {
+          id: createId(),
+          ...branchData,
+        },
+      ]);
+    }
+    handleCloseBranchModal();
   };
 
   const handleDeleteBranch = (branch) => {
@@ -145,114 +190,124 @@ const Branches = () => {
   };
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageTitle>Sucursales</PageTitle>
-        <PageActions>
-          <SearchContainer>
-            <Search size={20} />
-            <SearchInput
-              type="search"
-              value={searchValue}
-              placeholder="Buscar"
-              aria-label="Buscar sucursal"
-              onChange={(event) => setSearchValue(event.target.value)}
-            />
-          </SearchContainer>
-          <AddButton
-            type="button"
-            onClick={handleAddBranch}
-          >
-            <Plus size={18} />
-            Añadir sucursal
-          </AddButton>
-        </PageActions>
-      </PageHeader>
+    <>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>Sucursales</PageTitle>
+          <PageActions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput
+                type="search"
+                value={searchValue}
+                placeholder="Buscar"
+                aria-label="Buscar sucursal"
+                onChange={(event) => setSearchValue(event.target.value)}
+              />
+            </SearchContainer>
+            <AddButton
+              type="button"
+              onClick={handleAddBranch}
+            >
+              <Plus size={18} />
+              Añadir sucursal
+            </AddButton>
+          </PageActions>
+        </PageHeader>
 
-      <CatalogFilters aria-label="Filtrar por ciudad">
-        {CITY_FILTERS.map((filter) => (
-          <CatalogFilterButton
-            key={filter.id}
-            type="button"
-            $active={selectedCity === filter.id}
-            aria-pressed={selectedCity === filter.id}
-            onClick={() => setSelectedCity(filter.id)}
-          >
-            {filter.label}
-          </CatalogFilterButton>
-        ))}
-      </CatalogFilters>
+        <CatalogFilters aria-label="Filtrar por ciudad">
+          {CITY_FILTERS.map((filter) => (
+            <CatalogFilterButton
+              key={filter.id}
+              type="button"
+              $active={selectedCity === filter.id}
+              aria-pressed={selectedCity === filter.id}
+              onClick={() => setSelectedCity(filter.id)}
+            >
+              {filter.label}
+            </CatalogFilterButton>
+          ))}
+        </CatalogFilters>
 
-      <CatalogContainer>
-        <CatalogTable $minWidth="900px">
-          <CatalogHeader $columns={BRANCH_COLUMNS} aria-hidden="true">
-            <span>Sucursal</span>
-            <span>Ciudad</span>
-            <span>Empresas</span>
-            <span>Acciones</span>
-          </CatalogHeader>
-          {filteredBranches.length === 0 ? (
-            <CatalogEmpty>No se encontraron sucursales.</CatalogEmpty>
-          ) : (
-            <CatalogList>
-              {filteredBranches.map((branch) => (
-                <CatalogRow key={branch.id} $columns={BRANCH_COLUMNS}>
-                  <CatalogMain>
-                    <CatalogIcon>
-                      <Building2 size={29} strokeWidth={1.8} />
-                    </CatalogIcon>
+        <CatalogContainer>
+          <CatalogTable $minWidth="900px">
+            <CatalogHeader $columns={BRANCH_COLUMNS} aria-hidden="true">
+              <span>Sucursal</span>
+              <span>Ciudad</span>
+              <span>Empresas</span>
+              <span>Acciones</span>
+            </CatalogHeader>
+            {filteredBranches.length === 0 ? (
+              <CatalogEmpty>No se encontraron sucursales.</CatalogEmpty>
+            ) : (
+              <CatalogList>
+                {filteredBranches.map((branch) => (
+                  <CatalogRow key={branch.id} $columns={BRANCH_COLUMNS}>
+                    <CatalogMain>
+                      <CatalogIcon>
+                        <Building2 size={29} strokeWidth={1.8} />
+                      </CatalogIcon>
 
-                    <CatalogInfo>
-                      <CatalogTitle>{branch.name}</CatalogTitle>
-                      <CatalogDescription>{branch.description}</CatalogDescription>
-                      <CatalogMeta>
-                        <MapPin size={16} strokeWidth={1.8} />
-                        <span>{branch.address}</span>
-                      </CatalogMeta>
-                    </CatalogInfo>
-                  </CatalogMain>
+                      <CatalogInfo>
+                        <CatalogTitle>{branch.name}</CatalogTitle>
+                        <CatalogDescription>{branch.description}</CatalogDescription>
+                        <CatalogMeta>
+                          <MapPin size={16} strokeWidth={1.8} />
+                          <span>{branch.address}</span>
+                        </CatalogMeta>
+                      </CatalogInfo>
+                    </CatalogMain>
 
-                  <CatalogColumn data-label="Ciudad">
-                    {branch.city}
-                  </CatalogColumn>
+                    <CatalogColumn data-label="Ciudad">
+                      {branch.city}
+                    </CatalogColumn>
 
-                  <CatalogColumn data-label="Empresas">
-                    <CatalogBadgeList>
-                      {branch.companies.map((company) => (
-                        <CatalogBadge key={`${branch.id}-${company}`}>
-                          {company}
-                        </CatalogBadge>
-                      ))}
-                    </CatalogBadgeList>
-                  </CatalogColumn>
+                    <CatalogColumn data-label="Empresas">
+                      <CatalogBadgeList>
+                        {branch.companies.map((company) => (
+                          <CatalogBadge key={`${branch.id}-${company}`}>
+                            {company}
+                          </CatalogBadge>
+                        ))}
+                      </CatalogBadgeList>
+                    </CatalogColumn>
 
-                  <CatalogActions>
-                    <CatalogActionButton
-                      type="button"
-                      title="Editar sucursal"
-                      aria-label={`Editar sucursal ${branch.name}`}
-                      onClick={() => handleEditBranch(branch)}
-                    >
-                      <Pencil size={19} />
-                    </CatalogActionButton>
+                    <CatalogActions>
+                      <CatalogActionButton
+                        type="button"
+                        title="Editar sucursal"
+                        aria-label={`Editar sucursal ${branch.name}`}
+                        onClick={() => handleEditBranch(branch)}
+                      >
+                        <Pencil size={19} />
+                      </CatalogActionButton>
 
-                    <CatalogActionButton
-                      type="button"
-                      $danger
-                      title="Eliminar sucursal"
-                      aria-label={`Eliminar sucursal ${branch.name}`}
-                      onClick={() => handleDeleteBranch(branch)}
-                    >
-                      <Trash2 size={19} />
-                    </CatalogActionButton>
-                  </CatalogActions>
-                </CatalogRow>
-              ))}
-            </CatalogList>
-          )}
-        </CatalogTable>
-      </CatalogContainer>
-    </PageContainer>
+                      <CatalogActionButton
+                        type="button"
+                        $danger
+                        title="Eliminar sucursal"
+                        aria-label={`Eliminar sucursal ${branch.name}`}
+                        onClick={() => handleDeleteBranch(branch)}
+                      >
+                        <Trash2 size={19} />
+                      </CatalogActionButton>
+                    </CatalogActions>
+                  </CatalogRow>
+                ))}
+              </CatalogList>
+            )}
+          </CatalogTable>
+        </CatalogContainer>
+      </PageContainer>
+
+      <BranchModal
+        isOpen={isBranchModalOpen}
+        mode={modalMode}
+        branch={selectedBranch}
+        onClose={handleCloseBranchModal}
+        onSubmit={handleSaveBranch}
+      />
+    </>
   );
 };
 
