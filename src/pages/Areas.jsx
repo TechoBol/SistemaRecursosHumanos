@@ -31,39 +31,25 @@ import {
   CatalogTable,
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
+import Swal from "sweetalert2";
 import AreaModal from "../components/modals/AreaModal";
-
-const INITIAL_AREAS = [
-  {
-    id: 1,
-    name: "Ventas",
-    description:
-      "Área comercial dedicada a las ventas y atención al cliente. Intervienen ejecutivos de ventas, marketing y jefes de ventas.",
-    icon: "sales",
-  },
-  {
-    id: 2,
-    name: "Operaciones",
-    description:
-      "Área de producción y control de almacenes, materiales, stock y logística.",
-    icon: "operations",
-  },
-];
+import { useAreas } from "../hooks/useAreas";
 
 const BRANCH_COLUMNS = `
   minmax(0, 1fr)
   110px
 `;
 
-const getAreaIcon = (icon) => {
-  if (icon === "sales") {
+const getAreaIcon = (name) => {
+  const lowerName = String(name).toLowerCase();
+  if (lowerName.includes("venta") || lowerName.includes("comercial") || lowerName.includes("marketing")) {
     return <ShoppingCart size={29} strokeWidth={1.8} />;
   }
   return <Boxes size={29} strokeWidth={1.8} />;
 };
 
 const Areas = () => {
-  const [areas, setAreas] = useState(INITIAL_AREAS);
+  const { areas, isLoading, createArea, updateArea, deleteArea } = useAreas();
   const [searchValue, setSearchValue] = useState("");
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -102,44 +88,30 @@ const Areas = () => {
     setSelectedArea(null);
   };
 
-  const handleSaveArea = (areaData) => {
+  const handleSaveArea = async (areaData) => {
     if (modalMode === "edit" && selectedArea) {
-      setAreas((currentAreas) =>
-        currentAreas.map((area) =>
-          area.id === selectedArea.id
-            ? {
-                ...area,
-                ...areaData,
-              }
-            : area,
-        ),
-      );
+      await updateArea(selectedArea.id, areaData);
     } else {
-      const nextId = Math.max(0, ...areas.map((area) => area.id)) + 1;
-      setAreas((currentAreas) => [
-        ...currentAreas,
-        {
-          id: nextId,
-          icon: "operations",
-          ...areaData,
-        },
-      ]);
+      await createArea(areaData);
     }
     handleCloseAreaModal();
   };
 
   const handleDeleteArea = (area) => {
-    const shouldDelete = window.confirm(
-      `¿Deseas eliminar el área ${area.name}?`,
-    );
-    if (!shouldDelete) {
-      return;
-    }
-    setAreas((currentAreas) =>
-      currentAreas.filter(
-        (currentArea) => currentArea.id !== area.id,
-      ),
-    );
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: `¿Deseas eliminar el área ${area.name}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2F573C",
+      cancelButtonColor: "#D32F2F",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await deleteArea(area.id);
+      }
+    });
   };
 
   return (
@@ -177,14 +149,16 @@ const Areas = () => {
               <span>Acciones</span>
             </CatalogHeader>
 
-            {filteredAreas.length === 0 ? (
+            {isLoading ? (
+              <CatalogEmpty>Cargando áreas...</CatalogEmpty>
+            ) : filteredAreas.length === 0 ? (
               <CatalogEmpty>No se encontraron áreas.</CatalogEmpty>
             ) : (
               <CatalogList>
                 {filteredAreas.map((area) => (
                   <CatalogRow key={area.id} $columns={BRANCH_COLUMNS}>
                     <CatalogMain>
-                      <CatalogIcon>{getAreaIcon(area.icon)}</CatalogIcon>
+                      <CatalogIcon>{getAreaIcon(area.name)}</CatalogIcon>
                       <CatalogInfo>
                         <CatalogTitle>{area.name}</CatalogTitle>
                         <CatalogDescription>{area.description}</CatalogDescription>
@@ -201,15 +175,17 @@ const Areas = () => {
                         <Pencil size={19} />
                       </CatalogActionButton>
 
-                      <CatalogActionButton
-                        type="button"
-                        $danger
-                        title="Eliminar área"
-                        aria-label={`Eliminar área ${area.name}`}
-                        onClick={() => handleDeleteArea(area)}
-                      >
-                        <Trash2 size={19} />
-                      </CatalogActionButton>
+                      {area.isActive !== false && (
+                        <CatalogActionButton
+                          type="button"
+                          $danger
+                          title="Eliminar área"
+                          aria-label={`Eliminar área ${area.name}`}
+                          onClick={() => handleDeleteArea(area)}
+                        >
+                          <Trash2 size={19} color="#FF2B2B" />
+                        </CatalogActionButton>
+                      )}
                     </CatalogActions>
                   </CatalogRow>
                 ))}

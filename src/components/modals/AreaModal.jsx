@@ -83,10 +83,13 @@ const AreaModal = ({
     if (!validateForm()) {
       return;
     }
-    onSubmit({
+
+    const submittedData = {
       name: formData.name.trim(),
       description: formData.description.trim(),
-    });
+    };
+
+    onSubmit(submittedData);
   };
 
   const handleOverlayClick = (event) => {
@@ -140,6 +143,7 @@ const AreaModal = ({
                         ? "area-name-error"
                         : undefined
                     }
+                    style={{ borderColor: errors.name ? "#FF2B2B" : undefined }}
                   />
                   {errors.name && (
                     <FormErrorText id="area-name-error">
