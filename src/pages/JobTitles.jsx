@@ -34,6 +34,7 @@ import {
   CatalogTable,
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
+import JobTitleModal from "../components/modals/JobTitleModal";
 
 const INITIAL_JOB_TITLES = [
   {
@@ -54,6 +55,12 @@ const INITIAL_JOB_TITLES = [
   },
 ];
 
+const BRANCH_COLUMNS = `
+  minmax(320px, 1fr)
+  minmax(180px, 0.6fr)
+  110px
+`;
+
 const getJobTitleIcon = (icon) => {
   if (icon === "warehouse") {
     return <Archive size={29} strokeWidth={1.8} />;
@@ -62,11 +69,11 @@ const getJobTitleIcon = (icon) => {
 };
 
 const JobTitles = () => {
-  const [jobTitles, setJobTitles] = useState(
-    INITIAL_JOB_TITLES,
-  );
-
+  const [jobTitles, setJobTitles] = useState(INITIAL_JOB_TITLES,);
   const [searchValue, setSearchValue] = useState("");
+  const [isJobTitleModalOpen, setIsJobTitleModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState("create");
+  const [selectedJobTitle, setSelectedJobTitle] = useState(null);
 
   const filteredJobTitles = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
@@ -86,11 +93,50 @@ const JobTitles = () => {
   }, [jobTitles, searchValue]);
 
   const handleAddJobTitle = () => {
-    console.log("Agregar cargo");
+    setSelectedJobTitle(null);
+    setModalMode("create");
+    setIsJobTitleModalOpen(true);
   };
 
   const handleEditJobTitle = (jobTitle) => {
-    console.log("Editar cargo:", jobTitle);
+    setSelectedJobTitle(jobTitle);
+    setModalMode("edit");
+    setIsJobTitleModalOpen(true);
+  };
+
+  const handleCloseJobTitleModal = () => {
+    setIsJobTitleModalOpen(false);
+    setSelectedJobTitle(null);
+  };
+
+  const handleSaveJobTitle = (jobTitleData) => {
+    if (modalMode === "edit" && selectedJobTitle) {
+      setJobTitles((currentJobTitles) =>
+        currentJobTitles.map((jobTitle) =>
+          jobTitle.id === selectedJobTitle.id
+            ? {
+                ...jobTitle,
+                ...jobTitleData,
+              }
+            : jobTitle,
+        ),
+      );
+    } else {
+      const nextId =
+        Math.max(
+          0,
+          ...jobTitles.map((jobTitle) => jobTitle.id),
+        ) + 1;
+      setJobTitles((currentJobTitles) => [
+        ...currentJobTitles,
+        {
+          id: nextId,
+          icon: "operations",
+          ...jobTitleData,
+        },
+      ]);
+    }
+    handleCloseJobTitleModal();
   };
 
   const handleDeleteJobTitle = (jobTitle) => {
@@ -109,105 +155,101 @@ const JobTitles = () => {
   };
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageTitle>Cargos</PageTitle>
-        <PageActions>
-          <SearchContainer>
-            <Search size={20} />
-            <SearchInput
-              type="search"
-              value={searchValue}
-              placeholder="Buscar"
-              aria-label="Buscar cargo"
-              onChange={(event) =>
-                setSearchValue(event.target.value)
-              }
-            />
-          </SearchContainer>
-          <AddButton
-            type="button"
-            onClick={handleAddJobTitle}
-          >
-            <Plus size={18} />
-            Agregar cargo
-          </AddButton>
-        </PageActions>
-      </PageHeader>
+    <>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>Cargos</PageTitle>
+          <PageActions>
+            <SearchContainer>
+              <Search size={20} />
+              <SearchInput
+                type="search"
+                value={searchValue}
+                placeholder="Buscar"
+                aria-label="Buscar cargo"
+                onChange={(event) =>
+                  setSearchValue(event.target.value)
+                }
+              />
+            </SearchContainer>
+            <AddButton
+              type="button"
+              onClick={handleAddJobTitle}
+            >
+              <Plus size={18} />
+              Agregar cargo
+            </AddButton>
+          </PageActions>
+        </PageHeader>
 
-      <CatalogContainer>
-        <CatalogTable $minWidth="900px">
-          <CatalogHeader
-            $columns="
-              minmax(320px, 1fr)
-              minmax(180px, 240px)
-              110px
-            "
-            aria-hidden="true"
-          >
-            <span>Cargo</span>
-            <span>Áreas</span>
-            <span>Acciones</span>
-          </CatalogHeader>
+        <CatalogContainer>
+          <CatalogTable $minWidth="900px">
+            <CatalogHeader $columns={BRANCH_COLUMNS} aria-hidden="true">
+              <span>Cargo</span>
+              <span>Áreas</span>
+              <span>Acciones</span>
+            </CatalogHeader>
 
-          {filteredJobTitles.length === 0 ? (
-            <CatalogEmpty>No se encontraron cargos.</CatalogEmpty>
-          ) : (
-            <CatalogList>
-              {filteredJobTitles.map((jobTitle) => (
-                <CatalogRow
-                  key={jobTitle.id}
-                  $columns="
-                    minmax(320px, 1fr)
-                    minmax(180px, 240px)
-                    110px
-                  "
-                >
-                  <CatalogMain>
-                    <CatalogIcon>{getJobTitleIcon(jobTitle.icon)}</CatalogIcon>
-                    <CatalogInfo>
-                      <CatalogTitle>{jobTitle.name}</CatalogTitle>
-                      <CatalogDescription>{jobTitle.description}</CatalogDescription>
-                    </CatalogInfo>
-                  </CatalogMain>
+            {filteredJobTitles.length === 0 ? (
+              <CatalogEmpty>No se encontraron cargos.</CatalogEmpty>
+            ) : (
+              <CatalogList>
+                {filteredJobTitles.map((jobTitle) => (
+                  <CatalogRow key={jobTitle.id} $columns={BRANCH_COLUMNS}>
+                    <CatalogMain>
+                      <CatalogIcon>{getJobTitleIcon(jobTitle.icon)}</CatalogIcon>
+                      <CatalogInfo>
+                        <CatalogTitle>{jobTitle.name}</CatalogTitle>
+                        <CatalogDescription>{jobTitle.description}</CatalogDescription>
+                      </CatalogInfo>
+                    </CatalogMain>
 
-                  <CatalogColumn data-label="Áreas">
-                    <CatalogBadgeList>
-                      {jobTitle.areas.map((area) => (
-                        <CatalogBadge key={`${jobTitle.id}-${area}`}>
-                          {area}
-                        </CatalogBadge>
-                      ))}
-                    </CatalogBadgeList>
-                  </CatalogColumn>
+                    <CatalogColumn data-label="Áreas">
+                      <CatalogBadgeList>
+                        {jobTitle.areas.map((area) => (
+                          <CatalogBadge key={`${jobTitle.id}-${area}`}>
+                            {area}
+                          </CatalogBadge>
+                        ))}
+                      </CatalogBadgeList>
+                    </CatalogColumn>
 
-                  <CatalogActions>
-                    <CatalogActionButton
-                      type="button"
-                      title="Editar cargo"
-                      aria-label={`Editar cargo ${jobTitle.name}`}
-                      onClick={() => handleEditJobTitle(jobTitle)}
-                    >
-                      <Pencil size={19} />
-                    </CatalogActionButton>
+                    <CatalogActions>
+                      <CatalogActionButton
+                        type="button"
+                        title="Editar cargo"
+                        aria-label={`Editar cargo ${jobTitle.name}`}
+                        onClick={() => handleEditJobTitle(jobTitle)}
+                      >
+                        <Pencil size={19} />
+                      </CatalogActionButton>
 
-                    <CatalogActionButton
-                      type="button"
-                      $danger
-                      title="Eliminar cargo"
-                      aria-label={`Eliminar cargo ${jobTitle.name}`}
-                      onClick={() => handleDeleteJobTitle(jobTitle)}
-                    >
-                      <Trash2 size={19} />
-                    </CatalogActionButton>
-                  </CatalogActions>
-                </CatalogRow>
-              ))}
-            </CatalogList>
-          )}
-        </CatalogTable>
-      </CatalogContainer>
-    </PageContainer>
+                      <CatalogActionButton
+                        type="button"
+                        $danger
+                        title="Eliminar cargo"
+                        aria-label={`Eliminar cargo ${jobTitle.name}`}
+                        onClick={() => handleDeleteJobTitle(jobTitle)}
+                      >
+                        <Trash2 size={19} />
+                      </CatalogActionButton>
+                    </CatalogActions>
+                  </CatalogRow>
+                ))}
+              </CatalogList>
+            )}
+          </CatalogTable>
+        </CatalogContainer>
+      </PageContainer>
+
+      <JobTitleModal
+        isOpen={isJobTitleModalOpen}
+        mode={modalMode}
+        jobTitle={selectedJobTitle}
+        onClose={handleCloseJobTitleModal}
+        onSubmit={handleSaveJobTitle}
+      />
+    </>
   );
 };
 

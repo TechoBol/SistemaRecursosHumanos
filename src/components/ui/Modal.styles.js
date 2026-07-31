@@ -113,6 +113,12 @@ export const ModalContent = styled.div`
   }
 `;
 
+export const FormStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
 export const ModalSection = styled.section`
   padding: ${({ $compact }) => ($compact ? "22px" : "24px 32px")};
   background-color: ${theme.colors.white};
@@ -356,12 +362,6 @@ export const PrimaryButton = styled(BaseActionButton)`
   }
 `;
 
-export const FormStack = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
 export const SelectableOptions = styled.div`
   display: flex;
   align-items: center;
@@ -408,4 +408,141 @@ export const FormErrorText = styled.span`
   color: ${theme.colors.danger};
   font-size: 11px;
   line-height: 1.4;
+`;
+
+export const MultiSelect = styled.div`
+  width: 100%;
+`;
+
+export const MultiSelectControl = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  color: ${theme.colors.text};
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  background-color: ${theme.colors.white};
+  border: 1px solid ${({ $open }) => $open ? theme.colors.primary : theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  outline: none;
+  box-shadow: ${({ $open }) => $open ? "0 0 0 2px rgba(47, 87, 60, 0.12)" : "none"};
+  .values {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+  }
+  .placeholder {
+    color: ${theme.colors.textMuted};
+  }
+  > svg {
+    flex-shrink: 0;
+    color: ${theme.colors.textMuted};
+    transition: transform ${theme.transitions.fast};
+    transform: ${({ $open }) => $open ? "rotate(180deg)" : "rotate(0deg)"};
+  }
+`;
+
+export const MultiSelectChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 3px 8px;
+  color: ${theme.colors.white};
+  font-size: 12px;
+  font-weight: 500;
+  background-color: ${theme.colors.primary};
+  border-radius: ${theme.radius.sm};
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    border-radius: ${theme.radius.round};
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.16);
+    }
+    &:focus-visible {
+      outline: 1px solid ${theme.colors.white};
+      outline-offset: 1px;
+    }
+  }
+`;
+
+export const MultiSelectMenu = styled.div`
+  position: fixed;
+  z-index: 2000;
+  max-height: 240px;
+  padding: 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: ${theme.colors.white};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  box-shadow: 0 10px 28px rgba(31, 31, 31, 0.2);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(47, 87, 60, 0.55) transparent;
+  &::-webkit-scrollbar {
+    width: 7px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(47, 87, 60, 0.55);
+    border-radius: ${theme.radius.round};
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(47, 87, 60, 0.78);
+  }
+`;
+
+export const MultiSelectOption = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 10px;
+  color: ${({ $selected }) => $selected ? theme.colors.primary : theme.colors.text};
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  background-color: ${({ $selected }) => $selected ? "rgba(47, 87, 60, 0.08)" : theme.colors.white};
+  border: none;
+  border-radius: ${theme.radius.sm};
+  &:hover {
+    background-color: ${theme.colors.background};
+  }
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: -2px;
+  }
+  .checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: ${theme.colors.white};
+    background-color: ${({ $selected }) => $selected ? theme.colors.primary : theme.colors.white};
+    border: 1px solid ${({ $selected }) => $selected ? theme.colors.primary : theme.colors.border};
+    border-radius: 3px;
+  }
 `;

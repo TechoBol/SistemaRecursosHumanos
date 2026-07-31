@@ -50,6 +50,11 @@ const INITIAL_AREAS = [
   },
 ];
 
+const BRANCH_COLUMNS = `
+  minmax(0, 1fr)
+  110px
+`;
+
 const getAreaIcon = (icon) => {
   if (icon === "sales") {
     return <ShoppingCart size={29} strokeWidth={1.8} />;
@@ -167,10 +172,7 @@ const Areas = () => {
 
         <CatalogContainer>
           <CatalogTable $minWidth="900px">
-            <CatalogHeader
-              $columns="minmax(0, 1fr) 110px"
-              aria-hidden="true"
-            >
+            <CatalogHeader $columns={BRANCH_COLUMNS} aria-hidden="true">
               <span>Área</span>
               <span>Acciones</span>
             </CatalogHeader>
@@ -180,10 +182,7 @@ const Areas = () => {
             ) : (
               <CatalogList>
                 {filteredAreas.map((area) => (
-                  <CatalogRow
-                    key={area.id}
-                    $columns="minmax(0, 1fr) 110px"
-                  >
+                  <CatalogRow key={area.id} $columns={BRANCH_COLUMNS}>
                     <CatalogMain>
                       <CatalogIcon>{getAreaIcon(area.icon)}</CatalogIcon>
                       <CatalogInfo>

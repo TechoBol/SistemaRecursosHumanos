@@ -210,6 +210,7 @@ export const CatalogColumn = styled.div`
   justify-content: center;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
   min-width: 0;
   color: ${theme.colors.text};
   font-size: 13px;
@@ -230,27 +231,22 @@ export const CatalogColumn = styled.div`
 
 export const CatalogBadgeList = styled.div`
   display: flex;
-  align-items: flex-start;
-  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
   width: 100%;
-  @media (max-width: 700px) {
-    align-items: flex-start;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
+  min-width: 0;
 `;
 
 export const CatalogBadge = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 116px;
+  max-width: 100%;
   min-height: 22px;
   padding: 2px 12px;
   overflow: hidden;
-  color: ${theme.colors.primary};
-  font-weight: 500;
+  color: ${theme.colors.text};
   font-size: 12px;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -258,9 +254,6 @@ export const CatalogBadge = styled.span`
   background-color: rgba(47, 87, 60, 0.12);
   border: 1px solid ${theme.colors.primary};
   border-radius: ${theme.radius.round};
-  @media (max-width: 700px) {
-    min-width: 0;
-  }
 `;
 
 export const CatalogActions = styled.div`

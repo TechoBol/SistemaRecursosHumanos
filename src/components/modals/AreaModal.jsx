@@ -155,7 +155,6 @@ const AreaModal = ({
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    rows={4}
                   />
                 </FormField>
               </FormStack>
