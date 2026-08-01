@@ -27,27 +27,16 @@ const INITIAL_FORM = {
   name: "",
   description: "",
   address: "",
-  city: "",
-  companies: [],
+  cityId: "",
+  companyIds: [],
 };
-
-const CITY_OPTIONS = [
-  "Beni",
-  "Cochabamba",
-  "La Paz",
-  "Santa Cruz",
-];
-
-const COMPANY_OPTIONS = [
-  "TechoBol",
-  "Megadis",
-  "Rhinocons",
-];
 
 const BranchModal = ({
   isOpen,
   mode = "create",
   branch = null,
+  cities = [],
+  companies = [],
   onClose,
   onSubmit,
 }) => {
@@ -64,8 +53,8 @@ const BranchModal = ({
         name: branch.name ?? "",
         description: branch.description ?? "",
         address: branch.address ?? "",
-        city: branch.city ?? "",
-        companies: branch.companies ?? [],
+        cityId: branch.cityId ?? "",
+        companyIds: branch.companies ? branch.companies.map((cb) => cb.companyId) : [],
       });
     } else {
       setFormData(INITIAL_FORM);
@@ -89,22 +78,19 @@ const BranchModal = ({
     }));
   };
 
-  const handleToggleCompany = (company) => {
+  const handleToggleCompany = (companyId) => {
     setFormData((currentData) => {
-      const companyIsSelected = currentData.companies.includes(company);
+      const isSelected = currentData.companyIds.includes(companyId);
       return {
         ...currentData,
-        companies: companyIsSelected
-          ? currentData.companies.filter(
-              (currentCompany) =>
-                currentCompany !== company,
-            )
-          : [...currentData.companies, company],
+        companyIds: isSelected
+          ? currentData.companyIds.filter((id) => id !== companyId)
+          : [...currentData.companyIds, companyId],
       };
     });
     setErrors((currentErrors) => ({
       ...currentErrors,
-      companies: "",
+      companyIds: "",
     }));
   };
 
@@ -113,12 +99,11 @@ const BranchModal = ({
     if (!formData.name.trim()) {
       nextErrors.name = "El nombre es obligatorio.";
     }
-    if (!formData.city) {
-      nextErrors.city = "Selecciona una ciudad.";
+    if (!formData.cityId) {
+      nextErrors.cityId = "Selecciona una ciudad.";
     }
-    if (formData.companies.length === 0) {
-      nextErrors.companies =
-        "Selecciona al menos una empresa.";
+    if (formData.companyIds.length === 0) {
+      nextErrors.companyIds = "Selecciona al menos una empresa.";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -130,10 +115,11 @@ const BranchModal = ({
       return;
     }
     onSubmit({
-      ...formData,
       name: formData.name.trim(),
       description: formData.description.trim(),
       address: formData.address.trim(),
+      cityId: Number(formData.cityId),
+      companyIds: formData.companyIds.map(Number),
     });
   };
 
@@ -185,6 +171,7 @@ const BranchModal = ({
                     value={formData.name}
                     onChange={handleChange}
                     autoFocus
+                    style={{ borderColor: errors.name ? "#FF2B2B" : undefined }}
                   />
                   {errors.name && (
                     <FormErrorText>{errors.name}</FormErrorText>
@@ -217,46 +204,48 @@ const BranchModal = ({
                   <FormLabel htmlFor="branch-city">Ciudad</FormLabel>
                   <FormSelect
                     id="branch-city"
-                    name="city"
-                    value={formData.city}
+                    name="cityId"
+                    value={formData.cityId}
                     onChange={handleChange}
+                    style={{ borderColor: errors.cityId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    {CITY_OPTIONS.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
+                    {cities.map((city) => (
+                      <option key={city.id} value={city.id}>
+                        {city.name}
                       </option>
                     ))}
                   </FormSelect>
-                  {errors.city && (
-                    <FormErrorText>{errors.city}</FormErrorText>
+                  {errors.cityId && (
+                    <FormErrorText>{errors.cityId}</FormErrorText>
                   )}
                 </FormField>
 
                 <FormField>
-                  <FormLabel>Empresas</FormLabel>
+                  <FormLabel>Empresas vinculadas</FormLabel>
                   <SelectableOptions>
-                    {COMPANY_OPTIONS.map((company) => {
-                      const isSelected = formData.companies.includes(company);
+                    {companies.map((company) => {
+                      const isSelected = formData.companyIds.includes(company.id);
                       return (
                         <SelectableOptionButton
-                          key={company}
+                          key={company.id}
                           type="button"
                           $active={isSelected}
                           aria-pressed={isSelected}
-                          onClick={() => handleToggleCompany(company)}
+                          onClick={() => handleToggleCompany(company.id)}
+                          style={{ borderColor: errors.companyIds ? "#FF2B2B" : undefined }}
                         >
                           {isSelected && (
                             <Check size={15} strokeWidth={2.2} />
                           )}
-                          {company}
+                          {company.name}
                         </SelectableOptionButton>
                       );
                     })}
                   </SelectableOptions>
                   <FormHelperText>Puedes seleccionar una o varias empresas.</FormHelperText>
-                  {errors.companies && (
-                    <FormErrorText>{errors.companies}</FormErrorText>
+                  {errors.companyIds && (
+                    <FormErrorText>{errors.companyIds}</FormErrorText>
                   )}
                 </FormField>
               </FormStack>

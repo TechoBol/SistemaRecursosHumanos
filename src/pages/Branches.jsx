@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import {
   Building2,
   MapPin,
@@ -38,52 +39,9 @@ import {
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
 import BranchModal from "../components/modals/BranchModal";
-
-const INITIAL_BRANCHES = [
-  {
-    id: 1,
-    name: "Central Megadis",
-    description: "Sucursal Central de MEGADIS",
-    address: "Av. 9 de abril entre C. Kanaudt",
-    city: "Cochabamba",
-    companies: ["TechoBol", "Megadis"],
-  },
-  {
-    id: 2,
-    name: "Villa Bolívar",
-    description: "Ventas MEGADIS",
-    address: "Calle 4, Zona Téllez Ross",
-    city: "La Paz",
-    companies: ["Megadis", "Rhinocons"],
-  },
-  {
-    id: 3,
-    name: "Sucursal Trinidad",
-    description: "Sucursal regional",
-    address: "Av. 6 de Agosto, Zona Central",
-    city: "Beni",
-    companies: ["TechoBol"],
-  },
-];
-
-const CITY_FILTERS = [
-  {
-    id: "all",
-    label: "Todos",
-  },
-  {
-    id: "Beni",
-    label: "Beni",
-  },
-  {
-    id: "Cochabamba",
-    label: "Cochabamba",
-  },
-  {
-    id: "La Paz",
-    label: "La Paz",
-  },
-];
+import { useBranches } from "../hooks/useBranches";
+import { useCities } from "../hooks/useCities";
+import { useCompanies } from "../hooks/useCompanies";
 
 const BRANCH_COLUMNS = `
   minmax(320px, 1.6fr)
@@ -92,36 +50,41 @@ const BRANCH_COLUMNS = `
   110px
 `;
 
-const createId = () => {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random()}`;
-};
-
 const Branches = () => {
-  const [branches, setBranches] = useState(INITIAL_BRANCHES);
+  const { branches, isLoading, createBranch, updateBranch, deleteBranch } = useBranches();
+  const { cities, isLoading: isCitiesLoading } = useCities();
+  const { companies, isLoading: isCompaniesLoading } = useCompanies();
+
   const [searchValue, setSearchValue] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedBranch, setSelectedBranch] = useState(null);
 
+  const cityFilters = useMemo(() => {
+    return [
+      { id: "all", label: "Todos" },
+      ...cities.map((city) => ({ id: String(city.id), label: city.name })),
+    ];
+  }, [cities]);
+
   const filteredBranches = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
     return branches.filter((branch) => {
       const matchesCity =
         selectedCity === "all" ||
-        branch.city === selectedCity;
+        String(branch.cityId) === selectedCity;
+
+      const companyNames = branch.companies
+        ? branch.companies.map((cb) => cb.company?.name || "")
+        : [];
+
       const searchableContent = [
         branch.name,
         branch.description,
         branch.address,
-        branch.city,
-        ...branch.companies,
+        branch.city?.name || "",
+        ...companyNames,
       ]
         .join(" ")
         .toLowerCase();
@@ -148,46 +111,33 @@ const Branches = () => {
     setSelectedBranch(null);
   };
 
-  const handleSaveBranch = (branchData) => {
+  const handleSaveBranch = async (branchData) => {
     if (modalMode === "edit" && selectedBranch) {
-      setBranches((currentBranches) =>
-        currentBranches.map((branch) =>
-          branch.id === selectedBranch.id
-            ? {
-                ...branch,
-                ...branchData,
-              }
-            : branch,
-        ),
-      );
+      await updateBranch(selectedBranch.id, branchData);
     } else {
-      setBranches((currentBranches) => [
-        ...currentBranches,
-        {
-          id: createId(),
-          ...branchData,
-        },
-      ]);
+      await createBranch(branchData);
     }
     handleCloseBranchModal();
   };
 
   const handleDeleteBranch = (branch) => {
-    const shouldDelete = window.confirm(
-      `¿Deseas eliminar la sucursal ${branch.name}?`,
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    setBranches((currentBranches) =>
-      currentBranches.filter(
-        (currentBranch) =>
-          currentBranch.id !== branch.id,
-      ),
-    );
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: `¿Deseas desactivar la sucursal ${branch.name}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2F573C",
+      cancelButtonColor: "#D32F2F",
+      confirmButtonText: "Sí, desactivar",
+      cancelButtonText: "Cancelar"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await deleteBranch(branch.id);
+      }
+    });
   };
+
+  const showLoading = isLoading || isCitiesLoading || isCompaniesLoading;
 
   return (
     <>
@@ -216,7 +166,7 @@ const Branches = () => {
         </PageHeader>
 
         <CatalogFilters aria-label="Filtrar por ciudad">
-          {CITY_FILTERS.map((filter) => (
+          {cityFilters.map((filter) => (
             <CatalogFilterButton
               key={filter.id}
               type="button"
@@ -237,7 +187,9 @@ const Branches = () => {
               <span>Empresas</span>
               <span>Acciones</span>
             </CatalogHeader>
-            {filteredBranches.length === 0 ? (
+            {showLoading ? (
+              <CatalogEmpty>Cargando sucursales...</CatalogEmpty>
+            ) : filteredBranches.length === 0 ? (
               <CatalogEmpty>No se encontraron sucursales.</CatalogEmpty>
             ) : (
               <CatalogList>
@@ -259,16 +211,17 @@ const Branches = () => {
                     </CatalogMain>
 
                     <CatalogColumn data-label="Ciudad">
-                      {branch.city}
+                      {branch.city?.name || "Sin Ciudad"}
                     </CatalogColumn>
 
                     <CatalogColumn data-label="Empresas">
                       <CatalogBadgeList>
-                        {branch.companies.map((company) => (
-                          <CatalogBadge key={`${branch.id}-${company}`}>
-                            {company}
-                          </CatalogBadge>
-                        ))}
+                        {branch.companies &&
+                          branch.companies.map((cb) => (
+                            <CatalogBadge key={`${branch.id}-${cb.company?.id}`}>
+                              {cb.company?.name || "Sin Empresa"}
+                            </CatalogBadge>
+                          ))}
                       </CatalogBadgeList>
                     </CatalogColumn>
 
@@ -282,15 +235,17 @@ const Branches = () => {
                         <Pencil size={19} />
                       </CatalogActionButton>
 
-                      <CatalogActionButton
-                        type="button"
-                        $danger
-                        title="Eliminar sucursal"
-                        aria-label={`Eliminar sucursal ${branch.name}`}
-                        onClick={() => handleDeleteBranch(branch)}
-                      >
-                        <Trash2 size={19} />
-                      </CatalogActionButton>
+                      {branch.isActive !== false && (
+                        <CatalogActionButton
+                          type="button"
+                          $danger
+                          title="Eliminar sucursal"
+                          aria-label={`Eliminar sucursal ${branch.name}`}
+                          onClick={() => handleDeleteBranch(branch)}
+                        >
+                          <Trash2 size={19} color="#FF2B2B" />
+                        </CatalogActionButton>
+                      )}
                     </CatalogActions>
                   </CatalogRow>
                 ))}
@@ -304,6 +259,8 @@ const Branches = () => {
         isOpen={isBranchModalOpen}
         mode={modalMode}
         branch={selectedBranch}
+        cities={cities}
+        companies={companies}
         onClose={handleCloseBranchModal}
         onSubmit={handleSaveBranch}
       />
