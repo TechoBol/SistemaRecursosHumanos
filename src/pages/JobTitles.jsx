@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import {
   Archive,
   Pencil,
@@ -35,25 +36,8 @@ import {
   CatalogTitle,
 } from "../components/ui/CatalogList.styles";
 import JobTitleModal from "../components/modals/JobTitleModal";
-
-const INITIAL_JOB_TITLES = [
-  {
-    id: 1,
-    name: "Auxiliar de Operaciones",
-    description:
-      "Personal a cargo de apoyo y ayuda en el área de Producción o Almacén.",
-    areas: ["Ventas", "Operaciones"],
-    icon: "operations",
-  },
-  {
-    id: 2,
-    name: "Auxiliar de Almacén",
-    description:
-      "Personal a cargo del inventario, stock y control de los materiales existentes en un almacén de la sucursal.",
-    areas: ["Comercial", "Operaciones"],
-    icon: "warehouse",
-  },
-];
+import { useJobTitles } from "../hooks/useJobTitles";
+import { useAreas } from "../hooks/useAreas";
 
 const BRANCH_COLUMNS = `
   minmax(320px, 1fr)
@@ -61,15 +45,17 @@ const BRANCH_COLUMNS = `
   110px
 `;
 
-const getJobTitleIcon = (icon) => {
-  if (icon === "warehouse") {
+const getJobTitleIcon = (name) => {
+  const lowerName = String(name).toLowerCase();
+  if (lowerName.includes("almacen") || lowerName.includes("logistica") || lowerName.includes("inventario")) {
     return <Archive size={29} strokeWidth={1.8} />;
   }
   return <Truck size={29} strokeWidth={1.8} />;
 };
 
 const JobTitles = () => {
-  const [jobTitles, setJobTitles] = useState(INITIAL_JOB_TITLES,);
+  const { jobTitles, isLoading, createJobTitle, updateJobTitle, deleteJobTitle } = useJobTitles();
+  const { areas, isLoading: isAreasLoading } = useAreas();
   const [searchValue, setSearchValue] = useState("");
   const [isJobTitleModalOpen, setIsJobTitleModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -81,10 +67,14 @@ const JobTitles = () => {
       return jobTitles;
     }
     return jobTitles.filter((jobTitle) => {
+      const areaNames = jobTitle.areas
+        ? jobTitle.areas.map((at) => at.area?.name || "")
+        : [];
+
       const searchableContent = [
         jobTitle.name,
         jobTitle.description,
-        ...jobTitle.areas,
+        ...areaNames,
       ]
         .join(" ")
         .toLowerCase();
@@ -109,50 +99,33 @@ const JobTitles = () => {
     setSelectedJobTitle(null);
   };
 
-  const handleSaveJobTitle = (jobTitleData) => {
+  const handleSaveJobTitle = async (jobTitleData) => {
     if (modalMode === "edit" && selectedJobTitle) {
-      setJobTitles((currentJobTitles) =>
-        currentJobTitles.map((jobTitle) =>
-          jobTitle.id === selectedJobTitle.id
-            ? {
-                ...jobTitle,
-                ...jobTitleData,
-              }
-            : jobTitle,
-        ),
-      );
+      await updateJobTitle(selectedJobTitle.id, jobTitleData);
     } else {
-      const nextId =
-        Math.max(
-          0,
-          ...jobTitles.map((jobTitle) => jobTitle.id),
-        ) + 1;
-      setJobTitles((currentJobTitles) => [
-        ...currentJobTitles,
-        {
-          id: nextId,
-          icon: "operations",
-          ...jobTitleData,
-        },
-      ]);
+      await createJobTitle(jobTitleData);
     }
     handleCloseJobTitleModal();
   };
 
   const handleDeleteJobTitle = (jobTitle) => {
-    const shouldDelete = window.confirm(
-      `¿Deseas eliminar el cargo ${jobTitle.name}?`,
-    );
-    if (!shouldDelete) {
-      return;
-    }
-    setJobTitles((currentJobTitles) =>
-      currentJobTitles.filter(
-        (currentJobTitle) =>
-          currentJobTitle.id !== jobTitle.id,
-      ),
-    );
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: `¿Deseas desactivar el cargo ${jobTitle.name}?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2F573C",
+      cancelButtonColor: "#D32F2F",
+      confirmButtonText: "Sí, desactivar",
+      cancelButtonText: "Cancelar"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await deleteJobTitle(jobTitle.id);
+      }
+    });
   };
+
+  const showLoading = isLoading || isAreasLoading;
 
   return (
     <>
@@ -190,14 +163,16 @@ const JobTitles = () => {
               <span>Acciones</span>
             </CatalogHeader>
 
-            {filteredJobTitles.length === 0 ? (
+            {showLoading ? (
+              <CatalogEmpty>Cargando cargos...</CatalogEmpty>
+            ) : filteredJobTitles.length === 0 ? (
               <CatalogEmpty>No se encontraron cargos.</CatalogEmpty>
             ) : (
               <CatalogList>
                 {filteredJobTitles.map((jobTitle) => (
                   <CatalogRow key={jobTitle.id} $columns={BRANCH_COLUMNS}>
                     <CatalogMain>
-                      <CatalogIcon>{getJobTitleIcon(jobTitle.icon)}</CatalogIcon>
+                      <CatalogIcon>{getJobTitleIcon(jobTitle.name)}</CatalogIcon>
                       <CatalogInfo>
                         <CatalogTitle>{jobTitle.name}</CatalogTitle>
                         <CatalogDescription>{jobTitle.description}</CatalogDescription>
@@ -206,11 +181,12 @@ const JobTitles = () => {
 
                     <CatalogColumn data-label="Áreas">
                       <CatalogBadgeList>
-                        {jobTitle.areas.map((area) => (
-                          <CatalogBadge key={`${jobTitle.id}-${area}`}>
-                            {area}
-                          </CatalogBadge>
-                        ))}
+                        {jobTitle.areas &&
+                          jobTitle.areas.map((at) => (
+                            <CatalogBadge key={`${jobTitle.id}-${at.area?.id}`}>
+                              {at.area?.name || "Sin Área"}
+                            </CatalogBadge>
+                          ))}
                       </CatalogBadgeList>
                     </CatalogColumn>
 
@@ -224,15 +200,17 @@ const JobTitles = () => {
                         <Pencil size={19} />
                       </CatalogActionButton>
 
-                      <CatalogActionButton
-                        type="button"
-                        $danger
-                        title="Eliminar cargo"
-                        aria-label={`Eliminar cargo ${jobTitle.name}`}
-                        onClick={() => handleDeleteJobTitle(jobTitle)}
-                      >
-                        <Trash2 size={19} />
-                      </CatalogActionButton>
+                      {jobTitle.isActive !== false && (
+                        <CatalogActionButton
+                          type="button"
+                          $danger
+                          title="Eliminar cargo"
+                          aria-label={`Eliminar cargo ${jobTitle.name}`}
+                          onClick={() => handleDeleteJobTitle(jobTitle)}
+                        >
+                          <Trash2 size={19} color="#FF2B2B" />
+                        </CatalogActionButton>
+                      )}
                     </CatalogActions>
                   </CatalogRow>
                 ))}
@@ -246,6 +224,7 @@ const JobTitles = () => {
         isOpen={isJobTitleModalOpen}
         mode={modalMode}
         jobTitle={selectedJobTitle}
+        areas={areas}
         onClose={handleCloseJobTitleModal}
         onSubmit={handleSaveJobTitle}
       />

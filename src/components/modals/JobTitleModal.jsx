@@ -29,23 +29,14 @@ import {
 const INITIAL_FORM = {
   name: "",
   description: "",
-  areas: [],
+  areaIds: [],
 };
-
-const AREA_OPTIONS = [
-  "Administración",
-  "Comercial",
-  "Marketing",
-  "Operaciones",
-  "Recursos Humanos",
-  "Tecnología",
-  "Ventas",
-];
 
 const JobTitleModal = ({
   isOpen,
   mode = "create",
   jobTitle = null,
+  areas = [],
   onClose,
   onSubmit,
 }) => {
@@ -68,9 +59,7 @@ const JobTitleModal = ({
       setFormData({
         name: jobTitle.name ?? "",
         description: jobTitle.description ?? "",
-        areas: Array.isArray(jobTitle.areas)
-          ? jobTitle.areas
-          : [],
+        areaIds: jobTitle.areas ? jobTitle.areas.map((at) => at.areaId) : [],
       });
       return;
     }
@@ -194,35 +183,35 @@ const JobTitleModal = ({
     }));
   };
 
-  const handleToggleArea = (area) => {
+  const handleToggleArea = (areaId) => {
     setFormData((currentData) => {
       const isSelected =
-        currentData.areas.includes(area);
+        currentData.areaIds.includes(areaId);
 
       return {
         ...currentData,
-        areas: isSelected
-          ? currentData.areas.filter(
-              (selectedArea) =>
-                selectedArea !== area,
+        areaIds: isSelected
+          ? currentData.areaIds.filter(
+              (id) =>
+                id !== areaId,
             )
-          : [...currentData.areas, area],
+          : [...currentData.areaIds, areaId],
       };
     });
 
     setErrors((currentErrors) => ({
       ...currentErrors,
-      areas: "",
+      areaIds: "",
     }));
   };
 
-  const handleRemoveArea = (event, area) => {
+  const handleRemoveArea = (event, areaId) => {
     event.stopPropagation();
 
     setFormData((currentData) => ({
       ...currentData,
-      areas: currentData.areas.filter(
-        (selectedArea) => selectedArea !== area,
+      areaIds: currentData.areaIds.filter(
+        (id) => id !== areaId,
       ),
     }));
   };
@@ -235,8 +224,8 @@ const JobTitleModal = ({
         "El nombre del cargo es obligatorio.";
     }
 
-    if (formData.areas.length === 0) {
-      nextErrors.areas =
+    if (formData.areaIds.length === 0) {
+      nextErrors.areaIds =
         "Selecciona al menos un área.";
     }
 
@@ -255,7 +244,7 @@ const JobTitleModal = ({
     onSubmit({
       name: formData.name.trim(),
       description: formData.description.trim(),
-      areas: formData.areas,
+      areaIds: formData.areaIds.map(Number),
     });
   };
 
@@ -263,6 +252,11 @@ const JobTitleModal = ({
     if (event.target === event.currentTarget) {
       onClose();
     }
+  };
+
+  const getAreaName = (areaId) => {
+    const area = areas.find((a) => a.id === areaId);
+    return area ? area.name : "Sin Área";
   };
 
   const renderAreaMenu = () => {
@@ -277,18 +271,18 @@ const JobTitleModal = ({
         aria-label="Áreas disponibles"
         style={menuPosition}
       >
-        {AREA_OPTIONS.map((area) => {
-          const isSelected = formData.areas.includes(area);
+        {areas.map((area) => {
+          const isSelected = formData.areaIds.includes(area.id);
 
           return (
             <MultiSelectOption
-              key={area}
+              key={area.id}
               type="button"
               role="option"
               $selected={isSelected}
               aria-selected={isSelected}
               onClick={() =>
-                handleToggleArea(area)
+                handleToggleArea(area.id)
               }
             >
               <span className="checkbox">
@@ -296,7 +290,7 @@ const JobTitleModal = ({
                   <Check size={14} />
                 )}
               </span>
-              <span>{area}</span>
+              <span>{area.name}</span>
             </MultiSelectOption>
           );
         })}
@@ -349,6 +343,7 @@ const JobTitleModal = ({
                     value={formData.name}
                     onChange={handleChange}
                     autoFocus
+                    style={{ borderColor: errors.name ? "#FF2B2B" : undefined }}
                     aria-invalid={Boolean(errors.name)}
                   />
                   {errors.name && (
@@ -367,7 +362,7 @@ const JobTitleModal = ({
                 </FormField>
 
                 <FormField>
-                  <FormLabel>Áreas</FormLabel>
+                  <FormLabel>Áreas vinculadas</FormLabel>
                   <MultiSelect>
                     <MultiSelectControl
                       ref={controlRef}
@@ -375,7 +370,8 @@ const JobTitleModal = ({
                       $open={isAreaMenuOpen}
                       aria-haspopup="listbox"
                       aria-expanded={isAreaMenuOpen}
-                      aria-invalid={Boolean(errors.areas)}
+                      style={{ borderColor: errors.areaIds ? "#FF2B2B" : undefined }}
+                      aria-invalid={Boolean(errors.areaIds)}
                       onClick={() =>
                         setIsAreaMenuOpen(
                           (currentValue) => !currentValue,
@@ -383,16 +379,16 @@ const JobTitleModal = ({
                       }
                     >
                       <div className="values">
-                        {formData.areas.length === 0 ? (
+                        {formData.areaIds.length === 0 ? (
                           <span className="placeholder">Seleccionar áreas</span>
                         ) : (
-                          formData.areas.map((area) => (
-                            <MultiSelectChip key={area}>
-                              <span>{area}</span>
+                          formData.areaIds.map((areaId) => (
+                            <MultiSelectChip key={areaId}>
+                              <span>{getAreaName(areaId)}</span>
                               <button
                                 type="button"
-                                aria-label={`Quitar ${area}`}
-                                onClick={(event) => handleRemoveArea(event, area)}
+                                aria-label={`Quitar ${getAreaName(areaId)}`}
+                                onClick={(event) => handleRemoveArea(event, areaId)}
                               >
                                 <X size={13} />
                               </button>
@@ -405,8 +401,8 @@ const JobTitleModal = ({
                     {renderAreaMenu()}
                   </MultiSelect>
 
-                  {errors.areas && (
-                    <FormErrorText>{errors.areas}</FormErrorText>
+                  {errors.areaIds && (
+                    <FormErrorText>{errors.areaIds}</FormErrorText>
                   )}
                 </FormField>
               </FormStack>
