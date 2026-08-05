@@ -6,6 +6,8 @@ import {
   ChevronsRight,
   CircleUserRound,
   DollarSign,
+  FileSignature,
+  Layers3,
   List,
   Menu,
   Settings,
@@ -51,7 +53,13 @@ const MENU_ITEMS = [
       { id: "empleados-consolidados", label: "Consolidados", path: "/empleados/consolidados", icon: WalletCards, },
     ],
   },
-  { id: "planillas", label: "Planillas", path: "/planillas", icon: DollarSign, },
+  {
+    id: "nominas", label: "Nóminas", icon: DollarSign,
+    children: [
+      { id: "nomina-contrato", label: "Contrato", path: "/nominas/contrato", icon: FileSignature, },
+      { id: "nomina-consolidacion", label: "Consolidación", path: "/nominas/consolidacion", icon: Layers3, },
+    ],
+  },
   { id: "sucursales", label: "Sucursales", path: "/sucursales", icon: Building2, },
   { id: "areas", label: "Áreas", path: "/areas", icon: Menu, },
   { id: "cargos", label: "Cargos", path: "/cargos", icon: WalletCards, },
@@ -69,7 +77,7 @@ const Sidebar = ({
 
   const [openMenus, setOpenMenus] = useState({
     empleados: true,
-    departamentos: true,
+    nominas: true,
   });
 
   const closeMobileMenu = () => {

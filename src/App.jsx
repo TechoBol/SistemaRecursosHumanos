@@ -9,7 +9,8 @@ import Login from "./pages/Login";
 import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/employees/EmployeeDetail";
 import ConsolidatedEmployees from "./pages/ConsolidatedEmployees";
-import Payrolls from "./pages/Payrolls";
+import PayrollContract from "./pages/PayrollContract";
+import PayrollConsolidation from "./pages/PayrollConsolidation";
 import Branches from "./pages/Branches";
 import Areas from "./pages/Areas";
 import JobTitles from "./pages/JobTitles";
@@ -30,7 +31,8 @@ const App = () => {
             <Route path="empleados" element={<Employees />} />
             <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
             <Route path="empleados/consolidados" element={<ConsolidatedEmployees />} />
-            <Route path="planillas" element={<Payrolls />} />
+            <Route path="nominas/contrato" element={<PayrollContract />} />
+            <Route path="nominas/consolidacion" element={<PayrollConsolidation />} />
             <Route path="sucursales" element={<Branches />} />
             <Route path="areas" element={<Areas />} />
             <Route path="cargos" element={<JobTitles />} />

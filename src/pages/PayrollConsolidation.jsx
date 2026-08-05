@@ -4,15 +4,15 @@ import {
   PageTitle,
 } from "../components/ui/Page.styles";
 
-const Payrolls = () => {
+const PayrollConsolidation = () => {
   return (
     <PageContainer>
-      <PageTitle>Planillas</PageTitle>
+      <PageTitle>Nóminas por consolidación</PageTitle>
       <PageDescription>
-        Gestión de planillas del personal.
+        Gestión de nóminas por consolidación del personal.
       </PageDescription>
     </PageContainer>
   );
 };
 
-export default Payrolls;
+export default PayrollConsolidation;
