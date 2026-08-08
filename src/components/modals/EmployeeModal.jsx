@@ -34,7 +34,6 @@ const INITIAL_FORM = {
   address: "",
   contractCompany: "",
   consolidatedCompany: "",
-  contractPosition: "",
   employeeType: "Planta",
   branch: "",
   contractDate: "",
@@ -70,7 +69,6 @@ const EmployeeModal = ({
         address: employee.address ?? "",
         contractCompany: employee.contractCompany ?? "",
         consolidatedCompany: employee.consolidatedCompany ?? "",
-        contractPosition: employee.positionContract ?? "",
         employeeType: employee.employeeType ?? "Planta",
         branch: employee.branch ?? "",
         contractDate: employee.contractDate ?? "",
@@ -231,10 +229,7 @@ const EmployeeModal = ({
                   </InputIconContainer>
                 </FormField>
               </FormGrid>
-            </ModalSection>
 
-            <ModalSection>
-              <ModalSectionTitle>Información de contacto</ModalSectionTitle>
               <FormGrid $columns={3}>
                 <FormField>
                   <FormLabel htmlFor="email">Correo</FormLabel>
@@ -275,7 +270,10 @@ const EmployeeModal = ({
                   </InputIconContainer>
                 </FormField>
               </FormGrid>
+            </ModalSection>
 
+            <ModalSection>
+              <ModalSectionTitle>Información laboral</ModalSectionTitle>
               <FormGrid $columns={3}>
                 <FormField>
                   <FormLabel htmlFor="contractCompany">Empresa de contrato</FormLabel>
@@ -310,27 +308,6 @@ const EmployeeModal = ({
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="contractPosition">Cargo de contrato</FormLabel>
-                  <FormSelect
-                    id="contractPosition"
-                    name="contractPosition"
-                    value={formData.contractPosition}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Seleccionar</option>
-                    <option value="Auxiliar de sistemas">Auxiliar de sistemas</option>
-                    <option value="Analista">Analista</option>
-                    <option value="Desarrollador">Desarrollador</option>
-                  </FormSelect>
-                </FormField>
-              </FormGrid>
-            </ModalSection>
-
-            <ModalSection>
-              <ModalSectionTitle>Información laboral</ModalSectionTitle>
-              <FormGrid $columns={3}>
-                <FormField>
                   <FormLabel>Tipo de empleado</FormLabel>
                   <ToggleGroup>
                     <ToggleButton
@@ -352,7 +329,9 @@ const EmployeeModal = ({
                     </ToggleButton>
                   </ToggleGroup>
                 </FormField>
+              </FormGrid>
 
+              <FormGrid $columns={3}>
                 <FormField>
                   <FormLabel htmlFor="branch">Sucursal</FormLabel>
                   <FormSelect
@@ -367,36 +346,6 @@ const EmployeeModal = ({
                     <option value="CENTRAL">Central</option>
                     <option value="NORTE">Norte</option>
                   </FormSelect>
-                </FormField>
-
-                <FormField>
-                  <FormLabel htmlFor="contractDate">Fecha de contratación</FormLabel>
-                  <InputIconContainer>
-                    <FormInput
-                      ref={contractDateRef}
-                      id="contractDate"
-                      name="contractDate"
-                      type="date"
-                      value={formData.contractDate}
-                      onChange={handleDateChange}
-                      onBlur={() => setOpenCalendar(null)}
-                      required
-                    />
-
-                    <InputIconButton
-                      type="button"
-                      aria-label="Abrir calendario de fecha de contratación"
-                      aria-expanded={openCalendar === "contractDate"}
-                      onClick={() =>
-                        openDatePicker(
-                          "contractDate",
-                          contractDateRef,
-                        )
-                      }
-                    >
-                      <CalendarDays size={19} />
-                    </InputIconButton>
-                  </InputIconContainer>
                 </FormField>
 
                 <FormField>
@@ -430,6 +379,45 @@ const EmployeeModal = ({
                     <option value="Analista de Recursos Humanos">Analista de Recursos Humanos</option>
                     <option value="Desarrollador Frontend">Desarrollador Frontend</option>
                   </FormSelect>
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="contractDate">Inicio de contrato</FormLabel>
+                  <InputIconContainer>
+                    <FormInput
+                      ref={contractDateRef}
+                      id="contractDate"
+                      name="contractDate"
+                      type="date"
+                      value={formData.contractDate}
+                      onChange={handleDateChange}
+                      onBlur={() => setOpenCalendar(null)}
+                      required
+                    />
+
+                    <InputIconButton
+                      type="button"
+                      aria-label="Abrir calendario de fecha de contratación"
+                      aria-expanded={openCalendar === "contractDate"}
+                      onClick={() =>
+                        openDatePicker(
+                          "contractDate",
+                          contractDateRef,
+                        )
+                      }
+                    >
+                      <CalendarDays size={19} />
+                    </InputIconButton>
+                  </InputIconContainer>
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="contractDate">Fin de contrato</FormLabel>
+                  <InputIconContainer>
+                    <FormInput
+                      
+                    />
+                  </InputIconContainer>
                 </FormField>
               </FormGrid>
             </ModalSection>

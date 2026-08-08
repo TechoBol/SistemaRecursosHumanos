@@ -37,7 +37,6 @@ const initialEmployeeRows = [
     branch: "BARRIENTOS",
     area: "Tecnología",
     positionCurrent: "Auxiliar de Sistemas",
-    positionContract: "Auxiliar de sistemas",
     contractCompany: "Empresa A",
     consolidatedCompany: "TechoBol",
     employeeType: "Planta",
@@ -58,7 +57,6 @@ const initialEmployeeRows = [
     branch: "CENTRAL",
     area: "Recursos Humanos",
     positionCurrent: "Analista de Recursos Humanos",
-    positionContract: "Analista",
     contractCompany: "TechoBol",
     consolidatedCompany: "TechoBol",
     employeeType: "Planta",
@@ -79,7 +77,6 @@ const initialEmployeeRows = [
     branch: "NORTE",
     area: "Tecnología",
     positionCurrent: "Desarrollador Frontend",
-    positionContract: "Desarrollador",
     contractCompany: "Empresa B",
     consolidatedCompany: "TechoBol",
     employeeType: "Consultor",
@@ -132,7 +129,6 @@ const Employees = () => {
                 ...employee,
                 ...employeeData,
                 positionCurrent: employeeData.currentPosition,
-                positionContract: employeeData.contractPosition,
               }
             : employee,
         ),
@@ -143,7 +139,6 @@ const Employees = () => {
         id: Date.now(),
         status: "Activo",
         positionCurrent: employeeData.currentPosition,
-        positionContract: employeeData.contractPosition,
         seniority: "0 días",
         hiredAt: employeeData.contractDate
           ? `Contratado: ${employeeData.contractDate}`
