@@ -5,6 +5,7 @@ import {
   Pencil,
   Plus,
   Search,
+  FileText,
 } from "lucide-react";
 import {
   Badge,
@@ -16,86 +17,56 @@ import {
 } from "../components/ui/table/TableCell.styles";
 import {
   AddButton,
+  ChipFilters,
+  ChipFilterButton,
+  FiltersWrapper,
   PageActions,
   PageContainer,
   PageHeader,
   PageTitle,
   SearchContainer,
   SearchInput,
+  SwitchFilters,
+  SwitchFilterButton,
 } from "../components/ui/Page.styles";
 import EmployeeModal from "../components/modals/EmployeeModal";
 import DataTable from "../components/table/DataTable";
+import { useEmployees } from "../hooks/useEmployees";
+import { useCompanies } from "../hooks/useCompanies";
+import { useBranches } from "../hooks/useBranches";
+import { useAreas } from "../hooks/useAreas";
+import { useJobTitles } from "../hooks/useJobTitles";
 
-const initialEmployeeRows = [
-  {
-    id: 1,
-    firstName: "Luis",
-    lastName: "Perez",
-    ci: "7854123",
-    birthDate: "1998-04-12",
-    status: "Activo",
-    branch: "BARRIENTOS",
-    area: "Tecnología",
-    positionCurrent: "Auxiliar de Sistemas",
-    contractCompany: "Empresa A",
-    consolidatedCompany: "TechoBol",
-    employeeType: "Planta",
-    email: "luis@gmail.com",
-    phone: "77777777",
-    address: "Cochabamba",
-    seniority: "2 meses 1 día",
-    hiredAt: "Contratado: 6 de mayo de 2026",
-    contractDate: "2026-05-06",
-  },
-  {
-    id: 2,
-    firstName: "María Fernanda",
-    lastName: "López Vargas",
-    ci: "8547123",
-    birthDate: "1995-09-21",
-    status: "Activo",
-    branch: "CENTRAL",
-    area: "Recursos Humanos",
-    positionCurrent: "Analista de Recursos Humanos",
-    contractCompany: "TechoBol",
-    consolidatedCompany: "TechoBol",
-    employeeType: "Planta",
-    email: "maria.lopez@techobol.com",
-    phone: "75984562",
-    address: "La Paz",
-    seniority: "1 año 3 meses",
-    hiredAt: "Contratado: 15 de abril de 2025",
-    contractDate: "2025-04-15",
-  },
-  {
-    id: 3,
-    firstName: "Carlos Andrés",
-    lastName: "Mendoza Ruiz",
-    ci: "7548962",
-    birthDate: "1997-01-15",
-    status: "Inactivo",
-    branch: "NORTE",
-    area: "Tecnología",
-    positionCurrent: "Desarrollador Frontend",
-    contractCompany: "Empresa B",
-    consolidatedCompany: "TechoBol",
-    employeeType: "Consultor",
-    email: "carlos.mendoza@techobol.com",
-    phone: "76451230",
-    address: "Santa Cruz",
-    seniority: "8 meses",
-    hiredAt: "Contratado: 10 de noviembre de 2025",
-    contractDate: "2025-11-10",
-  },
-];
+const getSeniority = (dateString) => {
+  if (!dateString) return "N/A";
+  const hired = new Date(dateString);
+  const diffMs = Date.now() - hired.getTime();
+  if (diffMs < 0) return "0 días";
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 30) return `${diffDays} días`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths} meses`;
+  const diffYears = Math.floor(diffMonths / 12);
+  const remainingMonths = diffMonths % 12;
+  return `${diffYears} año${diffYears > 1 ? "s" : ""} ${remainingMonths} mes${remainingMonths !== 1 ? "es" : ""}`;
+};
 
 const Employees = () => {
   const navigate = useNavigate();
-  const [employees, setEmployees] = useState(initialEmployeeRows);
+  const { employees, isLoading, createEmployee, updateEmployee } = useEmployees();
+  const { companies } = useCompanies();
+  const { branches } = useBranches();
+  const { areas } = useAreas();
+  const { jobTitles } = useJobTitles();
+
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Filtro por defecto en "all" (Todas)
+  const [activeCompanyFilter, setActiveCompanyFilter] = useState("all");
+  const [filterType, setFilterType] = useState("contract"); // "contract" o "consolidated"
 
   const handleAddEmployee = () => {
     setSelectedEmployee(null);
@@ -120,51 +91,50 @@ const Employees = () => {
     setSelectedEmployee(null);
   };
 
-  const handleSubmitEmployee = (employeeData) => {
-    if (modalMode === "edit") {
-      setEmployees((currentEmployees) =>
-        currentEmployees.map((employee) =>
-          employee.id === employeeData.id
-            ? {
-                ...employee,
-                ...employeeData,
-                positionCurrent: employeeData.currentPosition,
-              }
-            : employee,
-        ),
-      );
+  const handleSubmitEmployee = async (employeeData) => {
+    if (modalMode === "edit" && selectedEmployee) {
+      await updateEmployee(selectedEmployee.id, employeeData);
     } else {
-      const newEmployee = {
-        ...employeeData,
-        id: Date.now(),
-        status: "Activo",
-        positionCurrent: employeeData.currentPosition,
-        seniority: "0 días",
-        hiredAt: employeeData.contractDate
-          ? `Contratado: ${employeeData.contractDate}`
-          : "Sin fecha de contratación",
-      };
-      setEmployees((currentEmployees) => [
-        ...currentEmployees,
-        newEmployee,
-      ]);
+      await createEmployee(employeeData);
     }
     handleCloseModal();
   };
 
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
-    if (!search) {
-      return employees;
-    }
-    return employees.filter((employee) =>
-      Object.values(employee).some((value) =>
-        String(value ?? "")
-          .toLowerCase()
-          .includes(search),
-      ),
-    );
-  }, [employees, searchValue]);
+    
+    return employees.filter((employee) => {
+      const activeContract = employee.contracts ? employee.contracts.find((c) => c.isActive) : null;
+      
+      // Filtrar por la empresa seleccionada en los chips
+      let matchesCompany = true;
+      if (activeCompanyFilter !== "all") {
+        const companyIdNum = Number(activeCompanyFilter);
+        if (filterType === "contract") {
+          matchesCompany = activeContract && activeContract.contractCompanyId === companyIdNum;
+        } else {
+          matchesCompany = activeContract && activeContract.consolidatedCompanyId === companyIdNum;
+        }
+      }
+
+      const searchableContent = [
+        employee.firstNames,
+        employee.lastNames,
+        employee.documentNumber,
+        employee.email,
+        employee.phone,
+        activeContract?.branch?.name,
+        activeContract?.area?.name,
+        activeContract?.jobTitle?.name,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = !search || searchableContent.includes(search);
+
+      return matchesCompany && matchesSearch;
+    });
+  }, [employees, searchValue, activeCompanyFilter, filterType]);
 
   const columns = useMemo(
     () => [
@@ -174,22 +144,32 @@ const Employees = () => {
         minWidth: 240,
         flex: 1.4,
         sortable: false,
-        valueGetter: (_, row) =>
-          `${row.firstName} ${row.lastName}`,
-        renderCell: ({ row }) => (
-          <CellStack>
-            <CellTitle>{row.firstName} {row.lastName}</CellTitle>
-            <CellText>{row.hiredAt}</CellText>
-          </CellStack>
-        ),
+        valueGetter: (_, row) => `${row.firstNames} ${row.lastNames}`,
+        renderCell: ({ row }) => {
+          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const hiredText = activeContract?.hireDate
+            ? `Contratado: ${new Date(activeContract.hireDate).toLocaleDateString("es-ES", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}`
+            : "Sin contratación";
+          return (
+            <CellStack>
+              <CellTitle>{row.firstNames} {row.lastNames}</CellTitle>
+              <CellText>{hiredText}</CellText>
+            </CellStack>
+          );
+        },
       },
       {
         field: "status",
         headerName: "Estado",
         width: 105,
+        valueGetter: (_, row) => (row.status === "ACTIVE" ? "Activo" : "Inactivo"),
         renderCell: ({ value }) => (
           <Badge
-            $variant={ value === "Activo" ? "success" : "danger" }
+            $variant={value === "Activo" ? "success" : "danger"}
           >
             {value}
           </Badge>
@@ -200,18 +180,30 @@ const Employees = () => {
         headerName: "Sucursal",
         minWidth: 130,
         flex: 0.7,
+        valueGetter: (_, row) => {
+          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          return activeContract?.branch?.name || "N/A";
+        },
       },
       {
         field: "area",
         headerName: "Área",
         minWidth: 145,
         flex: 0.8,
+        valueGetter: (_, row) => {
+          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          return activeContract?.area?.name || "N/A";
+        },
       },
       {
         field: "positionCurrent",
         headerName: "Cargo actual",
         minWidth: 190,
         flex: 1.1,
+        valueGetter: (_, row) => {
+          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          return activeContract?.jobTitle?.name || "N/A";
+        },
       },
       {
         field: "contact",
@@ -221,8 +213,8 @@ const Employees = () => {
         sortable: false,
         renderCell: ({ row }) => (
           <CellStack>
-            <CellText>{row.email}</CellText>
-            <CellText>{row.phone}</CellText>
+            <CellText>{row.email || "N/A"}</CellText>
+            <CellText>{row.phone || "N/A"}</CellText>
           </CellStack>
         ),
       },
@@ -231,6 +223,10 @@ const Employees = () => {
         headerName: "Antigüedad",
         minWidth: 130,
         flex: 0.7,
+        valueGetter: (_, row) => {
+          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          return getSeniority(activeContract?.hireDate);
+        },
       },
       {
         field: "actions",
@@ -244,7 +240,7 @@ const Employees = () => {
             <TableActionButton
               type="button"
               title="Editar empleado"
-              aria-label={`Editar a ${row.firstName} ${row.lastName}`}
+              aria-label={`Editar a ${row.firstNames} ${row.lastNames}`}
               onClick={(event) => {
                 event.stopPropagation();
                 handleEditEmployee(row);
@@ -255,7 +251,7 @@ const Employees = () => {
             <TableActionButton
               type="button"
               title="Ver detalle"
-              aria-label={`Ver detalle de ${row.firstName} ${row.lastName}`}
+              aria-label={`Ver detalle de ${row.firstNames} ${row.lastNames}`}
               onClick={(event) => {
                 event.stopPropagation();
                 handleViewEmployee(row);
@@ -298,9 +294,53 @@ const Employees = () => {
           </PageActions>
         </PageHeader>
 
+        <FiltersWrapper>
+          <ChipFilters>
+            <ChipFilterButton
+              type="button"
+              $active={activeCompanyFilter === "all"}
+              onClick={() => setActiveCompanyFilter("all")}
+            >
+              Todas
+            </ChipFilterButton>
+            {companies.map((c) => (
+              <ChipFilterButton
+                key={c.id}
+                type="button"
+                $active={String(activeCompanyFilter) === String(c.id)}
+                onClick={() => setActiveCompanyFilter(c.id)}
+              >
+                {c.name}
+              </ChipFilterButton>
+            ))}
+          </ChipFilters>
+
+          {activeCompanyFilter !== "all" && (
+            <SwitchFilters>
+              <SwitchFilterButton
+                type="button"
+                $active={filterType === "contract"}
+                onClick={() => setFilterType("contract")}
+              >
+                <FileText size={16} />
+                Contrato
+              </SwitchFilterButton>
+              <SwitchFilterButton
+                type="button"
+                $active={filterType === "consolidated"}
+                onClick={() => setFilterType("consolidated")}
+              >
+                <FileText size={16} />
+                Consolidación
+              </SwitchFilterButton>
+            </SwitchFilters>
+          )}
+        </FiltersWrapper>
+
         <DataTable
           rows={filteredRows}
           columns={columns}
+          loading={isLoading}
           pageSize={10}
           pageSizeOptions={[10, 25, 30, 50]}
           height="610px"
@@ -314,6 +354,10 @@ const Employees = () => {
         isOpen={isModalOpen}
         mode={modalMode}
         employee={selectedEmployee}
+        companies={companies}
+        branches={branches}
+        areas={areas}
+        jobTitles={jobTitles}
         onClose={handleCloseModal}
         onSubmit={handleSubmitEmployee}
       />

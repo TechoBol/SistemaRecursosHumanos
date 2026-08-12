@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, MapPin, X } from "lucide-react";
 import {
   CancelButton,
@@ -22,6 +22,7 @@ import {
   PrimaryButton,
   ToggleButton,
   ToggleGroup,
+  FormErrorText,
 } from "../ui/Modal.styles";
 
 const INITIAL_FORM = {
@@ -32,53 +33,76 @@ const INITIAL_FORM = {
   email: "",
   phone: "",
   address: "",
-  contractCompany: "",
-  consolidatedCompany: "",
+  contractCompanyId: "",
+  consolidatedCompanyId: "",
   employeeType: "Planta",
-  branch: "",
+  branchId: "",
+  areaId: "",
+  jobTitleId: "",
   contractDate: "",
-  area: "",
-  currentPosition: "",
+  endDate: "",
+  baseSalary: "",
+  status: "Activo",
 };
 
 const EmployeeModal = ({
   isOpen,
   mode = "create",
   employee = null,
+  companies = [],
+  branches = [],
+  areas = [],
+  jobTitles = [],
   onClose,
   onSubmit,
 }) => {
   const [formData, setFormData] = useState(INITIAL_FORM);
+  const [errors, setErrors] = useState({});
   const [openCalendar, setOpenCalendar] = useState(null);
   const birthDateRef = useRef(null);
   const contractDateRef = useRef(null);
+  const endDateRef = useRef(null);
+  const isEditMode = mode === "edit";
+
+  const filteredJobTitles = useMemo(() => {
+    if (!formData.areaId) return [];
+    const areaIdNum = Number(formData.areaId);
+    return jobTitles.filter((jt) =>
+      jt.areas && jt.areas.some((a) => a.areaId === areaIdNum)
+    );
+  }, [jobTitles, formData.areaId]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     setOpenCalendar(null);
-    if (mode === "edit" && employee) {
+    setErrors({});
+    if (isEditMode && employee) {
+      const activeContract = employee.contracts ? employee.contracts.find((c) => c.isActive) : null;
       setFormData({
-        firstName: employee.firstName ?? "",
-        lastName: employee.lastName ?? "",
-        ci: employee.ci ?? "",
-        birthDate: employee.birthDate ?? "",
+        firstName: employee.firstNames ?? "",
+        lastName: employee.lastNames ?? "",
+        ci: employee.documentNumber ?? "",
+        birthDate: employee.birthDate ? employee.birthDate.split("T")[0] : "",
         email: employee.email ?? "",
         phone: employee.phone ?? "",
         address: employee.address ?? "",
-        contractCompany: employee.contractCompany ?? "",
-        consolidatedCompany: employee.consolidatedCompany ?? "",
-        employeeType: employee.employeeType ?? "Planta",
-        branch: employee.branch ?? "",
-        contractDate: employee.contractDate ?? "",
-        area: employee.area ?? "",
-        currentPosition: employee.positionCurrent ?? "",
+        contractCompanyId: activeContract?.contractCompanyId ?? "",
+        consolidatedCompanyId: activeContract?.consolidatedCompanyId ?? "",
+        employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Planta",
+        branchId: activeContract?.branchId ?? "",
+        areaId: activeContract?.areaId ?? "",
+        jobTitleId: activeContract?.jobTitleId ?? "",
+        contractDate: activeContract?.hireDate ? activeContract.hireDate.split("T")[0] : "",
+        endDate: activeContract?.endDate ? activeContract.endDate.split("T")[0] : "",
+        baseSalary: activeContract?.baseSalary ?? "",
+        status: employee.status === "INACTIVE" ? "Inactivo" : "Activo",
       });
       return;
     }
     setFormData(INITIAL_FORM);
-  }, [isOpen, mode, employee]);
+  }, [isOpen, isEditMode, employee]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -101,9 +125,19 @@ const EmployeeModal = ({
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData((currentForm) => ({
-      ...currentForm,
-      [name]: value,
+    setFormData((currentForm) => {
+      const updated = {
+        ...currentForm,
+        [name]: value,
+      };
+      if (name === "areaId") {
+        updated.jobTitleId = "";
+      }
+      return updated;
+    });
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      [name]: "",
     }));
   };
 
@@ -114,8 +148,27 @@ const EmployeeModal = ({
     }));
   };
 
+  const validateForm = () => {
+    const nextErrors = {};
+    if (!formData.firstName.trim()) nextErrors.firstName = "El nombre es obligatorio.";
+    if (!formData.lastName.trim()) nextErrors.lastName = "El apellido es obligatorio.";
+    if (!formData.ci.trim()) nextErrors.ci = "El CI es obligatorio.";
+    if (!formData.contractCompanyId) nextErrors.contractCompanyId = "Selecciona la empresa contratante.";
+    if (!formData.consolidatedCompanyId) nextErrors.consolidatedCompanyId = "Selecciona la empresa consolidada.";
+    if (!formData.branchId) nextErrors.branchId = "Selecciona una sucursal.";
+    if (!formData.areaId) nextErrors.areaId = "Selecciona un área.";
+    if (!formData.jobTitleId) nextErrors.jobTitleId = "Selecciona un cargo.";
+    if (!formData.contractDate) nextErrors.contractDate = "La fecha de inicio es obligatoria.";
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     onSubmit({
       ...formData,
       id: employee?.id,
@@ -138,13 +191,13 @@ const EmployeeModal = ({
     setOpenCalendar(null);
   };
 
-  const title = mode === "edit" ? "Editar empleado" : "Agregar empleado";
-  const buttonText = mode === "edit" ? "Guardar cambios" : "Añadir empleado";
+  const title = isEditMode ? "Editar empleado" : "Agregar empleado";
+  const buttonText = isEditMode ? "Guardar cambios" : "Añadir empleado";
 
   return (
     <ModalOverlay onMouseDown={handleOverlayClick}>
       <ModalContainer
-        $maxWidth="800px"
+        $maxWidth="900px"
         role="dialog"
         aria-modal="true"
         aria-labelledby="employee-modal-title"
@@ -160,11 +213,11 @@ const EmployeeModal = ({
           </ModalCloseButton>
         </ModalHeader>
 
-        <ModalForm onSubmit={handleSubmit}>
+        <ModalForm onSubmit={handleSubmit} noValidate>
           <ModalContent>
             <ModalSection>
               <ModalSectionTitle>Información personal</ModalSectionTitle>
-              <FormGrid>
+              <FormGrid $columns={3}>
                 <FormField>
                   <FormLabel htmlFor="firstName">Nombre</FormLabel>
                   <FormInput
@@ -173,8 +226,9 @@ const EmployeeModal = ({
                     value={formData.firstName}
                     onChange={handleChange}
                     autoComplete="given-name"
-                    required
+                    style={{ borderColor: errors.firstName ? "#FF2B2B" : undefined }}
                   />
+                  {errors.firstName && <FormErrorText>{errors.firstName}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -185,8 +239,9 @@ const EmployeeModal = ({
                     value={formData.lastName}
                     onChange={handleChange}
                     autoComplete="family-name"
-                    required
+                    style={{ borderColor: errors.lastName ? "#FF2B2B" : undefined }}
                   />
+                  {errors.lastName && <FormErrorText>{errors.lastName}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -196,10 +251,13 @@ const EmployeeModal = ({
                     name="ci"
                     value={formData.ci}
                     onChange={handleChange}
-                    required
+                    style={{ borderColor: errors.ci ? "#FF2B2B" : undefined }}
                   />
+                  {errors.ci && <FormErrorText>{errors.ci}</FormErrorText>}
                 </FormField>
+              </FormGrid>
 
+              <FormGrid>
                 <FormField>
                   <FormLabel htmlFor="birthDate">Fecha de nacimiento</FormLabel>
                   <InputIconContainer>
@@ -216,7 +274,7 @@ const EmployeeModal = ({
                     <InputIconButton
                       type="button"
                       aria-label="Abrir calendario de fecha de nacimiento"
-                      aria-expanded={ openCalendar === "birthDate" }
+                      aria-expanded={openCalendar === "birthDate"}
                       onClick={() =>
                         openDatePicker(
                           "birthDate",
@@ -228,21 +286,6 @@ const EmployeeModal = ({
                     </InputIconButton>
                   </InputIconContainer>
                 </FormField>
-              </FormGrid>
-
-              <FormGrid $columns={3}>
-                <FormField>
-                  <FormLabel htmlFor="email">Correo</FormLabel>
-                  <FormInput
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    autoComplete="email"
-                    required
-                  />
-                </FormField>
 
                 <FormField>
                   <FormLabel htmlFor="phone">Teléfono</FormLabel>
@@ -253,6 +296,18 @@ const EmployeeModal = ({
                     value={formData.phone}
                     onChange={handleChange}
                     autoComplete="tel"
+                  />
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="email">Correo</FormLabel>
+                  <FormInput
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    autoComplete="email"
                   />
                 </FormField>
 
@@ -276,35 +331,37 @@ const EmployeeModal = ({
               <ModalSectionTitle>Información laboral</ModalSectionTitle>
               <FormGrid $columns={3}>
                 <FormField>
-                  <FormLabel htmlFor="contractCompany">Empresa de contrato</FormLabel>
+                  <FormLabel htmlFor="contractCompanyId">Empresa de contrato</FormLabel>
                   <FormSelect
-                    id="contractCompany"
-                    name="contractCompany"
-                    value={formData.contractCompany}
+                    id="contractCompanyId"
+                    name="contractCompanyId"
+                    value={formData.contractCompanyId}
                     onChange={handleChange}
-                    required
+                    style={{ borderColor: errors.contractCompanyId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    <option value="TechoBol">TechoBol</option>
-                    <option value="Empresa A">Empresa A</option>
-                    <option value="Empresa B">Empresa B</option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </FormSelect>
+                  {errors.contractCompanyId && <FormErrorText>{errors.contractCompanyId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="consolidatedCompany">Empresa consolidada</FormLabel>
+                  <FormLabel htmlFor="consolidatedCompanyId">Empresa consolidada</FormLabel>
                   <FormSelect
-                    id="consolidatedCompany"
-                    name="consolidatedCompany"
-                    value={formData.consolidatedCompany}
+                    id="consolidatedCompanyId"
+                    name="consolidatedCompanyId"
+                    value={formData.consolidatedCompanyId}
                     onChange={handleChange}
-                    required
+                    style={{ borderColor: errors.consolidatedCompanyId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    <option value="TechoBol">TechoBol</option>
-                    <option value="Empresa A">Empresa A</option>
-                    <option value="Empresa B">Empresa B</option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </FormSelect>
+                  {errors.consolidatedCompanyId && <FormErrorText>{errors.consolidatedCompanyId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -313,7 +370,7 @@ const EmployeeModal = ({
                     <ToggleButton
                       type="button"
                       $active={formData.employeeType === "Planta"}
-                      aria-pressed={ formData.employeeType === "Planta" }
+                      aria-pressed={formData.employeeType === "Planta"}
                       onClick={() => handleEmployeeType("Planta")}
                     >
                       Planta
@@ -333,52 +390,63 @@ const EmployeeModal = ({
 
               <FormGrid $columns={3}>
                 <FormField>
-                  <FormLabel htmlFor="branch">Sucursal</FormLabel>
+                  <FormLabel htmlFor="branchId">Sucursal</FormLabel>
                   <FormSelect
-                    id="branch"
-                    name="branch"
-                    value={formData.branch}
+                    id="branchId"
+                    name="branchId"
+                    value={formData.branchId}
                     onChange={handleChange}
-                    required
+                    style={{ borderColor: errors.branchId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    <option value="BARRIENTOS">Barrientos</option>
-                    <option value="CENTRAL">Central</option>
-                    <option value="NORTE">Norte</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
                   </FormSelect>
+                  {errors.branchId && <FormErrorText>{errors.branchId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="area">Área</FormLabel>
+                  <FormLabel htmlFor="areaId">Área</FormLabel>
                   <FormSelect
-                    id="area"
-                    name="area"
-                    value={formData.area}
+                    id="areaId"
+                    name="areaId"
+                    value={formData.areaId}
                     onChange={handleChange}
-                    required
+                    style={{ borderColor: errors.areaId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    <option value="Tecnología">Tecnología</option>
-                    <option value="Recursos Humanos">Recursos Humanos</option>
-                    <option value="Administración">Administración</option>
-                    <option value="Contabilidad">Contabilidad</option>
+                    {areas.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
                   </FormSelect>
+                  {errors.areaId && <FormErrorText>{errors.areaId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="currentPosition">Cargo actual</FormLabel>
+                  <FormLabel htmlFor="jobTitleId">Cargo actual</FormLabel>
                   <FormSelect
-                    id="currentPosition"
-                    name="currentPosition"
-                    value={formData.currentPosition}
+                    id="jobTitleId"
+                    name="jobTitleId"
+                    value={formData.jobTitleId}
                     onChange={handleChange}
-                    required
+                    disabled={!formData.areaId || filteredJobTitles.length === 0}
+                    style={{ borderColor: errors.jobTitleId ? "#FF2B2B" : undefined }}
                   >
-                    <option value="">Seleccionar</option>
-                    <option value="Auxiliar de Sistemas">Auxiliar de Sistemas</option>
-                    <option value="Analista de Recursos Humanos">Analista de Recursos Humanos</option>
-                    <option value="Desarrollador Frontend">Desarrollador Frontend</option>
+                    {!formData.areaId ? (
+                      <option value="">Selecciona primero un área</option>
+                    ) : filteredJobTitles.length === 0 ? (
+                      <option value="">No hay cargos en esta área</option>
+                    ) : (
+                      <>
+                        <option value="">Seleccionar</option>
+                        {filteredJobTitles.map((jt) => (
+                          <option key={jt.id} value={jt.id}>{jt.name}</option>
+                        ))}
+                      </>
+                    )}
                   </FormSelect>
+                  {errors.jobTitleId && <FormErrorText>{errors.jobTitleId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -392,7 +460,7 @@ const EmployeeModal = ({
                       value={formData.contractDate}
                       onChange={handleDateChange}
                       onBlur={() => setOpenCalendar(null)}
-                      required
+                      style={{ borderColor: errors.contractDate ? "#FF2B2B" : undefined }}
                     />
 
                     <InputIconButton
@@ -409,15 +477,47 @@ const EmployeeModal = ({
                       <CalendarDays size={19} />
                     </InputIconButton>
                   </InputIconContainer>
+                  {errors.contractDate && <FormErrorText>{errors.contractDate}</FormErrorText>}
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="contractDate">Fin de contrato</FormLabel>
+                  <FormLabel htmlFor="endDate">Fin de contrato</FormLabel>
                   <InputIconContainer>
                     <FormInput
-                      
+                      ref={endDateRef}
+                      id="endDate"
+                      name="endDate"
+                      type="date"
+                      value={formData.endDate}
+                      onChange={handleDateChange}
+                      onBlur={() => setOpenCalendar(null)}
                     />
+
+                    <InputIconButton
+                      type="button"
+                      aria-label="Abrir calendario de fecha fin de contrato"
+                      aria-expanded={openCalendar === "endDate"}
+                      onClick={() =>
+                        openDatePicker(
+                          "endDate",
+                          endDateRef,
+                        )
+                      }
+                    >
+                      <CalendarDays size={19} />
+                    </InputIconButton>
                   </InputIconContainer>
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="baseSalary">Salario Base (Bs.)</FormLabel>
+                  <FormInput
+                    id="baseSalary"
+                    name="baseSalary"
+                    type="number"
+                    value={formData.baseSalary}
+                    onChange={handleChange}
+                  />
                 </FormField>
               </FormGrid>
             </ModalSection>

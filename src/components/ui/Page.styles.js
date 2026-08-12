@@ -140,3 +140,90 @@ export const AddButton = styled.button`
     min-width: 0;
   }
 `;
+
+/* FILTROS */
+export const FiltersWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  flex-wrap: wrap;
+  margin-bottom: -8px;
+`;
+
+/* chip */
+export const ChipFilters = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+`;
+
+export const ChipFilterButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  min-height: 36px;
+  padding: 0 20px;
+  color: ${({ $active }) => $active ? theme.colors.white : theme.colors.textMuted};
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
+  border: 1px solid ${({ $active }) => $active ? theme.colors.primary : theme.colors.border};
+  border-radius: ${theme.radius.round};
+  transition:
+    color ${theme.transitions.fast},
+    background-color ${theme.transitions.fast},
+    border-color ${theme.transitions.fast},
+    transform ${theme.transitions.fast};
+  &:hover { color: ${({ $active }) => $active ? theme.colors.white : theme.colors.primary};
+    border-color: ${theme.colors.primary};
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+/* switch */
+export const SwitchFilters = styled.div`
+  display: inline-flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 3px;
+`;
+
+export const SwitchFilterButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 130px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: ${({ $active }) => ($active ? "rgba(47, 87, 60, 0.08)" : "transparent")};
+  color: ${({ $active }) => ($active ? "#2f573c" : "#718096")};
+  border: none;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+
+  svg {
+    color: ${({ $active }) => ($active ? "#2f573c" : "#718096")};
+    transition: color 0.2s ease;
+  }
+
+  &:hover {
+    color: #2f573c;
+    svg {
+      color: #2f573c;
+    }
+  }
+`;

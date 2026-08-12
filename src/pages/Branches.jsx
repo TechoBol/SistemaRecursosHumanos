@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import {
   AddButton,
+  ChipFilters,
+  ChipFilterButton,
   PageActions,
   PageContainer,
   PageHeader,
@@ -26,8 +28,6 @@ import {
   CatalogContainer,
   CatalogDescription,
   CatalogEmpty,
-  CatalogFilterButton,
-  CatalogFilters,
   CatalogHeader,
   CatalogIcon,
   CatalogInfo,
@@ -165,9 +165,9 @@ const Branches = () => {
           </PageActions>
         </PageHeader>
 
-        <CatalogFilters aria-label="Filtrar por ciudad">
+        <ChipFilters aria-label="Filtrar por ciudad">
           {cityFilters.map((filter) => (
-            <CatalogFilterButton
+            <ChipFilterButton
               key={filter.id}
               type="button"
               $active={selectedCity === filter.id}
@@ -175,9 +175,9 @@ const Branches = () => {
               onClick={() => setSelectedCity(filter.id)}
             >
               {filter.label}
-            </CatalogFilterButton>
+            </ChipFilterButton>
           ))}
-        </CatalogFilters>
+        </ChipFilters>
 
         <CatalogContainer>
           <CatalogTable $minWidth="900px">

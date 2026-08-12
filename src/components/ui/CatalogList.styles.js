@@ -1,42 +1,6 @@
 import styled from "styled-components";
 import { theme } from "./Theme";
 
-/* chip */
-export const CatalogFilters = styled.div`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  width: 100%;
-`;
-
-export const CatalogFilterButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 82px;
-  min-height: 36px;
-  padding: 0 20px;
-  color: ${({ $active }) => $active ? theme.colors.white : theme.colors.textMuted};
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
-  border: 1px solid ${({ $active }) => $active ? theme.colors.primary : theme.colors.border};
-  border-radius: ${theme.radius.round};
-  transition:
-    color ${theme.transitions.fast},
-    background-color ${theme.transitions.fast},
-    border-color ${theme.transitions.fast},
-    transform ${theme.transitions.fast};
-  &:hover { color: ${({ $active }) => $active ? theme.colors.white : theme.colors.primary};
-    border-color: ${theme.colors.primary};
-  }
-  &:active {
-    transform: scale(0.98);
-  }
-`;
-
 /* contenedor */
 export const CatalogContainer = styled.section`
   width: 100%;

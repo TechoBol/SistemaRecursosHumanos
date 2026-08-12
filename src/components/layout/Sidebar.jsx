@@ -46,13 +46,7 @@ import useAuthentication from "../../hooks/useAuthentication";
 import logoMenu from "../../assets/logo-menu.png";
 
 const MENU_ITEMS = [
-  {
-    id: "empleados", label: "Empleados", icon: UsersRound,
-    children: [
-      { id: "lista-empleados", label: "Lista", path: "/empleados", icon: List, },
-      { id: "empleados-consolidados", label: "Consolidados", path: "/empleados/consolidados", icon: WalletCards, },
-    ],
-  },
+  { id: "empleados", label: "Empleados", path: "/empleados", icon: UsersRound, },
   {
     id: "nominas", label: "Nóminas", icon: DollarSign,
     children: [
