@@ -45,6 +45,7 @@ import {
   SectionHeader,
 } from "../../components/ui/employees/PersonalInformation.styles";
 import EmergencyContactModal from "../../components/modals/EmergencyContactModal";
+import { useEmergencyContacts } from "../../hooks/useEmergencyContacts";
 
 const formatDate = (dateValue) => {
   if (!dateValue) {
@@ -58,16 +59,6 @@ const formatDate = (dateValue) => {
   return `${day}/${month}/${year}`;
 };
 
-const createId = () => {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random()}`;
-};
-
 const closeDetailsMenu = (event) => {
   event.currentTarget
     .closest("details")
@@ -75,9 +66,7 @@ const closeDetailsMenu = (event) => {
 };
 
 const PersonalInformation = ({ employee }) => {
-  const [emergencyContacts, setEmergencyContacts] = useState(
-    [],
-  );
+  const { contacts, addContact, updateContact, deleteContact } = useEmergencyContacts(employee.id);
 
   const [
     selectedEmergencyContact,
@@ -102,42 +91,23 @@ const PersonalInformation = ({ employee }) => {
     setIsEmergencyModalOpen(false);
   };
 
-  const handleSaveContact = (contactData) => {
+  const handleSaveContact = async (contactData) => {
     if (selectedEmergencyContact) {
-      setEmergencyContacts((currentContacts) =>
-        currentContacts.map((contact) =>
-          contact.id === selectedEmergencyContact.id
-            ? {
-                ...contact,
-                ...contactData,
-              }
-            : contact,
-        ),
-      );
+      await updateContact(selectedEmergencyContact.id, contactData);
     } else {
-      setEmergencyContacts((currentContacts) => [
-        ...currentContacts,
-        {
-          ...contactData,
-          id: createId(),
-        },
-      ]);
+      await addContact(contactData);
     }
     handleCloseContactModal();
   };
 
-  const handleDeleteContact = (contactId) => {
+  const handleDeleteContact = async (contactId) => {
     const shouldDelete = window.confirm(
       "¿Deseas eliminar este contacto de emergencia?",
     );
     if (!shouldDelete) {
       return;
     }
-    setEmergencyContacts((currentContacts) =>
-      currentContacts.filter(
-        (contact) => contact.id !== contactId,
-      ),
-    );
+    await deleteContact(contactId);
   };
 
   const renderContactMenu = (contact) => (
@@ -177,7 +147,7 @@ const PersonalInformation = ({ employee }) => {
   );
 
   const renderEmergencyContacts = () => {
-    if (emergencyContacts.length === 0) {
+    if (contacts.length === 0) {
       return (
         <EmptyState>
           <AlertTriangle size={34} />
@@ -189,7 +159,7 @@ const PersonalInformation = ({ employee }) => {
 
     return (
       <ContactList>
-        {emergencyContacts.map((contact) => (
+        {contacts.map((contact) => (
           <ContactItem key={contact.id}>
             <ContactTopRow>
               <ContactDetail>

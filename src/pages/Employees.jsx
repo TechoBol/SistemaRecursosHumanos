@@ -31,25 +31,12 @@ import {
 } from "../components/ui/Page.styles";
 import EmployeeModal from "../components/modals/EmployeeModal";
 import DataTable from "../components/table/DataTable";
+import { getSeniorityShort, formatLongDate } from "../utils/dateUtils";
 import { useEmployees } from "../hooks/useEmployees";
 import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
 import { useAreas } from "../hooks/useAreas";
 import { useJobTitles } from "../hooks/useJobTitles";
-
-const getSeniority = (dateString) => {
-  if (!dateString) return "N/A";
-  const hired = new Date(dateString);
-  const diffMs = Date.now() - hired.getTime();
-  if (diffMs < 0) return "0 días";
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 30) return `${diffDays} días`;
-  const diffMonths = Math.floor(diffDays / 30);
-  if (diffMonths < 12) return `${diffMonths} meses`;
-  const diffYears = Math.floor(diffMonths / 12);
-  const remainingMonths = diffMonths % 12;
-  return `${diffYears} año${diffYears > 1 ? "s" : ""} ${remainingMonths} mes${remainingMonths !== 1 ? "es" : ""}`;
-};
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -148,11 +135,7 @@ const Employees = () => {
         renderCell: ({ row }) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
           const hiredText = activeContract?.hireDate
-            ? `Contratado: ${new Date(activeContract.hireDate).toLocaleDateString("es-ES", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}`
+            ? `Contratado: ${formatLongDate(activeContract.hireDate)}`
             : "Sin contratación";
           return (
             <CellStack>
@@ -225,7 +208,7 @@ const Employees = () => {
         flex: 0.7,
         valueGetter: (_, row) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
-          return getSeniority(activeContract?.hireDate);
+          return getSeniorityShort(activeContract?.hireDate);
         },
       },
       {

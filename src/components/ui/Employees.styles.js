@@ -4,9 +4,6 @@ import { theme } from "./Theme";
 export const DetailPage = styled.main`
   width: 100%;
   min-width: 0;
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
 `;
 
 export const DetailContainer = styled.section`
@@ -240,10 +237,6 @@ export const SecondaryButton = styled.button`
     cursor: not-allowed;
     opacity: 0.55;
   }
-`;
-
-export const CompanyButton = styled(SecondaryButton)`
-  min-width: 150px;
 `;
 
 export const TabContentCard = styled.section`

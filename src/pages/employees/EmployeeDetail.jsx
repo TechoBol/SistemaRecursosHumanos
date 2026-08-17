@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import {
   BriefcaseBusiness,
   Building2,
   CalendarDays,
   Mail,
+  MapPin,
   Phone,
 } from "lucide-react";
 import {
   ActionButton,
-  CompanyButton,
   ContactActionGroup,
   ContactCard,
   ContactDataItem,
@@ -30,6 +30,14 @@ import {
   SecondaryButton,
 } from "../../components/ui/Employees.styles";
 import EmployeeModal from "../../components/modals/EmployeeModal";
+import { getSeniorityFull } from "../../utils/dateUtils";
+import { getEmployeeByIdApi } from "../../services/EmployeeService";
+import { useLoginStore } from "../../components/store/loginStore";
+import { useEmployees } from "../../hooks/useEmployees";
+import { useCompanies } from "../../hooks/useCompanies";
+import { useBranches } from "../../hooks/useBranches";
+import { useAreas } from "../../hooks/useAreas";
+import { useJobTitles } from "../../hooks/useJobTitles";
 import AdvancesInformation from "./AdvancesInformation";
 import MemorandumsInformation from "./MemorandumsInformation";
 import OtherEventsInformation from "./OtherEventsInformation";
@@ -40,121 +48,115 @@ import TerminationInformation from "./TerminationInformation";
 import VacationsInformation from "./VacationsInformation";
 
 const DETAIL_TABS = [
-  {
-    id: "personal",
-    label: "Información personal",
-  },
-  {
-    id: "salary",
-    label: "Salario",
-  },
-  {
-    id: "memorandums",
-    label: "Memorándums",
-  },
-  {
-    id: "permissions",
-    label: "Permisos y faltas",
-  },
-  {
-    id: "vacations",
-    label: "Vacaciones",
-  },
-  {
-    id: "advances",
-    label: "Anticipos",
-  },
-  {
-    id: "others",
-    label: "Otros",
-  },
-  {
-    id: "termination",
-    label: "Desvinculación",
-  },
+  { id: "personal", label: "Información personal" },
+  { id: "salary", label: "Salario" },
+  { id: "memorandums", label: "Memorándums" },
+  { id: "permissions", label: "Permisos y faltas" },
+  { id: "vacations", label: "Vacaciones" },
+  { id: "advances", label: "Anticipos" },
+  { id: "others", label: "Otros" },
+  { id: "termination", label: "Desvinculación" },
 ];
 
-const FALLBACK_EMPLOYEE = {
-  id: 1,
-  firstName: "Luis",
-  lastName: "Perez",
-  ci: "7854123",
-  birthDate: "1998-04-12",
-  status: "Activo",
-  branch: "BARRIENTOS",
-  area: "Tecnología",
-  positionCurrent: "Auxiliar de Sistemas",
-  positionContract: "Auxiliar de sistemas",
-  contractCompany: "Empresa A",
-  consolidatedCompany: "TechoBol",
-  employeeType: "Planta",
-  email: "luis@gmail.com",
-  phone: "77777777",
-  address: "Cochabamba",
-  seniority: "2 meses 1 día",
-  contractDate: "2026-05-06",
+const mapDbEmployeeToUi = (emp) => {
+  if (!emp) return null;
+  const activeContract = emp.contracts ? emp.contracts.find((c) => c.isActive) : null;
+  return {
+    ...emp,
+    firstName: emp.firstNames ?? "",
+    lastName: emp.lastNames ?? "",
+    ci: emp.documentNumber ?? "",
+    birthDate: emp.birthDate ? emp.birthDate.split("T")[0] : "",
+    status: emp.status === "ACTIVE" ? "Activo" : "Inactivo",
+    branch: activeContract?.branch?.name || "Sin sucursal",
+    area: activeContract?.area?.name || "Sin área",
+    positionCurrent: activeContract?.jobTitle?.name || "Sin cargo actual",
+    positionContract: activeContract?.jobTitle?.name || "Sin cargo de contrato",
+    contractCompany: activeContract?.contractCompany?.name || "Sin empresa de contrato",
+    consolidatedCompany: activeContract?.consolidatedCompany?.name || "Sin empresa consolidada",
+    employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Planta",
+    email: emp.email ?? "",
+    phone: emp.phone ?? "",
+    address: emp.address ?? "",
+    seniority: getSeniorityFull(activeContract?.hireDate),
+    contractDate: activeContract?.hireDate ? activeContract.hireDate.split("T")[0] : "",
+  };
 };
 
 const formatDate = (dateValue) => {
-  if (!dateValue) {
-    return "Sin fecha registrada";
-  }
+  if (!dateValue) return "Sin fecha registrada";
   const dateParts = dateValue.split("-");
-  if (dateParts.length !== 3) {
-    return dateValue;
-  }
+  if (dateParts.length !== 3) return dateValue;
   const [year, month, day] = dateParts;
   return `${day}/${month}/${year}`;
 };
 
 const EmployeeDetail = () => {
+  const { token } = useLoginStore();
   const location = useLocation();
   const { employeeId } = useParams();
   const receivedEmployee = location.state?.employee;
 
-  const [employee, setEmployee] = useState(
-    receivedEmployee ?? {
-      ...FALLBACK_EMPLOYEE,
-      id: Number(employeeId) || FALLBACK_EMPLOYEE.id,
-    },
-  );
+  const { updateEmployee } = useEmployees();
+  const { companies } = useCompanies();
+  const { branches } = useBranches();
+  const { areas } = useAreas();
+  const { jobTitles } = useJobTitles();
 
+  const [dbEmployee, setDbEmployee] = useState(receivedEmployee);
   const [activeTab, setActiveTab] = useState("personal");
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
+  const fetchEmployeeData = useCallback(async () => {
+    if (!token || !employeeId) return;
+    const data = await getEmployeeByIdApi(token, Number(employeeId));
+    if (data) {
+      setDbEmployee(data);
+    }
+  }, [token, employeeId]);
+
+  useEffect(() => {
+    if (!receivedEmployee) {
+      fetchEmployeeData();
+    }
+  }, [receivedEmployee, fetchEmployeeData]);
+
+  const uiEmployee = useMemo(() => {
+    return mapDbEmployeeToUi(dbEmployee) || {
+      id: Number(employeeId),
+      firstName: "Cargando",
+      lastName: "...",
+      ci: "",
+      status: "Activo",
+      branch: "Cargando...",
+      area: "Cargando...",
+      positionCurrent: "Cargando...",
+      email: "",
+      phone: "",
+      consolidatedCompany: "",
+      contractDate: "",
+      seniority: "",
+    };
+  }, [dbEmployee, employeeId]);
+
   const fullName = useMemo(() => {
-    return `${employee.firstName ?? ""} ${
-      employee.lastName ?? ""
-    }`.trim();
-  }, [employee.firstName, employee.lastName]);
+    return `${uiEmployee.firstName} ${uiEmployee.lastName}`.trim();
+  }, [uiEmployee.firstName, uiEmployee.lastName]);
 
-  const handleSaveEmployee = (employeeData) => {
-    setEmployee((currentEmployee) => ({
-      ...currentEmployee,
-      ...employeeData,
-
-      positionCurrent:
-        employeeData.currentPosition ??
-        currentEmployee.positionCurrent,
-
-      positionContract:
-        employeeData.contractPosition ??
-        currentEmployee.positionContract,
-
-      contractDate:
-        employeeData.contractDate ??
-        currentEmployee.contractDate,
-    }));
-
+  const handleSaveEmployee = async (employeeData) => {
+    const updated = await updateEmployee(uiEmployee.id, employeeData);
+    if (updated) {
+      setDbEmployee(updated);
+    }
     setIsEmployeeModalOpen(false);
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "personal":
-        return <PersonalInformation employee={employee} />;
+        return <PersonalInformation employee={uiEmployee} />;
       case "salary":
-        return <SalaryInformation employee={employee} />;
+        return <SalaryInformation employee={uiEmployee} />;
       case "memorandums":
         return <MemorandumsInformation />;
       case "permissions":
@@ -166,9 +168,7 @@ const EmployeeDetail = () => {
       case "others":
         return <OtherEventsInformation />;
       case "termination":
-        return (
-          <TerminationInformation employee={employee} />
-        );
+        return <TerminationInformation employee={uiEmployee} />;
       default:
         return null;
     }
@@ -199,37 +199,47 @@ const EmployeeDetail = () => {
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <BriefcaseBusiness size={17} />
-                    {employee.positionCurrent ||
-                      "Sin cargo actual"}
+                    Cargo: {uiEmployee.positionCurrent || "Sin cargo actual"}
                   </EmployeeMetaItem>
 
                   <EmployeeMetaDivider />
 
                   <EmployeeMetaItem>
-                    {employee.area || "Sin área"}
+                    Área: {uiEmployee.area || "Sin área"}
                   </EmployeeMetaItem>
 
                   <EmployeeMetaDivider />
 
                   <EmployeeMetaItem>
-                    {employee.branch || "Sin sucursal"}
+                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
 
                 <EmployeeMeta>
-                  <EmployeeStatus $status={employee.status}>
-                    {employee.status || "Sin estado"}
+                  <EmployeeMetaItem>
+                    <Building2 size={20} />
+                    Contrato: {uiEmployee.contractCompany || "Sin empresa de contrato"}
+                  </EmployeeMetaItem>
+                  <EmployeeMetaDivider />
+                  <EmployeeMetaItem>
+                    Consolidada: {uiEmployee.consolidatedCompany || "Sin empresa consolidada"}
+                  </EmployeeMetaItem>
+                </EmployeeMeta>
+
+                <EmployeeMeta>
+                  <EmployeeStatus $status={uiEmployee.status}>
+                    {uiEmployee.status || "Sin estado"}
                   </EmployeeStatus>
 
                   <EmployeeMetaItem>
                     <CalendarDays size={18} />
-                    {formatDate(employee.contractDate)}
+                    Fecha de contrato: {formatDate(uiEmployee.contractDate)}
                   </EmployeeMetaItem>
 
                   <EmployeeMetaDivider />
 
                   <EmployeeMetaItem>
-                    {employee.seniority || "Sin antigüedad calculada"}
+                    {uiEmployee.seniority || "Sin antigüedad"}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
               </DetailMainCard>
@@ -241,21 +251,21 @@ const EmployeeDetail = () => {
                   <ContactDataItem>
                     <Mail size={20} />
                     <span>
-                      {employee.email || "Sin correo registrado"}
+                      {uiEmployee.email || "Sin correo registrado"}
                     </span>
                   </ContactDataItem>
 
                   <ContactDataItem>
                     <Phone size={20} />
                     <span>
-                      {employee.phone || "Sin teléfono registrado"}
+                      {uiEmployee.phone || "Sin teléfono registrado"}
                     </span>
                   </ContactDataItem>
 
                   <ContactDataItem>
-                    <Building2 size={20} />
+                    <MapPin size={20} />
                     <span>
-                      {employee.consolidatedCompany || "Sin empresa consolidada"}
+                      {uiEmployee.address || "Sin dirección registrada"}
                     </span>
                   </ContactDataItem>
                 </ContactSection>
@@ -263,30 +273,17 @@ const EmployeeDetail = () => {
                 <ContactActionGroup>
                   <ActionButton
                     type="button"
-                    onClick={() =>
-                      setIsEmployeeModalOpen(true)
-                    }
+                    onClick={() => setIsEmployeeModalOpen(true)}
                   >
                     Editar
                   </ActionButton>
 
                   <SecondaryButton
                     type="button"
-                    onClick={() =>
-                      console.log("Ver historial")
-                    }
+                    onClick={() => console.log("Ver historial")}
                   >
                     Historial
                   </SecondaryButton>
-
-                  <CompanyButton
-                    type="button"
-                    onClick={() =>
-                      console.log("Cambiar compañía")
-                    }
-                  >
-                    Cambiar compañía
-                  </CompanyButton>
                 </ContactActionGroup>
               </ContactCard>
             </DetailHeaderGrid>
@@ -299,7 +296,11 @@ const EmployeeDetail = () => {
       <EmployeeModal
         isOpen={isEmployeeModalOpen}
         mode="edit"
-        employee={employee}
+        employee={dbEmployee}
+        companies={companies}
+        branches={branches}
+        areas={areas}
+        jobTitles={jobTitles}
         onClose={() => setIsEmployeeModalOpen(false)}
         onSubmit={handleSaveEmployee}
       />

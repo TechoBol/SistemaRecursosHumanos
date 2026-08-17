@@ -9,7 +9,6 @@ export const PageContainer = styled.main`
   min-width: 0;
   @media (max-width: 768px) {
     gap: 24px;
-    padding: 16px;
   }
 `;
 

@@ -29,6 +29,7 @@ export const ContentShell = styled.div`
   overflow: hidden;
   @media (max-width: 768px) {
     border-radius: 0;
+    padding: 20px;
   }
 `;
 
