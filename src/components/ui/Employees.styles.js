@@ -54,11 +54,43 @@ export const DetailTab = styled.button`
   }
 `;
 
+export const DetailNavigation = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+`;
+
+export const BackButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  color: ${theme.colors.textMuted};
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: ${theme.radius.sm};
+  svg {
+    flex-shrink: 0;
+  }
+  &:hover {
+    color: ${theme.colors.primary};
+    background-color: ${theme.colors.background};
+  }
+  &:focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 2px;
+  }
+`;
+
 export const DetailContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: 20px;
+  margin-top: 10px;
 `;
 
 export const DetailHeaderGrid = styled.div`

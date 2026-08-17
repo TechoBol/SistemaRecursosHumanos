@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowLeft,
   BriefcaseBusiness,
   Building2,
   CalendarDays,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import {
   ActionButton,
+  BackButton,
   ContactActionGroup,
   ContactCard,
   ContactDataItem,
@@ -21,6 +23,7 @@ import {
   DetailPage,
   DetailTab,
   DetailTabs,
+  DetailNavigation,
   EmployeeMeta,
   EmployeeMetaDivider,
   EmployeeMetaItem,
@@ -91,6 +94,7 @@ const formatDate = (dateValue) => {
 };
 
 const EmployeeDetail = () => {
+  const navigate = useNavigate();
   const { token } = useLoginStore();
   const location = useLocation();
   const { employeeId } = useParams();
@@ -190,6 +194,13 @@ const EmployeeDetail = () => {
               </DetailTab>
             ))}
           </DetailTabs>
+
+          <DetailNavigation>
+            <BackButton type="button" onClick={() => navigate("/empleados")}>
+              <ArrowLeft size={17} />
+              Atrás
+            </BackButton>
+          </DetailNavigation>
 
           <DetailContent>
             <DetailHeaderGrid>
