@@ -31,7 +31,6 @@ import {
 } from "../../components/ui/Employees.styles";
 import EmployeeModal from "../../components/modals/EmployeeModal";
 import { getSeniorityFull } from "../../utils/dateUtils";
-import { getEmployeeByIdApi } from "../../services/EmployeeService";
 import { useLoginStore } from "../../components/store/loginStore";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useCompanies } from "../../hooks/useCompanies";
@@ -97,7 +96,7 @@ const EmployeeDetail = () => {
   const { employeeId } = useParams();
   const receivedEmployee = location.state?.employee;
 
-  const { updateEmployee } = useEmployees();
+  const { getEmployeeById, updateEmployee } = useEmployees();
   const { companies } = useCompanies();
   const { branches } = useBranches();
   const { areas } = useAreas();
@@ -108,12 +107,12 @@ const EmployeeDetail = () => {
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
   const fetchEmployeeData = useCallback(async () => {
-    if (!token || !employeeId) return;
-    const data = await getEmployeeByIdApi(token, Number(employeeId));
+    if (!employeeId) return;
+    const data = await getEmployeeById(Number(employeeId));
     if (data) {
       setDbEmployee(data);
     }
-  }, [token, employeeId]);
+  }, [employeeId, getEmployeeById]);
 
   useEffect(() => {
     if (!receivedEmployee) {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useLoginStore } from "../components/store/loginStore";
 import {
   getEmployeesApi,
+  getEmployeeByIdApi,
   createEmployeeApi,
   updateEmployeeApi,
   deleteEmployeeApi
@@ -26,6 +27,19 @@ export const useEmployees = () => {
       setIsLoading(false);
     }
   }, [token, isLoggedIn]);
+
+  const getEmployeeById = async (id: number) => {
+    if (!token) return null;
+    setIsLoading(true);
+    try {
+      return await getEmployeeByIdApi(token, id);
+    } catch (error) {
+      console.error("Error en useEmployees al obtener empleado por ID:", error);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const createEmployee = async (employeeData: any) => {
     if (!token) return null;
@@ -89,6 +103,7 @@ export const useEmployees = () => {
     employees,
     isLoading,
     fetchEmployees,
+    getEmployeeById,
     createEmployee,
     updateEmployee,
     deleteEmployee
