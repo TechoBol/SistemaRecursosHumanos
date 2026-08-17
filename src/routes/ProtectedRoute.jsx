@@ -1,16 +1,12 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useLoginStore } from "../components/store/loginStore";
 
-export const ProtectedRoute = ({ children, allowedLevels }) => {
-  const { isLoggedIn, level } = useLoginStore();
+export const ProtectedRoute = ({ children }) => {
+  const { isLoggedIn } = useLoginStore();
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" replace />;
   }
 
-  if (allowedLevels && !allowedLevels.includes(Number(level))) {
-    return <Navigate to="/products" />;/
-  }
-
-  return children;
+  return children ? children : <Outlet />;
 };
