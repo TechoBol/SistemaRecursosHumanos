@@ -13,9 +13,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import {
-  ActionButton,
   SectionTitle,
-  SecondaryButton,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
 import {
@@ -34,7 +32,6 @@ import {
   ContactTopRow,
   EmergencyCard,
   EmptyState,
-  FileActions,
   FileCard,
   FileDescription,
   FileIcon,
@@ -223,24 +220,6 @@ const PersonalInformation = ({ employee }) => {
               <FileDescription>Gestiona todos los documentos del empleado.</FileDescription>
             </div>
           </FileInfo>
-
-          <FileActions>
-            <SecondaryButton
-              type="button"
-              onClick={() =>
-                console.log("Administrar file")
-              }
-            >
-              Administrar file
-            </SecondaryButton>
-
-            <ActionButton
-              type="button"
-              onClick={() => console.log("Ver file")}
-            >
-              Ver file
-            </ActionButton>
-          </FileActions>
         </FileCard>
 
         <InformationColumns>

@@ -50,17 +50,6 @@ export const FileDescription = styled.p`
   line-height: 1.5;
 `;
 
-export const FileActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  @media (max-width: 480px) {
-    align-items: stretch;
-    flex-direction: column;
-  }
-`;
-
 export const InformationColumns = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
