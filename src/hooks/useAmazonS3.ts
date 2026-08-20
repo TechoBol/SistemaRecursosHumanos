@@ -225,7 +225,8 @@ export const useAmazonS3 = () => {
 
     const uniqueName = `${employeeCi}_${Date.now()}.${extension}`;
 
-    const key = `RRHH/EMPLOYEES/${employeeCi}/${folder}/${uniqueName}`;
+    //const key = `RRHH/EMPLOYEES/${employeeCi}/${folder}/${uniqueName}`;
+    const key = `RRHH/EMPLOYEES/${folder}/${uniqueName}`;
 
     const signedUrl = await getSignedUrl(
       s3Ref.current,

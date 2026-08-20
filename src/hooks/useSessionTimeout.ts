@@ -6,6 +6,7 @@ const INACTIVITY_TIME = 30 * 60 * 1000; // 30 minutos
 const CHECK_INTERVAL = 10000; // Validar cada 10 segundos
 
 export const useSessionTimeout = () => {
+  /*
   const { logOut } = useAuthentication();
   const { isLoggedIn } = useLoginStore();
 
@@ -53,4 +54,5 @@ export const useSessionTimeout = () => {
       clearInterval(interval);
     };
   }, [isLoggedIn, logOut]);
+  */
 };
