@@ -546,3 +546,86 @@ export const MultiSelectOption = styled.button`
     border-radius: 3px;
   }
 `;
+
+export const DropZone = styled.label`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  border: 2px dashed ${theme.colors.border};
+  border-radius: ${theme.radius.md};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  background-color: #fafbfc;
+  input {
+    display: none;
+  }
+  &:hover {
+    border-color: ${theme.colors.primary};
+    background-color: rgba(47, 87, 60, 0.02);
+  }
+  svg {
+    color: ${theme.colors.primary};
+  }
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: ${theme.colors.textMuted};
+  }
+`;
+
+export const PreviewWrapper = styled.div`
+  margin-top: 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.md};
+  overflow: hidden;
+  background-color: #fdfdfd;
+  display: flex;
+  flex-direction: column;
+`;
+
+export const PreviewHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid ${theme.colors.border};
+  font-size: 13px;
+  color: ${theme.colors.text};
+  font-weight: 500;
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 80%;
+  }
+`;
+
+export const PreviewFrame = styled.div`
+  width: 100%;
+  height: 360px;
+  max-height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ececec;
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  @media (max-width: 480px) {
+    height: 240px;
+    max-height: 35vh;
+  }
+`;
