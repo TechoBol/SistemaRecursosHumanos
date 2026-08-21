@@ -16,6 +16,8 @@ export const useAmazonS3 = () => {
         secretAccessKey: import.meta.env.VITE_ACCESS_KEY_SECRET,
       },
       forcePathStyle: true,
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     }),
   );
 
@@ -210,5 +212,56 @@ export const useAmazonS3 = () => {
     return key;
   };
 
-  return { getFileUrl, uploadPDF, uploadPDFCotizacion, uploadPDFTranfer, uploadPDFFactura, uploadPDFImport, uploadPDFCruce, uploadPDFAbono };
+  // documentos del empleado
+  const uploadEmployeeDocument = async (
+    file: File,
+    employeeCi: string,
+    folder: "CV" | "CI" | "CROQUIS" | "GARANTIA"
+  ) => {
+    const extension =
+      file.name.split(".").pop()?.toLowerCase() ||
+      file.type.split("/")[1] ||
+      "bin";
+
+    const uniqueName = `${employeeCi}_${Date.now()}.${extension}`;
+
+    //const key = `RRHH/EMPLOYEES/${employeeCi}/${folder}/${uniqueName}`;
+    const key = `RRHH/EMPLOYEES/${folder}/${uniqueName}`;
+
+    const signedUrl = await getSignedUrl(
+      s3Ref.current,
+      new PutObjectCommand({
+        Bucket: import.meta.env.VITE_S3_BUCKET_NAME,
+        Key: key,
+        ContentType: file.type,
+      }),
+      { expiresIn: 3600 }
+    );
+
+    const response = await fetch(signedUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Error al subir el documento del empleado");
+    }
+
+    return key;
+  };
+
+  return {
+    getFileUrl,
+    uploadPDF,
+    uploadPDFCotizacion,
+    uploadPDFTranfer,
+    uploadPDFFactura,
+    uploadPDFImport,
+    uploadPDFCruce,
+    uploadPDFAbono,
+    uploadEmployeeDocument,
+  };
 };

@@ -50,17 +50,6 @@ export const FileDescription = styled.p`
   line-height: 1.5;
 `;
 
-export const FileActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  @media (max-width: 480px) {
-    align-items: stretch;
-    flex-direction: column;
-  }
-`;
-
 export const InformationColumns = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -328,4 +317,237 @@ export const ContactMenuItem = styled.button`
   svg {
     flex-shrink: 0;
   }
+`;
+
+// estilos para components locales para el acordeon de documentos
+export const AccordionContainer = styled.div`
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.lg};
+  background-color: #ffffff;
+  overflow: hidden;
+  margin-bottom: 24px;
+`;
+
+export const AccordionHeader = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background-color: ${theme.colors.secondaryBackground || "#faf9f6"};
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  &:hover {
+    background-color: #f5f3ef;
+  }
+  @media (max-width: 600px) {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+`;
+
+export const AccordionHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  color: ${theme.colors.primary};
+  text-align: left;
+  @media (max-width: 600px) {
+    align-items: flex-start;
+  }
+`;
+
+export const AccordionHeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  @media (max-width: 600px) {
+    width: 100%;
+    justify-content: flex-end;
+    
+  }
+`;
+
+export const RegisteredCountBadge = styled.span`
+  background-color: #ffffff;
+  border: 1px solid ${theme.colors.border};
+  color: ${theme.colors.textMuted};
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 999px;
+`;
+
+export const AccordionBody = styled.div`
+  padding: 8px 24px 24px;
+  border-top: 1px solid ${theme.colors.border};
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const DocTypeRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+  &:not(:last-child) {
+    border-bottom: 1px solid ${theme.colors.border};
+  }
+`;
+
+export const DocTypeHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  @media (max-width: 600px) {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+`;
+
+export const DocTypeMeta = styled.div`
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const DocTypeIcon = styled.div`
+  color: ${theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: rgba(47, 87, 60, 0.06);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+`;
+
+export const DocTypeInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const DocTypeTitle = styled.h4`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${theme.colors.text};
+`;
+
+export const DocTypeDesc = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: ${theme.colors.textMuted};
+`;
+
+export const UploadButton = styled.label`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 16px;
+  background-color: #ffffff;
+  border: 1px solid #c8d3cc;
+  color: ${theme.colors.primary};
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  input {
+    display: none;
+  }
+  &:hover {
+    background-color: rgba(47, 87, 60, 0.05);
+    border-color: ${theme.colors.primary};
+  }
+  @media (max-width: 600px) {
+    margin-left: 52px;
+  }
+`;
+
+export const FileItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 8px;
+  margin-top: 4px;
+`;
+
+export const FileItemLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: ${theme.colors.text};
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 0;
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+export const FileItemRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  @media (max-width: 600px) {
+    gap: 8px;
+  }
+`;
+
+export const FileActionTextButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${theme.colors.primary};
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const IconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  &:hover {
+    background-color: rgba(255, 43, 43, 0.08);
+  }
+`;
+
+export const FileItemsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-left: 52px;
 `;
