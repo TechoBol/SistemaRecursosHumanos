@@ -165,7 +165,7 @@ const Employees = () => {
         flex: 0.7,
         valueGetter: (_, row) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
-          return activeContract?.branch?.name || "N/A";
+          return activeContract?.branch?.name || "No seleccionada";
         },
       },
       {
@@ -175,7 +175,7 @@ const Employees = () => {
         flex: 0.8,
         valueGetter: (_, row) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
-          return activeContract?.area?.name || "N/A";
+          return activeContract?.area?.name || "No seleccionada";
         },
       },
       {
@@ -185,7 +185,7 @@ const Employees = () => {
         flex: 1.1,
         valueGetter: (_, row) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
-          return activeContract?.jobTitle?.name || "N/A";
+          return activeContract?.jobTitle?.name || "No seleccionado";
         },
       },
       {
@@ -196,8 +196,8 @@ const Employees = () => {
         sortable: false,
         renderCell: ({ row }) => (
           <CellStack>
-            <CellText>{row.email || "N/A"}</CellText>
-            <CellText>{row.phone || "N/A"}</CellText>
+            <CellText>{row.email || "Correo NO registrado"}</CellText>
+            <CellText>{row.phone || "Celular NO registrado"}</CellText>
           </CellStack>
         ),
       },

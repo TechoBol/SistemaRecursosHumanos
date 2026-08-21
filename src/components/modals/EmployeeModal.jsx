@@ -34,8 +34,9 @@ const INITIAL_FORM = {
   phone: "",
   address: "",
   contractCompanyId: "",
+  contractJobTitleId: "",
   consolidatedCompanyId: "",
-  employeeType: "Planta",
+  employeeType: "Fiscal",
   branchId: "",
   areaId: "",
   jobTitleId: "",
@@ -89,8 +90,9 @@ const EmployeeModal = ({
         phone: employee.phone ?? "",
         address: employee.address ?? "",
         contractCompanyId: activeContract?.contractCompanyId ?? "",
+        contractJobTitleId: activeContract?.contractJobTitleId ?? "",
         consolidatedCompanyId: activeContract?.consolidatedCompanyId ?? "",
-        employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Planta",
+        employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Fiscal",
         branchId: activeContract?.branchId ?? "",
         areaId: activeContract?.areaId ?? "",
         jobTitleId: activeContract?.jobTitleId ?? "",
@@ -126,9 +128,10 @@ const EmployeeModal = ({
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentForm) => {
+      const cleanValue = name === "baseSalary" ? value.replace(/[^0-9]/g, "") : value;
       const updated = {
         ...currentForm,
-        [name]: value,
+        [name]: cleanValue,
       };
       if (name === "areaId") {
         updated.jobTitleId = "";
@@ -154,6 +157,7 @@ const EmployeeModal = ({
     if (!formData.lastName.trim()) nextErrors.lastName = "El apellido es obligatorio.";
     if (!formData.ci.trim()) nextErrors.ci = "El CI es obligatorio.";
     if (!formData.contractCompanyId) nextErrors.contractCompanyId = "Selecciona la empresa contratante.";
+    if (!formData.contractJobTitleId) nextErrors.contractJobTitleId = "Selecciona el cargo del contrato.";
     if (!formData.consolidatedCompanyId) nextErrors.consolidatedCompanyId = "Selecciona la empresa consolidada.";
     if (!formData.branchId) nextErrors.branchId = "Selecciona una sucursal.";
     if (!formData.areaId) nextErrors.areaId = "Selecciona un área.";
@@ -191,13 +195,31 @@ const EmployeeModal = ({
     setOpenCalendar(null);
   };
 
+  const handleKeyDownSalary = (event) => {
+    const allowedKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+      "Escape",
+      "Enter",
+    ];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
+  };
+
   const title = isEditMode ? "Editar empleado" : "Agregar empleado";
   const buttonText = isEditMode ? "Guardar cambios" : "Añadir empleado";
 
   return (
     <ModalOverlay onMouseDown={handleOverlayClick}>
       <ModalContainer
-        $maxWidth="900px"
+        $maxWidth="950px"
         role="dialog"
         aria-modal="true"
         aria-labelledby="employee-modal-title"
@@ -348,32 +370,32 @@ const EmployeeModal = ({
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="consolidatedCompanyId">Empresa consolidada</FormLabel>
+                  <FormLabel htmlFor="contractJobTitleId">Cargo contrato</FormLabel>
                   <FormSelect
-                    id="consolidatedCompanyId"
-                    name="consolidatedCompanyId"
-                    value={formData.consolidatedCompanyId}
+                    id="contractJobTitleId"
+                    name="contractJobTitleId"
+                    value={formData.contractJobTitleId}
                     onChange={handleChange}
-                    style={{ borderColor: errors.consolidatedCompanyId ? "#FF2B2B" : undefined }}
+                    style={{ borderColor: errors.contractJobTitleId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                    {jobTitles.map((jt) => (
+                      <option key={jt.id} value={jt.id}>{jt.name}</option>
                     ))}
                   </FormSelect>
-                  {errors.consolidatedCompanyId && <FormErrorText>{errors.consolidatedCompanyId}</FormErrorText>}
+                  {errors.contractJobTitleId && <FormErrorText>{errors.contractJobTitleId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
-                  <FormLabel>Tipo de empleado</FormLabel>
+                  <FormLabel>Tipo de contrato</FormLabel>
                   <ToggleGroup>
                     <ToggleButton
                       type="button"
-                      $active={formData.employeeType === "Planta"}
-                      aria-pressed={formData.employeeType === "Planta"}
-                      onClick={() => handleEmployeeType("Planta")}
+                      $active={formData.employeeType === "Fiscal"}
+                      aria-pressed={formData.employeeType === "Fiscal"}
+                      onClick={() => handleEmployeeType("Fiscal")}
                     >
-                      Planta
+                      Fiscal
                     </ToggleButton>
 
                     <ToggleButton
@@ -390,20 +412,20 @@ const EmployeeModal = ({
 
               <FormGrid $columns={3}>
                 <FormField>
-                  <FormLabel htmlFor="branchId">Sucursal</FormLabel>
+                  <FormLabel htmlFor="consolidatedCompanyId">Empresa consolidada</FormLabel>
                   <FormSelect
-                    id="branchId"
-                    name="branchId"
-                    value={formData.branchId}
+                    id="consolidatedCompanyId"
+                    name="consolidatedCompanyId"
+                    value={formData.consolidatedCompanyId}
                     onChange={handleChange}
-                    style={{ borderColor: errors.branchId ? "#FF2B2B" : undefined }}
+                    style={{ borderColor: errors.consolidatedCompanyId ? "#FF2B2B" : undefined }}
                   >
                     <option value="">Seleccionar</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
+                    {companies.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </FormSelect>
-                  {errors.branchId && <FormErrorText>{errors.branchId}</FormErrorText>}
+                  {errors.consolidatedCompanyId && <FormErrorText>{errors.consolidatedCompanyId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -447,6 +469,25 @@ const EmployeeModal = ({
                     )}
                   </FormSelect>
                   {errors.jobTitleId && <FormErrorText>{errors.jobTitleId}</FormErrorText>}
+                </FormField>
+              </FormGrid>
+
+              <FormGrid $columns={4}>
+                <FormField>
+                  <FormLabel htmlFor="branchId">Sucursal</FormLabel>
+                  <FormSelect
+                    id="branchId"
+                    name="branchId"
+                    value={formData.branchId}
+                    onChange={handleChange}
+                    style={{ borderColor: errors.branchId ? "#FF2B2B" : undefined }}
+                  >
+                    <option value="">Seleccionar</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </FormSelect>
+                  {errors.branchId && <FormErrorText>{errors.branchId}</FormErrorText>}
                 </FormField>
 
                 <FormField>
@@ -515,8 +556,11 @@ const EmployeeModal = ({
                     id="baseSalary"
                     name="baseSalary"
                     type="number"
+                    step="1"
+                    pattern="[0-9]*"
                     value={formData.baseSalary}
                     onChange={handleChange}
+                    onKeyDown={handleKeyDownSalary}
                   />
                 </FormField>
               </FormGrid>

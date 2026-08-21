@@ -73,7 +73,7 @@ const mapDbEmployeeToUi = (emp) => {
     branch: activeContract?.branch?.name || "Sin sucursal",
     area: activeContract?.area?.name || "Sin área",
     positionCurrent: activeContract?.jobTitle?.name || "Sin cargo actual",
-    positionContract: activeContract?.jobTitle?.name || "Sin cargo de contrato",
+    positionContract: activeContract?.contractJobTitle?.name || "Sin cargo de contrato",
     contractCompany: activeContract?.contractCompany?.name || "Sin empresa de contrato",
     consolidatedCompany: activeContract?.consolidatedCompany?.name || "Sin empresa consolidada",
     employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Planta",
