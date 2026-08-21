@@ -128,9 +128,10 @@ const EmployeeModal = ({
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentForm) => {
+      const cleanValue = name === "baseSalary" ? value.replace(/[^0-9]/g, "") : value;
       const updated = {
         ...currentForm,
-        [name]: value,
+        [name]: cleanValue,
       };
       if (name === "areaId") {
         updated.jobTitleId = "";
@@ -192,6 +193,24 @@ const EmployeeModal = ({
   const handleDateChange = (event) => {
     handleChange(event);
     setOpenCalendar(null);
+  };
+
+  const handleKeyDownSalary = (event) => {
+    const allowedKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+      "Escape",
+      "Enter",
+    ];
+    if (allowedKeys.includes(event.key)) {
+      return;
+    }
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
   };
 
   const title = isEditMode ? "Editar empleado" : "Agregar empleado";
@@ -537,8 +556,11 @@ const EmployeeModal = ({
                     id="baseSalary"
                     name="baseSalary"
                     type="number"
+                    step="1"
+                    pattern="[0-9]*"
                     value={formData.baseSalary}
                     onChange={handleChange}
+                    onKeyDown={handleKeyDownSalary}
                   />
                 </FormField>
               </FormGrid>

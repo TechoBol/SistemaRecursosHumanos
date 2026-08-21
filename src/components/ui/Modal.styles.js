@@ -201,6 +201,16 @@ export const FormInput = styled.input`
   &[type="date"]::-webkit-inner-spin-button {
     display: none;
   }
+  &[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  &[type="number"]::-webkit-outer-spin-button,
+  &[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
 `;
 
 export const FormTextarea = styled.textarea`
