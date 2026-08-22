@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Mail,
   MapPin,
+  MapPinned,
   Phone,
 } from "lucide-react";
 import {
@@ -209,19 +210,22 @@ const EmployeeDetail = () => {
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <BriefcaseBusiness size={17} />
-                    Cargo: {uiEmployee.positionCurrent || "Sin cargo actual"}
+                    Cargo de contrato: {uiEmployee.positionContract || "Sin cargo contrato"}
                   </EmployeeMetaItem>
-
                   <EmployeeMetaDivider />
-
+                  <EmployeeMetaItem>
+                    Cargo actual: {uiEmployee.positionCurrent || "Sin cargo actual"}
+                  </EmployeeMetaItem>
+                </EmployeeMeta>
+                
+                <EmployeeMeta>
+                  <EmployeeMetaItem>
+                    <MapPinned size={17} />
+                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
+                  </EmployeeMetaItem>
+                  <EmployeeMetaDivider />
                   <EmployeeMetaItem>
                     Área: {uiEmployee.area || "Sin área"}
-                  </EmployeeMetaItem>
-
-                  <EmployeeMetaDivider />
-
-                  <EmployeeMetaItem>
-                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
 

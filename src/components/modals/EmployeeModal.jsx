@@ -408,9 +408,7 @@ const EmployeeModal = ({
                     </ToggleButton>
                   </ToggleGroup>
                 </FormField>
-              </FormGrid>
 
-              <FormGrid $columns={3}>
                 <FormField>
                   <FormLabel htmlFor="consolidatedCompanyId">Empresa consolidada</FormLabel>
                   <FormSelect
