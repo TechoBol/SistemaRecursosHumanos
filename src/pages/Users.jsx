@@ -23,6 +23,7 @@ import UserModal from "../components/modals/UserModal";
 import DataTable from "../components/table/DataTable";
 import { useUsers } from "../hooks/useUsers";
 import { useRoles } from "../hooks/useRoles";
+import { successToast } from "../services/toasts";
 
 const Users = () => {
   const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
@@ -69,12 +70,16 @@ const Users = () => {
   };
 
   const handleSaveUser = async (userData) => {
+    let result;
     if (modalMode === "edit" && selectedUser) {
-      await updateUser(selectedUser.id, userData);
+      result = await updateUser(selectedUser.id, userData);
     } else {
-      await createUser(userData);
+      result = await createUser(userData);
     }
-    handleCloseModal();
+    if (result) {
+      handleCloseModal();
+      successToast(modalMode === "edit" ? "Usuario actualizado correctamente." : "Usuario creado correctamente.");
+    }
   };
 
   const handleDeleteUser = (user) => {

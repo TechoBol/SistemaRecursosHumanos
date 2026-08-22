@@ -41,6 +41,7 @@ import { useCompanies } from "../../hooks/useCompanies";
 import { useBranches } from "../../hooks/useBranches";
 import { useAreas } from "../../hooks/useAreas";
 import { useJobTitles } from "../../hooks/useJobTitles";
+import { successToast } from "../../services/toasts";
 import AdvancesInformation from "./AdvancesInformation";
 import MemorandumsInformation from "./MemorandumsInformation";
 import OtherEventsInformation from "./OtherEventsInformation";
@@ -151,8 +152,9 @@ const EmployeeDetail = () => {
     const updated = await updateEmployee(uiEmployee.id, employeeData);
     if (updated) {
       setDbEmployee(updated);
+      setIsEmployeeModalOpen(false);
+      successToast("Empleado actualizado correctamente.");
     }
-    setIsEmployeeModalOpen(false);
   };
 
   const renderTabContent = () => {

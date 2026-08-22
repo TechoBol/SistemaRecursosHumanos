@@ -76,7 +76,6 @@ export const createEmployeeApi = async (token: string, employeeData: any) => {
       return null;
     }
 
-    successToast("Empleado registrado correctamente.");
     return data;
   } catch (error) {
     console.error("Error al crear empleado:", error);
@@ -107,7 +106,6 @@ export const updateEmployeeApi = async (token: string, id: number, employeeData:
       return null;
     }
 
-    successToast("Empleado actualizado correctamente.");
     return data;
   } catch (error) {
     console.error("Error al actualizar empleado:", error);

@@ -37,6 +37,7 @@ import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
 import { useAreas } from "../hooks/useAreas";
 import { useJobTitles } from "../hooks/useJobTitles";
+import { successToast } from "../services/toasts";
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -79,12 +80,16 @@ const Employees = () => {
   };
 
   const handleSubmitEmployee = async (employeeData) => {
+    let result;
     if (modalMode === "edit" && selectedEmployee) {
-      await updateEmployee(selectedEmployee.id, employeeData);
+      result = await updateEmployee(selectedEmployee.id, employeeData);
     } else {
-      await createEmployee(employeeData);
+      result = await createEmployee(employeeData);
     }
-    handleCloseModal();
+    if (result) {
+      handleCloseModal();
+      successToast(modalMode === "edit" ? "Empleado actualizado correctamente." : "Empleado registrado correctamente.");
+    }
   };
 
   const filteredRows = useMemo(() => {
