@@ -28,6 +28,7 @@ const INITIAL_FORM = {
   date: "",
   reason: "",
   description: "",
+  discount: "",
 };
 
 const PermissionAbsenceModal = ({
@@ -53,6 +54,7 @@ const PermissionAbsenceModal = ({
         date: record.date ?? "",
         reason: record.reason ?? "",
         description: record.description ?? "",
+        discount: record.discount ?? "",
       });
     } else {
       setFormData(INITIAL_FORM);
@@ -124,6 +126,7 @@ const PermissionAbsenceModal = ({
       date: formData.date,
       reason: formData.reason.trim(),
       description: formData.description.trim(),
+      discount: formData.discount !== "" ? Number(formData.discount) : 0,
     };
     if (
       !normalizedData.date ||
@@ -182,8 +185,7 @@ const PermissionAbsenceModal = ({
               <FormGrid $columns={1}>
                 <FormField>
                   <FormLabel>Tipo</FormLabel>
-
-                  <ToggleGroup>
+                  <ToggleGroup $columns={3}>
                     <ToggleButton
                       type="button"
                       $active={formData.type === "permission"}
@@ -192,6 +194,15 @@ const PermissionAbsenceModal = ({
                       onClick={() => handleSelectType("permission")}
                     >
                       Permiso
+                    </ToggleButton>
+                    <ToggleButton
+                      type="button"
+                      $active={formData.type === "lateness"}
+                      $variant="warning"
+                      aria-pressed={ formData.type === "lateness" }
+                      onClick={() => handleSelectType("lateness")}
+                    >
+                      Atraso
                     </ToggleButton>
                     <ToggleButton
                       type="button"
@@ -269,6 +280,20 @@ const PermissionAbsenceModal = ({
                   />
                 </FormField>
 
+                <FormField>
+                  <FormLabel htmlFor="permission-discount">Descuento (Bs.)</FormLabel>
+                  <FormInput
+                    id="permission-discount"
+                    name="discount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                  />
+                </FormField>
+
                 {errorMessage && (
                   <p
                     role="alert"
@@ -292,7 +317,9 @@ const PermissionAbsenceModal = ({
                 ? "Guardar cambios"
                 : formData.type === "permission"
                   ? "Registrar permiso"
-                  : "Registrar falta"}
+                  : formData.type === "absence"
+                    ? "Registrar falta"
+                    : "Registrar atraso"}
             </PrimaryButton>
           </ModalActions>
         </ModalForm>
