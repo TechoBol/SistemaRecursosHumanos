@@ -18,6 +18,7 @@ export const theme = {
 
     border: "#C7C7C7",
     danger: "#FF2B2B",
+    info: "#2563EB",
     overlay: "rgba(31, 31, 31, 0.45)",
   },
 

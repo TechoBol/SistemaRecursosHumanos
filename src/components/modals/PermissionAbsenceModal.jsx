@@ -198,7 +198,7 @@ const PermissionAbsenceModal = ({
                     <ToggleButton
                       type="button"
                       $active={formData.type === "lateness"}
-                      $variant="warning"
+                      $variant="info"
                       aria-pressed={ formData.type === "lateness" }
                       onClick={() => handleSelectType("lateness")}
                     >

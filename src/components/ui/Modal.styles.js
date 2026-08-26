@@ -278,7 +278,7 @@ export const ToggleButton = styled.button`
       return theme.colors.white;
     }
     if ($variant === "danger") return theme.colors.danger;
-    if ($variant === "warning") return "#f97316";
+    if ($variant === "info") return theme.colors.info;;
     return theme.colors.primary;
   }};
   border: none;
@@ -293,22 +293,7 @@ export const ToggleButton = styled.button`
       if (!$active) {
         return theme.colors.background;
       }
-      if ($variant === "danger") return theme.colors.danger;
-      if ($variant === "warning") return "#ea580c";
-      return theme.colors.primary;
     }};
-  }
-  &:focus-visible {
-    position: relative;
-    z-index: 1;
-    outline: 2px solid
-      ${({ $variant = "primary" }) => {
-        if ($variant === "danger") return theme.colors.danger;
-        if ($variant === "warning") return "#f97316";
-        return theme.colors.primary;
-      }};
-
-    outline-offset: -2px;
   }
 `;
 

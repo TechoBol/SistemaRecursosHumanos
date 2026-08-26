@@ -129,13 +129,13 @@ const EmployeeDetail = () => {
   const uiEmployee = useMemo(() => {
     return mapDbEmployeeToUi(dbEmployee) || {
       id: Number(employeeId),
-      firstName: "Cargando",
+      firstName: "",
       lastName: "...",
       ci: "",
       status: "Activo",
-      branch: "Cargando...",
-      area: "Cargando...",
-      positionCurrent: "Cargando...",
+      branch: "",
+      area: "",
+      positionCurrent: "",
       email: "",
       phone: "",
       consolidatedCompany: "",
