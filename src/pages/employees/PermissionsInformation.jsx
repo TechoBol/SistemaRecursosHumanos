@@ -5,6 +5,7 @@ import {
   CircleAlert,
   ClipboardCheck,
   Clock3,
+  MoreVertical,
   Pencil,
   Plus,
   Trash2,
@@ -46,6 +47,14 @@ import {
   FilterLabel,
   HistoryEmptyState,
   HistoryMonthHeader,
+  DesktopOnly,
+  MobileOnly,
+  IncidentMenu,
+  IncidentMenuButton,
+  IncidentMenuList,
+  IncidentMenuAction,
+  MobileHeaderRow,
+  MobileHeaderLeft,
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
 import PermissionAbsenceModal from "../../components/modals/PermissionAbsenceModal";
@@ -270,50 +279,110 @@ const PermissionsInformation = () => {
     });
   };
 
+  const closeMenu = (event) => {
+    const details = event.target.closest("details");
+    if (details) {
+      details.removeAttribute("open");
+    }
+  };
 
+  const renderMobileMenu = (record) => (
+    <IncidentMenu>
+      <IncidentMenuButton title="Opciones">
+        <MoreVertical size={20} />
+      </IncidentMenuButton>
+      <IncidentMenuList>
+        <IncidentMenuAction
+          type="button"
+          onClick={(e) => {
+            closeMenu(e);
+            handleOpenEditModal(record);
+          }}
+        >
+          <Pencil size={14} />
+          Editar
+        </IncidentMenuAction>
+        <IncidentMenuAction
+          type="button"
+          $variant="danger"
+          onClick={(e) => {
+            closeMenu(e);
+            handleDeleteRecord(record.id);
+          }}
+        >
+          <Trash2 size={14} />
+          Eliminar
+        </IncidentMenuAction>
+      </IncidentMenuList>
+    </IncidentMenu>
+  );
 
+  /* card de registro */
   const renderIncidentItem = (record) => {
     const { day, month } = parseRecordDate(record.date);
     const badgeText = record.type === "permission" ? "Permiso" : record.type === "absence" ? "Falta" : "Atraso";
 
     return (
       <IncidentItem key={record.id}>
-        <IncidentDateBlock>
-          <IncidentDay>{day}</IncidentDay>
-          <IncidentMonth>{month}</IncidentMonth>
-        </IncidentDateBlock>
-        <IncidentIndicator $type={record.type} />
-        <IncidentContent>
-          <IncidentHeader>
-            <IncidentBadge $type={record.type}>{badgeText}</IncidentBadge>
-            <IncidentReason>{record.reason}</IncidentReason>
-          </IncidentHeader>
-          <IncidentMeta>
-            Registrado por {record.registeredBy || "Usuario"}
-          </IncidentMeta>
-        </IncidentContent>
-        <IncidentValueBlock>
-          <IncidentDiscount>
-            {record.discount > 0 ? `-Bs ${formatCurrency(record.discount)}` : "Bs 0.00"}
-          </IncidentDiscount>
-        </IncidentValueBlock>
-        <IncidentActions>
-          <IncidentActionButton
-            type="button"
-            title="Editar"
-            onClick={() => handleOpenEditModal(record)}
-          >
-            <Pencil size={16} />
-          </IncidentActionButton>
-          <IncidentActionButton
-            type="button"
-            $variant="danger"
-            title="Eliminar"
-            onClick={() => handleDeleteRecord(record.id)}
-          >
-            <Trash2 size={16} />
-          </IncidentActionButton>
-        </IncidentActions>
+        {/* Desktop View */}
+        <DesktopOnly>
+          <IncidentDateBlock>
+            <IncidentDay>{day}</IncidentDay>
+            <IncidentMonth>{month}</IncidentMonth>
+          </IncidentDateBlock>
+          <IncidentIndicator $type={record.type} />
+          <IncidentContent>
+            <IncidentHeader>
+              <IncidentBadge $type={record.type}>{badgeText}</IncidentBadge>
+              <IncidentReason>{record.reason}</IncidentReason>
+            </IncidentHeader>
+            <IncidentMeta>Registrado por {record.registeredBy || "Usuario"}</IncidentMeta>
+          </IncidentContent>
+          <IncidentValueBlock>
+            <IncidentDiscount>
+              {record.discount > 0 ? `-Bs ${formatCurrency(record.discount)}` : "Bs 0.00"}
+            </IncidentDiscount>
+          </IncidentValueBlock>
+          <IncidentActions>
+            <IncidentActionButton
+              type="button"
+              title="Editar"
+              onClick={() => handleOpenEditModal(record)}
+            >
+              <Pencil size={16} />
+            </IncidentActionButton>
+            <IncidentActionButton
+              type="button"
+              $variant="danger"
+              title="Eliminar"
+              onClick={() => handleDeleteRecord(record.id)}
+            >
+              <Trash2 size={16} />
+            </IncidentActionButton>
+          </IncidentActions>
+        </DesktopOnly>
+
+        {/* Mobile View */}
+        <MobileOnly>
+          <MobileHeaderRow>
+            <MobileHeaderLeft>
+              <IncidentDateBlock>
+                <IncidentDay>{day}</IncidentDay>
+                <IncidentMonth>{month}</IncidentMonth>
+              </IncidentDateBlock>
+              <IncidentIndicator $type={record.type} />
+              <IncidentHeader>
+                <IncidentBadge $type={record.type}>{badgeText}</IncidentBadge>
+                <IncidentDiscount>
+                  {record.discount > 0 ? `-Bs ${formatCurrency(record.discount)}` : "Bs 0.00"}
+                </IncidentDiscount>
+              </IncidentHeader>
+            </MobileHeaderLeft>
+            {renderMobileMenu(record)}
+          </MobileHeaderRow>
+          <IncidentReason>{record.reason}</IncidentReason>
+          <IncidentMeta>Registrado por {record.registeredBy || "Usuario"}</IncidentMeta>
+        </MobileOnly>
       </IncidentItem>
     );
   };

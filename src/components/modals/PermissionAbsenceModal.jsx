@@ -5,6 +5,7 @@ import {
   FormGrid,
   FormInput,
   FormLabel,
+  FormTextarea,
   InputIconButton,
   InputIconContainer,
   ModalActions,
@@ -260,7 +261,7 @@ const PermissionAbsenceModal = ({
 
                 <FormField>
                   <FormLabel htmlFor="permission-reason">Motivo</FormLabel>
-                  <FormInput
+                  <FormTextarea
                     id="permission-reason"
                     name="reason"
                     type="text"

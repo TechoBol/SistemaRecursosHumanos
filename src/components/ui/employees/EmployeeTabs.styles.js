@@ -664,5 +664,108 @@ export const HistoryMonthHeader = styled.h4`
   text-transform: capitalize;
   margin-bottom: 12px;
   padding-bottom: 6px;
-  
+`;
+
+export const DesktopOnly = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
+export const MobileOnly = styled.div`
+  display: none;
+  @media (max-width: 600px) {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+`;
+
+export const IncidentMenu = styled.details`
+  position: relative;
+  display: inline-block;
+  &[open] summary::before {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    display: block;
+    cursor: default;
+    content: " ";
+    background: transparent;
+  }
+`;
+
+export const IncidentMenuButton = styled.summary`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: ${theme.colors.textMuted};
+  list-style: none;
+  cursor: pointer;
+  border-radius: ${theme.radius.round};
+  transition: background-color ${theme.transitions.fast};
+  &::-webkit-details-marker {
+    display: none;
+  }
+  &:hover {
+    color: ${theme.colors.primary};
+    background-color: rgba(47, 87, 60, 0.08);
+  }
+`;
+
+export const IncidentMenuList = styled.div`
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 6px;
+  background-color: ${theme.colors.white};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.md};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+`;
+
+export const IncidentMenuAction = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: ${({ $variant }) => ($variant === "danger" ? "#FF2B2B" : theme.colors.text)};
+  background-color: transparent;
+  border: none;
+  border-radius: ${theme.radius.sm};
+  cursor: pointer;
+  &:hover {
+    background-color: rgba(47, 87, 60, 0.08);
+  }
+`;
+
+export const MobileHeaderRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+`;
+
+export const MobileHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `;
