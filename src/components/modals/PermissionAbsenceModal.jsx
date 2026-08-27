@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, X } from "lucide-react";
 import {
+  FormErrorText,
   FormField,
   FormGrid,
   FormInput,
@@ -42,7 +43,7 @@ const PermissionAbsenceModal = ({
   const isEditMode = mode === "edit";
   const dateInputRef = useRef(null);
   const [formData, setFormData] = useState(INITIAL_FORM);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (!isOpen) {
@@ -60,7 +61,7 @@ const PermissionAbsenceModal = ({
     } else {
       setFormData(INITIAL_FORM);
     }
-    setErrorMessage("");
+    setErrors({});
   }, [isOpen, isEditMode, record]);
 
   useEffect(() => {
@@ -88,8 +89,11 @@ const PermissionAbsenceModal = ({
       ...currentData,
       [name]: value,
     }));
-    if (errorMessage) {
-      setErrorMessage("");
+    if (errors[name]) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        [name]: "",
+      }));
     }
   };
 
@@ -121,6 +125,18 @@ const PermissionAbsenceModal = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const nextErrors = {};
+    if (!formData.date) {
+      nextErrors.date = "La fecha es obligatoria.";
+    }
+    if (!formData.reason.trim()) {
+      nextErrors.reason = "El motivo es obligatorio.";
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
     const normalizedData = {
       type: formData.type,
       duration: formData.duration,
@@ -129,16 +145,6 @@ const PermissionAbsenceModal = ({
       description: formData.description.trim(),
       discount: formData.discount !== "" ? Number(formData.discount) : 0,
     };
-    if (
-      !normalizedData.date ||
-      !normalizedData.reason ||
-      !normalizedData.description
-    ) {
-      setErrorMessage(
-        "Completa la fecha, el motivo y la descripción.",
-      );
-      return;
-    }
     onSubmit(normalizedData);
   };
 
@@ -237,7 +243,7 @@ const PermissionAbsenceModal = ({
                   </ToggleGroup>
                 </FormField>
 
-                <FormField>
+                 <FormField>
                   <FormLabel htmlFor="permission-date">Fecha</FormLabel>
                   <InputIconContainer>
                     <FormInput
@@ -247,6 +253,7 @@ const PermissionAbsenceModal = ({
                       type="date"
                       value={formData.date}
                       onChange={handleChange}
+                      style={{ borderColor: errors.date ? "#FF2B2B" : undefined }}
                     />
                     <InputIconButton
                       type="button"
@@ -257,8 +264,11 @@ const PermissionAbsenceModal = ({
                       <CalendarDays size={20} />
                     </InputIconButton>
                   </InputIconContainer>
+                  {errors.date && (
+                    <FormErrorText>{errors.date}</FormErrorText>
+                  )}
                 </FormField>
-
+ 
                 <FormField>
                   <FormLabel htmlFor="permission-reason">Motivo</FormLabel>
                   <FormTextarea
@@ -267,7 +277,11 @@ const PermissionAbsenceModal = ({
                     type="text"
                     value={formData.reason}
                     onChange={handleChange}
+                    style={{ borderColor: errors.reason ? "#FF2B2B" : undefined }}
                   />
+                  {errors.reason && (
+                    <FormErrorText>{errors.reason}</FormErrorText>
+                  )}
                 </FormField>
 
                 <FormField>
@@ -294,19 +308,6 @@ const PermissionAbsenceModal = ({
                     placeholder="0.00"
                   />
                 </FormField>
-
-                {errorMessage && (
-                  <p
-                    role="alert"
-                    style={{
-                      margin: 0,
-                      color: "#FF2B2B",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {errorMessage}
-                  </p>
-                )}
               </FormGrid>
             </ModalSection>
           </ModalContent>
