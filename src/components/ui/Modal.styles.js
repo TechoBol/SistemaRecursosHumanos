@@ -261,7 +261,7 @@ export const InputIconButton = styled.button`
 export const ToggleGroup = styled.div`
   display: grid;
   grid-template-columns: repeat(${({ $columns = 2 }) => $columns}, 1fr);
-  min-height: 40px;
+  min-height: 35px;
   overflow: hidden;
   border: 1px solid ${theme.colors.border};
   border-radius: ${theme.radius.md};

@@ -87,8 +87,10 @@ const parseRecordDate = (dateStr) => {
   return { day, month, year: y };
 };
 
-const PermissionsInformation = () => {
+const PermissionsInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
+  const activeContract = employee?.contracts?.find((c) => c.isActive);
+  const baseSalary = activeContract ? Number(activeContract.baseSalary) : null;
   const [records, setRecords] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -488,6 +490,7 @@ const PermissionsInformation = () => {
         isOpen={isModalOpen}
         mode={modalMode}
         record={selectedRecord}
+        baseSalary={baseSalary}
         onClose={handleCloseModal}
         onSubmit={handleSaveRecord}
       />

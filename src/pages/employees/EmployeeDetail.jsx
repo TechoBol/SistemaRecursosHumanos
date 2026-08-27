@@ -166,7 +166,7 @@ const EmployeeDetail = () => {
       case "memorandums":
         return <MemorandumsInformation />;
       case "permissions":
-        return <PermissionsInformation />;
+        return <PermissionsInformation employee={uiEmployee} />;
       case "vacations":
         return <VacationsInformation />;
       case "advances":

@@ -37,6 +37,7 @@ const PermissionAbsenceModal = ({
   isOpen,
   record = null,
   mode = "create",
+  baseSalary = null,
   onClose,
   onSubmit,
 }) => {
@@ -97,18 +98,48 @@ const PermissionAbsenceModal = ({
     }
   };
 
+  const calculateDiscountValue = (type, duration, salary) => {
+    if (!salary || isNaN(salary)) return "";
+    if (type === "lateness") {
+      if (duration === "halfDay") {
+        return ((salary / 30) / 2).toFixed(2);
+      } else if (duration === "fullDay") {
+        return (salary / 30).toFixed(2);
+      }
+    } else if (type === "absence") {
+      return ((salary / 30) * 2).toFixed(2);
+    }
+    return "";
+  };
+
   const handleSelectType = (type) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      type,
-    }));
+    setFormData((currentData) => {
+      const nextData = {
+        ...currentData,
+        type,
+      };
+      if (baseSalary) {
+        if (type === "permission") {
+          nextData.discount = "";
+        } else {
+          nextData.discount = calculateDiscountValue(type, nextData.duration, baseSalary);
+        }
+      }
+      return nextData;
+    });
   };
 
   const handleSelectDuration = (duration) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      duration,
-    }));
+    setFormData((currentData) => {
+      const nextData = {
+        ...currentData,
+        duration,
+      };
+      if (baseSalary && nextData.type !== "permission") {
+        nextData.discount = calculateDiscountValue(nextData.type, duration, baseSalary);
+      }
+      return nextData;
+    });
   };
 
   const handleOpenCalendar = () => {
@@ -223,25 +254,27 @@ const PermissionAbsenceModal = ({
                   </ToggleGroup>
                 </FormField>
 
-                <FormField>
-                  <FormLabel>Duración</FormLabel>
-                  <ToggleGroup>
-                    <ToggleButton
-                      type="button"
-                      $active={ formData.duration === "halfDay"}
-                      onClick={() => handleSelectDuration("halfDay")}
-                    >
-                      Medio día
-                    </ToggleButton>
-                    <ToggleButton
-                      type="button"
-                      $active={formData.duration === "fullDay"}
-                      onClick={() => handleSelectDuration("fullDay")}
-                    >
-                      Un día
-                    </ToggleButton>
-                  </ToggleGroup>
-                </FormField>
+                {formData.type !== "absence" && (
+                  <FormField>
+                    <FormLabel>Duración</FormLabel>
+                    <ToggleGroup>
+                      <ToggleButton
+                        type="button"
+                        $active={formData.duration === "halfDay"}
+                        onClick={() => handleSelectDuration("halfDay")}
+                      >
+                        Medio día
+                      </ToggleButton>
+                      <ToggleButton
+                        type="button"
+                        $active={formData.duration === "fullDay"}
+                        onClick={() => handleSelectDuration("fullDay")}
+                      >
+                        Un día
+                      </ToggleButton>
+                    </ToggleGroup>
+                  </FormField>
+                )}
 
                  <FormField>
                   <FormLabel htmlFor="permission-date">Fecha</FormLabel>
