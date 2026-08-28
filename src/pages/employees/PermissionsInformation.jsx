@@ -58,6 +58,7 @@ import {
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
 import PermissionAbsenceModal from "../../components/modals/PermissionAbsenceModal";
+import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
 
 const createId = () => {
   if (
@@ -91,7 +92,7 @@ const PermissionsInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
   const activeContract = employee?.contracts?.find((c) => c.isActive);
   const baseSalary = activeContract ? Number(activeContract.baseSalary) : null;
-  const [records, setRecords] = useState([]);
+  const { incidents: records = [], addIncident, updateIncident, deleteIncident } = useAttendanceIncidents(employee?.id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -244,22 +245,14 @@ const PermissionsInformation = ({ employee }) => {
     setIsModalOpen(false);
   };
 
-  const handleSaveRecord = (recordData) => {
+  const handleSaveRecord = async (recordData) => {
     if (modalMode === "edit" && selectedRecord) {
-      setRecords((currentRecords) =>
-        currentRecords.map((r) =>
-          r.id === selectedRecord.id ? { ...r, ...recordData } : r
-        )
-      );
+      await updateIncident(selectedRecord.id, recordData);
     } else {
-      setRecords((currentRecords) => [
-        ...currentRecords,
-        {
-          id: createId(),
-          ...recordData,
-          registeredBy: fullName || "Usuario",
-        },
-      ]);
+      await addIncident({
+        ...recordData,
+        registeredBy: fullName || "Usuario",
+      });
     }
     handleCloseModal();
   };
@@ -274,9 +267,9 @@ const PermissionsInformation = ({ employee }) => {
       cancelButtonColor: "#D32F2F",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar"
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setRecords((currentRecords) => currentRecords.filter((r) => r.id !== id));
+        await deleteIncident(id);
       }
     });
   };

@@ -203,10 +203,7 @@ const PermissionAbsenceModal = ({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <ModalHeader>
-          <ModalTitle id="permission-modal-title">
-            {title}
-          </ModalTitle>
-
+          <ModalTitle id="permission-modal-title">{title}</ModalTitle>
           <ModalCloseButton
             type="button"
             title="Cerrar"
@@ -317,7 +314,7 @@ const PermissionAbsenceModal = ({
                   )}
                 </FormField>
 
-                <FormField>
+                {/*<FormField>
                   <FormLabel htmlFor="permission-description">Descripción</FormLabel>
                   <FormInput
                     id="permission-description"
@@ -326,7 +323,7 @@ const PermissionAbsenceModal = ({
                     value={formData.description}
                     onChange={handleChange}
                   />
-                </FormField>
+                </FormField>*/}
 
                 <FormField>
                   <FormLabel htmlFor="permission-discount">Descuento (Bs.)</FormLabel>
