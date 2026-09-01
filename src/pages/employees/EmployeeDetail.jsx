@@ -170,7 +170,7 @@ const EmployeeDetail = () => {
       case "vacations":
         return <VacationsInformation />;
       case "advances":
-        return <AdvancesInformation />;
+        return <AdvancesInformation employee={uiEmployee} />;
       case "others":
         return <OtherEventsInformation />;
       case "termination":

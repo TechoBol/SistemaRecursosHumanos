@@ -57,6 +57,7 @@ import {
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
 import AdvanceModal from "../../components/modals/AdvanceModal";
+import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 
 const createId = () => {
   if (
@@ -86,9 +87,9 @@ const parseRecordDate = (dateStr) => {
   return { day, month, year: y };
 };
 
-const AdvancesInformation = () => {
+const AdvancesInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
-  const [records, setRecords] = useState([]);
+  const { advances: records = [], addAdvance, updateAdvance, deleteAdvance } = useEmployeeAdvances(employee?.id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -216,22 +217,14 @@ const AdvancesInformation = () => {
     setIsModalOpen(false);
   };
 
-  const handleSaveRecord = (recordData) => {
+  const handleSaveRecord = async (recordData) => {
     if (modalMode === "edit" && selectedRecord) {
-      setRecords((currentRecords) =>
-        currentRecords.map((r) =>
-          r.id === selectedRecord.id ? { ...r, ...recordData } : r
-        )
-      );
+      await updateAdvance(selectedRecord.id, recordData);
     } else {
-      setRecords((currentRecords) => [
-        ...currentRecords,
-        {
-          id: createId(),
-          ...recordData,
-          registeredBy: fullName || "Usuario",
-        },
-      ]);
+      await addAdvance({
+        ...recordData,
+        registeredBy: fullName || "Usuario",
+      });
     }
     handleCloseModal();
   };
@@ -246,9 +239,9 @@ const AdvancesInformation = () => {
       cancelButtonColor: "#D32F2F",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setRecords((currentRecords) => currentRecords.filter((r) => r.id !== id));
+        await deleteAdvance(id);
       }
     });
   };
