@@ -54,10 +54,10 @@ import VacationsInformation from "./VacationsInformation";
 const DETAIL_TABS = [
   { id: "personal", label: "Información personal" },
   { id: "salary", label: "Salario" },
-  { id: "memorandums", label: "Memorándums" },
   { id: "permissions", label: "Permisos y faltas" },
-  { id: "vacations", label: "Vacaciones" },
   { id: "advances", label: "Anticipos" },
+  { id: "vacations", label: "Vacaciones" },
+  { id: "memorandums", label: "Memorándums" },
   { id: "others", label: "Otros" },
   { id: "termination", label: "Desvinculación" },
 ];
@@ -163,14 +163,14 @@ const EmployeeDetail = () => {
         return <PersonalInformation employee={uiEmployee} />;
       case "salary":
         return <SalaryInformation employee={uiEmployee} />;
-      case "memorandums":
-        return <MemorandumsInformation />;
       case "permissions":
         return <PermissionsInformation employee={uiEmployee} />;
-      case "vacations":
-        return <VacationsInformation />;
       case "advances":
         return <AdvancesInformation employee={uiEmployee} />;
+      case "vacations":
+        return <VacationsInformation />;
+      case "memorandums":
+        return <MemorandumsInformation />;
       case "others":
         return <OtherEventsInformation />;
       case "termination":
