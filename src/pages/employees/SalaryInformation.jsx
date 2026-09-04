@@ -12,6 +12,7 @@ import {
   SectionTitle,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
+import { calculateSalarySummary } from "../../utils/salaryCalculator";
 
 import {
   ContentDivider,
@@ -96,8 +97,16 @@ const formatCurrency = (amount = 0) => {
     .replace("BOB", "Bs");
 };
 
-const SalaryInformation = () => {
+const SalaryInformation = ({ employee }) => {
   const [openMonthId, setOpenMonthId] = useState(null);
+
+  const activeContract = useMemo(() => {
+    return employee?.contracts?.find((c) => c.isActive) || employee?.contracts?.[0] || null;
+  }, [employee]);
+
+  const salarySummary = useMemo(() => {
+    return calculateSalarySummary(activeContract);
+  }, [activeContract]);
 
   const currentSalary = SALARY_HISTORY[0];
 
@@ -148,7 +157,7 @@ const SalaryInformation = () => {
               <SummaryLabel>Haber básico</SummaryLabel>
 
               <SummaryValue>
-                {formatCurrency(currentSalary.baseSalary)}
+                {formatCurrency(salarySummary.baseSalary)}
               </SummaryValue>
             </SummaryContent>
 
@@ -162,7 +171,7 @@ const SalaryInformation = () => {
               <SummaryLabel>Días trabajados</SummaryLabel>
 
               <SummaryValue>
-                {currentSalary.workedDays}
+                {salarySummary.workedDays}
               </SummaryValue>
             </SummaryContent>
 
@@ -177,7 +186,7 @@ const SalaryInformation = () => {
 
               <SummaryValue>
                 {formatCurrency(
-                  currentSalary.basicEarnings,
+                  salarySummary.basicEarnings,
                 )}
               </SummaryValue>
             </SummaryContent>
@@ -244,10 +253,8 @@ const SalaryInformation = () => {
           </DetailSection>
 
           <HighlightCard>
-            <HighlightLabel>Total a pagar</HighlightLabel>
-
+            <HighlightLabel>Líquido pagable</HighlightLabel>
             <HighlightValue>{formatCurrency(totalToPay)}</HighlightValue>
-
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
