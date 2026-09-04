@@ -177,10 +177,11 @@ export const DetailSection = styled.section`
 `;
 
 export const DetailTitle = styled.h3`
-  margin: 0 0 14px;
-  color: ${({ $variant }) => $variant === "danger" ? theme.colors.danger : theme.colors.text};
+  margin: 0 0 12px;
+  color: ${({ $variant }) => $variant === "danger" ? theme.colors.danger : theme.colors.primary};
   font-size: 17px;
   font-weight: 600;
+  margin-top: ${({ $mt }) => $mt || "0"};
 `;
 
 export const DetailList = styled.div`

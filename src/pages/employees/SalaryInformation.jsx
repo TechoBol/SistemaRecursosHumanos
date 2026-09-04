@@ -122,7 +122,7 @@ const SalaryInformation = () => {
   };
 
   const handleUpdateBaseSalary = () => {
-    console.log("Actualizar salario base");
+    console.log("Actualizar haber básico");
   };
 
   return (
@@ -131,24 +131,21 @@ const SalaryInformation = () => {
         <TabHeader>
           <div>
             <SectionTitle>Resumen salario</SectionTitle>
-
-            <TabDescription>
-              Información general del mes actual
-            </TabDescription>
+            <TabDescription>Información general del mes actual</TabDescription>
           </div>
 
           <ActionButton
             type="button"
             onClick={handleUpdateBaseSalary}
           >
-            Actualizar salario base
+            Actualizar haber básico
           </ActionButton>
         </TabHeader>
 
         <SummaryGrid $columns={3}>
           <SummaryCard $variant="primary">
             <SummaryContent>
-              <SummaryLabel>Salario base</SummaryLabel>
+              <SummaryLabel>Haber básico</SummaryLabel>
 
               <SummaryValue>
                 {formatCurrency(currentSalary.baseSalary)}
@@ -176,7 +173,7 @@ const SalaryInformation = () => {
 
           <SummaryCard $variant="warning">
             <SummaryContent>
-              <SummaryLabel>Ganancia básica</SummaryLabel>
+              <SummaryLabel>Sueldo básico</SummaryLabel>
 
               <SummaryValue>
                 {formatCurrency(
@@ -195,22 +192,27 @@ const SalaryInformation = () => {
 
         <DetailGrid>
           <DetailSection>
-            <DetailTitle $variant="danger">
-              Deducciones
-            </DetailTitle>
-
+            {/* AUMENTOS */}
+            <DetailTitle>Aumentos</DetailTitle>
             <DetailList>
               <DetailItem>
                 <DetailInfo>
-                  <DetailLabel>
-                    Deducciones obligatorias
-                  </DetailLabel>
-
-                  <DetailDescription>
-                    AFP (12,71 %)
-                  </DetailDescription>
+                  <DetailLabel>Bono de antigüedad</DetailLabel>
+                  <DetailDescription>2 años 5%</DetailDescription>
                 </DetailInfo>
-
+                <DetailValue>
+                  {formatCurrency(400)}
+                </DetailValue>
+              </DetailItem>
+            </DetailList>
+            {/* DESCUENTOS */}
+            <DetailTitle $variant="danger" $mt="15px">Descuentos</DetailTitle>
+            <DetailList>
+              <DetailItem>
+                <DetailInfo>
+                  <DetailLabel>Gestora</DetailLabel>
+                  <DetailDescription>AFP (12,71 %)</DetailDescription>
+                </DetailInfo>
                 <DetailValue $variant="danger">
                   -{" "}
                   {formatCurrency(
@@ -221,20 +223,22 @@ const SalaryInformation = () => {
 
               <DetailItem>
                 <DetailInfo>
-                  <DetailLabel>
-                    Otras deducciones
-                  </DetailLabel>
-
-                  <DetailDescription>
-                    Ninguna
-                  </DetailDescription>
+                  <DetailLabel>Deudas</DetailLabel>
+                  <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
                 </DetailInfo>
-
                 <DetailValue>
                   {formatCurrency(
-                    currentSalary.otherDeductions,
+                    
                   )}
                 </DetailValue>
+              </DetailItem>
+
+              <DetailItem>
+                <DetailInfo>
+                  <DetailLabel>Anticipos</DetailLabel>
+                  <DetailDescription>Adelantos del mes</DetailDescription>
+                </DetailInfo>
+                <DetailValue>{formatCurrency(1)}</DetailValue>
               </DetailItem>
             </DetailList>
           </DetailSection>
@@ -242,9 +246,7 @@ const SalaryInformation = () => {
           <HighlightCard>
             <HighlightLabel>Total a pagar</HighlightLabel>
 
-            <HighlightValue>
-              {formatCurrency(totalToPay)}
-            </HighlightValue>
+            <HighlightValue>{formatCurrency(totalToPay)}</HighlightValue>
 
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
@@ -279,7 +281,7 @@ const SalaryInformation = () => {
                 {isOpen && (
                   <HistoryContent>
                     <HistoryValue>
-                      <span>Salario base</span>
+                      <span>Haber básico</span>
                       <strong>
                         {formatCurrency(history.baseSalary)}
                       </strong>
@@ -291,7 +293,7 @@ const SalaryInformation = () => {
                     </HistoryValue>
 
                     <HistoryValue>
-                      <span>Ganancia básica</span>
+                      <span>Sueldo básico</span>
                       <strong>
                         {formatCurrency(
                           history.basicEarnings,
@@ -300,7 +302,7 @@ const SalaryInformation = () => {
                     </HistoryValue>
 
                     <HistoryValue>
-                      <span>Deducciones</span>
+                      <span>Gestora</span>
                       <strong>
                         {formatCurrency(
                           history.mandatoryDeductions +
