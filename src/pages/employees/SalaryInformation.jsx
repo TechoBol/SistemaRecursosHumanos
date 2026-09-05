@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   CalendarDays,
-  ChevronDown,
-  ChevronUp,
   DollarSign,
   TrendingUp,
 } from "lucide-react";
@@ -13,6 +11,8 @@ import {
   TabContentCard,
 } from "../../components/ui/Employees.styles";
 import { calculateSalarySummary } from "../../utils/salaryCalculator";
+import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
+import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 
 import {
   ContentDivider,
@@ -28,11 +28,7 @@ import {
   HighlightCard,
   HighlightLabel,
   HighlightValue,
-  HistoryContent,
-  HistoryHeader,
-  HistoryItem,
-  HistoryList,
-  HistoryValue,
+  HistoryEmptyState,
   SummaryCard,
   SummaryContent,
   SummaryGrid,
@@ -42,49 +38,6 @@ import {
   TabDescription,
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
-
-const SALARY_HISTORY = [
-  {
-    id: 1,
-    month: "Junio de 2026",
-    baseSalary: 3300,
-    workedDays: 7,
-    basicEarnings: 770,
-    mandatoryDeductions: 97.87,
-    otherDeductions: 0,
-    total: 770,
-  },
-  {
-    id: 2,
-    month: "Mayo de 2026",
-    baseSalary: 3300,
-    workedDays: 30,
-    basicEarnings: 3300,
-    mandatoryDeductions: 97.87,
-    otherDeductions: 0,
-    total: 3202.13,
-  },
-  {
-    id: 3,
-    month: "Abril de 2026",
-    baseSalary: 3300,
-    workedDays: 30,
-    basicEarnings: 3300,
-    mandatoryDeductions: 97.87,
-    otherDeductions: 0,
-    total: 3202.13,
-  },
-  {
-    id: 4,
-    month: "Marzo de 2026",
-    baseSalary: 3100,
-    workedDays: 30,
-    basicEarnings: 3100,
-    mandatoryDeductions: 91.94,
-    otherDeductions: 0,
-    total: 3008.06,
-  },
-];
 
 const formatCurrency = (amount = 0) => {
   return new Intl.NumberFormat("es-BO", {
@@ -98,41 +51,54 @@ const formatCurrency = (amount = 0) => {
 };
 
 const SalaryInformation = ({ employee }) => {
-  const [openMonthId, setOpenMonthId] = useState(null);
-
   const activeContract = useMemo(() => {
     return employee?.contracts?.find((c) => c.isActive) || employee?.contracts?.[0] || null;
   }, [employee]);
 
+  const { incidents = [] } = useAttendanceIncidents(employee?.id);
+  const { advances = [] } = useEmployeeAdvances(employee?.id);
+
+  const currentYear = new Date().getFullYear();
+  const currentMonthNum = new Date().getMonth() + 1;
+
+  // Suma de deudas (descuentos por asistencias/faltas/atrasos) del mes actual
+  const attendanceDiscountsTotal = useMemo(() => {
+    return incidents.reduce((sum, item) => {
+      if (!item.date) return sum;
+      const parts = item.date.split("-");
+      if (parts.length !== 3) return sum;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      if (y === currentYear && m === currentMonthNum) {
+        return sum + (Number(item.discount) || 0);
+      }
+      return sum;
+    }, 0);
+  }, [incidents, currentYear, currentMonthNum]);
+
+  // Suma de anticipos otorgados en el mes actual
+  const advanceTotal = useMemo(() => {
+    return advances.reduce((sum, item) => {
+      if (!item.date) return sum;
+      const parts = item.date.split("-");
+      if (parts.length !== 3) return sum;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      if (y === currentYear && m === currentMonthNum) {
+        return sum + (Number(item.amount) || 0);
+      }
+      return sum;
+    }, 0);
+  }, [advances, currentYear, currentMonthNum]);
+
   const salarySummary = useMemo(() => {
-    return calculateSalarySummary(activeContract);
-  }, [activeContract]);
-
-  const currentSalary = SALARY_HISTORY[0];
-
-  const totalDeductions = useMemo(() => {
-    return (
-      currentSalary.mandatoryDeductions +
-      currentSalary.otherDeductions
+    return calculateSalarySummary(
+      activeContract,
+      new Date(),
+      attendanceDiscountsTotal,
+      advanceTotal
     );
-  }, [
-    currentSalary.mandatoryDeductions,
-    currentSalary.otherDeductions,
-  ]);
-
-  const totalToPay = useMemo(() => {
-    return currentSalary.basicEarnings - totalDeductions;
-  }, [currentSalary.basicEarnings, totalDeductions]);
-
-  const handleToggleMonth = (monthId) => {
-    setOpenMonthId((currentId) =>
-      currentId === monthId ? null : monthId,
-    );
-  };
-
-  const handleUpdateBaseSalary = () => {
-    console.log("Actualizar haber básico");
-  };
+  }, [activeContract, attendanceDiscountsTotal, advanceTotal]);
 
   return (
     <>
@@ -143,10 +109,7 @@ const SalaryInformation = ({ employee }) => {
             <TabDescription>Información general del mes actual</TabDescription>
           </div>
 
-          <ActionButton
-            type="button"
-            onClick={handleUpdateBaseSalary}
-          >
+          <ActionButton type="button">
             Actualizar haber básico
           </ActionButton>
         </TabHeader>
@@ -155,12 +118,10 @@ const SalaryInformation = ({ employee }) => {
           <SummaryCard $variant="primary">
             <SummaryContent>
               <SummaryLabel>Haber básico</SummaryLabel>
-
               <SummaryValue>
                 {formatCurrency(salarySummary.baseSalary)}
               </SummaryValue>
             </SummaryContent>
-
             <SummaryIcon>
               <DollarSign size={56} strokeWidth={1.7} />
             </SummaryIcon>
@@ -169,12 +130,10 @@ const SalaryInformation = ({ employee }) => {
           <SummaryCard $variant="neutral">
             <SummaryContent>
               <SummaryLabel>Días trabajados</SummaryLabel>
-
               <SummaryValue>
                 {salarySummary.workedDays}
               </SummaryValue>
             </SummaryContent>
-
             <SummaryIcon>
               <CalendarDays size={52} strokeWidth={1.7} />
             </SummaryIcon>
@@ -183,14 +142,10 @@ const SalaryInformation = ({ employee }) => {
           <SummaryCard $variant="warning">
             <SummaryContent>
               <SummaryLabel>Sueldo básico</SummaryLabel>
-
               <SummaryValue>
-                {formatCurrency(
-                  salarySummary.basicEarnings,
-                )}
+                {formatCurrency(salarySummary.basicEarnings)}
               </SummaryValue>
             </SummaryContent>
-
             <SummaryIcon>
               <TrendingUp size={52} strokeWidth={1.7} />
             </SummaryIcon>
@@ -207,10 +162,10 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Bono de antigüedad</DetailLabel>
-                  <DetailDescription>2 años 5%</DetailDescription>
+                  <DetailDescription>{salarySummary.seniorityDescription}</DetailDescription>
                 </DetailInfo>
                 <DetailValue>
-                  {formatCurrency(550)}
+                  {formatCurrency(salarySummary.seniorityBonus)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -218,11 +173,11 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Total ganado</HighlightLabel>
-            <HighlightValue>{formatCurrency(totalToPay)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salarySummary.totalEarned)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
-        
+
         {/* DESCUENTOS */}
         <DetailGrid>
           <DetailSection>
@@ -231,13 +186,10 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Gestora</DetailLabel>
-                  <DetailDescription>AFP (12,71 %)</DetailDescription>
+                  <DetailDescription>AFP (12,71 % sobre Total Ganado)</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(
-                    currentSalary.mandatoryDeductions,
-                  )}
+                  - {formatCurrency(salarySummary.gestoraDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -246,10 +198,8 @@ const SalaryInformation = ({ employee }) => {
                   <DetailLabel>Deudas</DetailLabel>
                   <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
                 </DetailInfo>
-                <DetailValue>
-                  {formatCurrency(
-                    
-                  )}
+                <DetailValue $variant="danger">
+                  - {formatCurrency(salarySummary.deudasDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -258,14 +208,16 @@ const SalaryInformation = ({ employee }) => {
                   <DetailLabel>Anticipos</DetailLabel>
                   <DetailDescription>Adelantos del mes</DetailDescription>
                 </DetailInfo>
-                <DetailValue>{formatCurrency(1)}</DetailValue>
+                <DetailValue $variant="danger">
+                  - {formatCurrency(salarySummary.anticiposDeduction)}
+                </DetailValue>
               </DetailItem>
             </DetailList>
           </DetailSection>
 
           <HighlightCard>
             <HighlightLabel>Líquido pagable</HighlightLabel>
-            <HighlightValue>{formatCurrency(totalToPay)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salarySummary.netPayable)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
@@ -273,74 +225,9 @@ const SalaryInformation = ({ employee }) => {
 
       <TabContentCard>
         <SectionTitle>Meses anteriores</SectionTitle>
-
-        <HistoryList>
-          {SALARY_HISTORY.map((history) => {
-            const isOpen = openMonthId === history.id;
-
-            return (
-              <HistoryItem key={history.id}>
-                <HistoryHeader
-                  type="button"
-                  aria-expanded={isOpen}
-                  onClick={() =>
-                    handleToggleMonth(history.id)
-                  }
-                >
-                  <span>{history.month}</span>
-
-                  {isOpen ? (
-                    <ChevronUp size={19} />
-                  ) : (
-                    <ChevronDown size={19} />
-                  )}
-                </HistoryHeader>
-
-                {isOpen && (
-                  <HistoryContent>
-                    <HistoryValue>
-                      <span>Haber básico</span>
-                      <strong>
-                        {formatCurrency(history.baseSalary)}
-                      </strong>
-                    </HistoryValue>
-
-                    <HistoryValue>
-                      <span>Días trabajados</span>
-                      <strong>{history.workedDays}</strong>
-                    </HistoryValue>
-
-                    <HistoryValue>
-                      <span>Sueldo básico</span>
-                      <strong>
-                        {formatCurrency(
-                          history.basicEarnings,
-                        )}
-                      </strong>
-                    </HistoryValue>
-
-                    <HistoryValue>
-                      <span>Gestora</span>
-                      <strong>
-                        {formatCurrency(
-                          history.mandatoryDeductions +
-                            history.otherDeductions,
-                        )}
-                      </strong>
-                    </HistoryValue>
-
-                    <HistoryValue>
-                      <span>Total pagado</span>
-                      <strong>
-                        {formatCurrency(history.total)}
-                      </strong>
-                    </HistoryValue>
-                  </HistoryContent>
-                )}
-              </HistoryItem>
-            );
-          })}
-        </HistoryList>
+        <HistoryEmptyState>
+          No se encontraron registros de nóminas de meses anteriores
+        </HistoryEmptyState>
       </TabContentCard>
     </>
   );
