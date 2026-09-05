@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, X } from "lucide-react";
 import {
+  FormErrorText,
   FormField,
   FormGrid,
   FormInput,
   FormLabel,
+  FormTextarea,
   InputIconButton,
   InputIconContainer,
   ModalActions,
@@ -28,19 +30,21 @@ const INITIAL_FORM = {
   date: "",
   reason: "",
   description: "",
+  discount: "",
 };
 
 const PermissionAbsenceModal = ({
   isOpen,
   record = null,
   mode = "create",
+  baseSalary = null,
   onClose,
   onSubmit,
 }) => {
   const isEditMode = mode === "edit";
   const dateInputRef = useRef(null);
   const [formData, setFormData] = useState(INITIAL_FORM);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (!isOpen) {
@@ -53,11 +57,12 @@ const PermissionAbsenceModal = ({
         date: record.date ?? "",
         reason: record.reason ?? "",
         description: record.description ?? "",
+        discount: record.discount ?? "",
       });
     } else {
       setFormData(INITIAL_FORM);
     }
-    setErrorMessage("");
+    setErrors({});
   }, [isOpen, isEditMode, record]);
 
   useEffect(() => {
@@ -85,23 +90,56 @@ const PermissionAbsenceModal = ({
       ...currentData,
       [name]: value,
     }));
-    if (errorMessage) {
-      setErrorMessage("");
+    if (errors[name]) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        [name]: "",
+      }));
     }
   };
 
+  const calculateDiscountValue = (type, duration, salary) => {
+    if (!salary || isNaN(salary)) return "";
+    if (type === "lateness") {
+      if (duration === "halfDay") {
+        return ((salary / 30) / 2).toFixed(2);
+      } else if (duration === "fullDay") {
+        return (salary / 30).toFixed(2);
+      }
+    } else if (type === "absence") {
+      return ((salary / 30) * 2).toFixed(2);
+    }
+    return "";
+  };
+
   const handleSelectType = (type) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      type,
-    }));
+    setFormData((currentData) => {
+      const nextData = {
+        ...currentData,
+        type,
+      };
+      if (baseSalary) {
+        if (type === "permission") {
+          nextData.discount = "";
+        } else {
+          nextData.discount = calculateDiscountValue(type, nextData.duration, baseSalary);
+        }
+      }
+      return nextData;
+    });
   };
 
   const handleSelectDuration = (duration) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      duration,
-    }));
+    setFormData((currentData) => {
+      const nextData = {
+        ...currentData,
+        duration,
+      };
+      if (baseSalary && nextData.type !== "permission") {
+        nextData.discount = calculateDiscountValue(nextData.type, duration, baseSalary);
+      }
+      return nextData;
+    });
   };
 
   const handleOpenCalendar = () => {
@@ -118,23 +156,26 @@ const PermissionAbsenceModal = ({
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    const nextErrors = {};
+    if (!formData.date) {
+      nextErrors.date = "La fecha es obligatoria.";
+    }
+    if (!formData.reason.trim()) {
+      nextErrors.reason = "El motivo es obligatorio.";
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
     const normalizedData = {
       type: formData.type,
       duration: formData.duration,
       date: formData.date,
       reason: formData.reason.trim(),
       description: formData.description.trim(),
+      discount: formData.discount !== "" ? Number(formData.discount) : 0,
     };
-    if (
-      !normalizedData.date ||
-      !normalizedData.reason ||
-      !normalizedData.description
-    ) {
-      setErrorMessage(
-        "Completa la fecha, el motivo y la descripción.",
-      );
-      return;
-    }
     onSubmit(normalizedData);
   };
 
@@ -162,10 +203,7 @@ const PermissionAbsenceModal = ({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <ModalHeader>
-          <ModalTitle id="permission-modal-title">
-            {title}
-          </ModalTitle>
-
+          <ModalTitle id="permission-modal-title">{title}</ModalTitle>
           <ModalCloseButton
             type="button"
             title="Cerrar"
@@ -182,8 +220,7 @@ const PermissionAbsenceModal = ({
               <FormGrid $columns={1}>
                 <FormField>
                   <FormLabel>Tipo</FormLabel>
-
-                  <ToggleGroup>
+                  <ToggleGroup $columns={3}>
                     <ToggleButton
                       type="button"
                       $active={formData.type === "permission"}
@@ -192,6 +229,15 @@ const PermissionAbsenceModal = ({
                       onClick={() => handleSelectType("permission")}
                     >
                       Permiso
+                    </ToggleButton>
+                    <ToggleButton
+                      type="button"
+                      $active={formData.type === "lateness"}
+                      $variant="info"
+                      aria-pressed={ formData.type === "lateness" }
+                      onClick={() => handleSelectType("lateness")}
+                    >
+                      Atraso
                     </ToggleButton>
                     <ToggleButton
                       type="button"
@@ -205,27 +251,29 @@ const PermissionAbsenceModal = ({
                   </ToggleGroup>
                 </FormField>
 
-                <FormField>
-                  <FormLabel>Duración</FormLabel>
-                  <ToggleGroup>
-                    <ToggleButton
-                      type="button"
-                      $active={ formData.duration === "halfDay"}
-                      onClick={() => handleSelectDuration("halfDay")}
-                    >
-                      Medio día
-                    </ToggleButton>
-                    <ToggleButton
-                      type="button"
-                      $active={formData.duration === "fullDay"}
-                      onClick={() => handleSelectDuration("fullDay")}
-                    >
-                      Un día
-                    </ToggleButton>
-                  </ToggleGroup>
-                </FormField>
+                {formData.type !== "absence" && (
+                  <FormField>
+                    <FormLabel>Duración</FormLabel>
+                    <ToggleGroup>
+                      <ToggleButton
+                        type="button"
+                        $active={formData.duration === "halfDay"}
+                        onClick={() => handleSelectDuration("halfDay")}
+                      >
+                        Medio día
+                      </ToggleButton>
+                      <ToggleButton
+                        type="button"
+                        $active={formData.duration === "fullDay"}
+                        onClick={() => handleSelectDuration("fullDay")}
+                      >
+                        Un día
+                      </ToggleButton>
+                    </ToggleGroup>
+                  </FormField>
+                )}
 
-                <FormField>
+                 <FormField>
                   <FormLabel htmlFor="permission-date">Fecha</FormLabel>
                   <InputIconContainer>
                     <FormInput
@@ -235,6 +283,7 @@ const PermissionAbsenceModal = ({
                       type="date"
                       value={formData.date}
                       onChange={handleChange}
+                      style={{ borderColor: errors.date ? "#FF2B2B" : undefined }}
                     />
                     <InputIconButton
                       type="button"
@@ -245,20 +294,27 @@ const PermissionAbsenceModal = ({
                       <CalendarDays size={20} />
                     </InputIconButton>
                   </InputIconContainer>
+                  {errors.date && (
+                    <FormErrorText>{errors.date}</FormErrorText>
+                  )}
                 </FormField>
-
+ 
                 <FormField>
                   <FormLabel htmlFor="permission-reason">Motivo</FormLabel>
-                  <FormInput
+                  <FormTextarea
                     id="permission-reason"
                     name="reason"
                     type="text"
                     value={formData.reason}
                     onChange={handleChange}
+                    style={{ borderColor: errors.reason ? "#FF2B2B" : undefined }}
                   />
+                  {errors.reason && (
+                    <FormErrorText>{errors.reason}</FormErrorText>
+                  )}
                 </FormField>
 
-                <FormField>
+                {/*<FormField>
                   <FormLabel htmlFor="permission-description">Descripción</FormLabel>
                   <FormInput
                     id="permission-description"
@@ -267,20 +323,21 @@ const PermissionAbsenceModal = ({
                     value={formData.description}
                     onChange={handleChange}
                   />
-                </FormField>
+                </FormField>*/}
 
-                {errorMessage && (
-                  <p
-                    role="alert"
-                    style={{
-                      margin: 0,
-                      color: "#FF2B2B",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {errorMessage}
-                  </p>
-                )}
+                <FormField>
+                  <FormLabel htmlFor="permission-discount">Descuento (Bs.)</FormLabel>
+                  <FormInput
+                    id="permission-discount"
+                    name="discount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.discount}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                  />
+                </FormField>
               </FormGrid>
             </ModalSection>
           </ModalContent>
@@ -292,7 +349,9 @@ const PermissionAbsenceModal = ({
                 ? "Guardar cambios"
                 : formData.type === "permission"
                   ? "Registrar permiso"
-                  : "Registrar falta"}
+                  : formData.type === "absence"
+                    ? "Registrar falta"
+                    : "Registrar atraso"}
             </PrimaryButton>
           </ModalActions>
         </ModalForm>

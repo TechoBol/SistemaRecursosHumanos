@@ -152,9 +152,6 @@ export const FormGrid = styled.div`
   & + & {
     margin-top: 18px;
   }
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   @media (max-width: 560px) {
     grid-template-columns: 1fr;
   }
@@ -263,8 +260,8 @@ export const InputIconButton = styled.button`
 
 export const ToggleGroup = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  min-height: 40px;
+  grid-template-columns: repeat(${({ $columns = 2 }) => $columns}, 1fr);
+  min-height: 35px;
   overflow: hidden;
   border: 1px solid ${theme.colors.border};
   border-radius: ${theme.radius.md};
@@ -280,9 +277,9 @@ export const ToggleButton = styled.button`
     if (!$active) {
       return theme.colors.white;
     }
-    return $variant === "danger"
-      ? theme.colors.danger
-      : theme.colors.primary;
+    if ($variant === "danger") return theme.colors.danger;
+    if ($variant === "info") return theme.colors.info;;
+    return theme.colors.primary;
   }};
   border: none;
   transition:
@@ -296,21 +293,7 @@ export const ToggleButton = styled.button`
       if (!$active) {
         return theme.colors.background;
       }
-      return $variant === "danger"
-        ? theme.colors.danger
-        : theme.colors.primary;
     }};
-  }
-  &:focus-visible {
-    position: relative;
-    z-index: 1;
-    outline: 2px solid
-      ${({ $variant = "primary" }) =>
-        $variant === "danger"
-          ? theme.colors.danger
-          : theme.colors.primary};
-
-    outline-offset: -2px;
   }
 `;
 

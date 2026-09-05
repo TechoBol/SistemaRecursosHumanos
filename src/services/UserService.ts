@@ -76,7 +76,6 @@ export const createUserApi = async (token: string, userData: any) => {
       return null;
     }
 
-    successToast("Usuario creado correctamente.");
     return data;
   } catch (error) {
     console.error("Error al crear usuario:", error);
@@ -107,7 +106,6 @@ export const updateUserApi = async (token: string, id: number, userData: any) =>
       return null;
     }
 
-    successToast("Usuario actualizado correctamente.");
     return data;
   } catch (error) {
     console.error("Error al actualizar usuario:", error);

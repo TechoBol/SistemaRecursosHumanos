@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Mail,
   MapPin,
+  MapPinned,
   Phone,
 } from "lucide-react";
 import {
@@ -40,6 +41,7 @@ import { useCompanies } from "../../hooks/useCompanies";
 import { useBranches } from "../../hooks/useBranches";
 import { useAreas } from "../../hooks/useAreas";
 import { useJobTitles } from "../../hooks/useJobTitles";
+import { successToast } from "../../services/toasts";
 import AdvancesInformation from "./AdvancesInformation";
 import MemorandumsInformation from "./MemorandumsInformation";
 import OtherEventsInformation from "./OtherEventsInformation";
@@ -52,10 +54,10 @@ import VacationsInformation from "./VacationsInformation";
 const DETAIL_TABS = [
   { id: "personal", label: "Información personal" },
   { id: "salary", label: "Salario" },
-  { id: "memorandums", label: "Memorándums" },
   { id: "permissions", label: "Permisos y faltas" },
-  { id: "vacations", label: "Vacaciones" },
   { id: "advances", label: "Anticipos" },
+  { id: "vacations", label: "Vacaciones" },
+  { id: "memorandums", label: "Memorándums" },
   { id: "others", label: "Otros" },
   { id: "termination", label: "Desvinculación" },
 ];
@@ -127,13 +129,13 @@ const EmployeeDetail = () => {
   const uiEmployee = useMemo(() => {
     return mapDbEmployeeToUi(dbEmployee) || {
       id: Number(employeeId),
-      firstName: "Cargando",
+      firstName: "",
       lastName: "...",
       ci: "",
       status: "Activo",
-      branch: "Cargando...",
-      area: "Cargando...",
-      positionCurrent: "Cargando...",
+      branch: "",
+      area: "",
+      positionCurrent: "",
       email: "",
       phone: "",
       consolidatedCompany: "",
@@ -150,8 +152,9 @@ const EmployeeDetail = () => {
     const updated = await updateEmployee(uiEmployee.id, employeeData);
     if (updated) {
       setDbEmployee(updated);
+      setIsEmployeeModalOpen(false);
+      successToast("Empleado actualizado correctamente.");
     }
-    setIsEmployeeModalOpen(false);
   };
 
   const renderTabContent = () => {
@@ -160,14 +163,14 @@ const EmployeeDetail = () => {
         return <PersonalInformation employee={uiEmployee} />;
       case "salary":
         return <SalaryInformation employee={uiEmployee} />;
-      case "memorandums":
-        return <MemorandumsInformation />;
       case "permissions":
-        return <PermissionsInformation />;
+        return <PermissionsInformation employee={uiEmployee} />;
+      case "advances":
+        return <AdvancesInformation employee={uiEmployee} />;
       case "vacations":
         return <VacationsInformation />;
-      case "advances":
-        return <AdvancesInformation />;
+      case "memorandums":
+        return <MemorandumsInformation />;
       case "others":
         return <OtherEventsInformation />;
       case "termination":
@@ -209,19 +212,22 @@ const EmployeeDetail = () => {
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <BriefcaseBusiness size={17} />
-                    Cargo: {uiEmployee.positionCurrent || "Sin cargo actual"}
+                    Cargo de contrato: {uiEmployee.positionContract || "Sin cargo contrato"}
                   </EmployeeMetaItem>
-
                   <EmployeeMetaDivider />
-
+                  <EmployeeMetaItem>
+                    Cargo actual: {uiEmployee.positionCurrent || "Sin cargo actual"}
+                  </EmployeeMetaItem>
+                </EmployeeMeta>
+                
+                <EmployeeMeta>
+                  <EmployeeMetaItem>
+                    <MapPinned size={17} />
+                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
+                  </EmployeeMetaItem>
+                  <EmployeeMetaDivider />
                   <EmployeeMetaItem>
                     Área: {uiEmployee.area || "Sin área"}
-                  </EmployeeMetaItem>
-
-                  <EmployeeMetaDivider />
-
-                  <EmployeeMetaItem>
-                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
 
