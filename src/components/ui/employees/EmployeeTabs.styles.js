@@ -181,7 +181,6 @@ export const DetailTitle = styled.h3`
   color: ${({ $variant }) => $variant === "danger" ? theme.colors.danger : theme.colors.primary};
   font-size: 17px;
   font-weight: 600;
-  margin-top: ${({ $mt }) => $mt || "0"};
 `;
 
 export const DetailList = styled.div`

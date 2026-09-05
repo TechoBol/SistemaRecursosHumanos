@@ -199,9 +199,9 @@ const SalaryInformation = ({ employee }) => {
 
         <ContentDivider />
 
+        {/* AUMENTOS */}
         <DetailGrid>
           <DetailSection>
-            {/* AUMENTOS */}
             <DetailTitle>Aumentos</DetailTitle>
             <DetailList>
               <DetailItem>
@@ -210,12 +210,23 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>2 años 5%</DetailDescription>
                 </DetailInfo>
                 <DetailValue>
-                  {formatCurrency(400)}
+                  {formatCurrency(550)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
-            {/* DESCUENTOS */}
-            <DetailTitle $variant="danger" $mt="15px">Descuentos</DetailTitle>
+          </DetailSection>
+
+          <HighlightCard>
+            <HighlightLabel>Total ganado</HighlightLabel>
+            <HighlightValue>{formatCurrency(totalToPay)}</HighlightValue>
+            <DollarSign size={54} strokeWidth={1.7} />
+          </HighlightCard>
+        </DetailGrid>
+        
+        {/* DESCUENTOS */}
+        <DetailGrid>
+          <DetailSection>
+            <DetailTitle $variant="danger">Descuentos</DetailTitle>
             <DetailList>
               <DetailItem>
                 <DetailInfo>
