@@ -3,11 +3,6 @@
  */
 
 /**
- * Salario Mínimo Nacional (SMN) de referencia para el cálculo de beneficios de ley (Bolivia).
- */
-export const MINIMUM_NATIONAL_SALARY = 2796.40;
-
-/**
  * Obtiene el total de días calendario de un mes determinado (mes 1-indexed, ej. 8 para agosto).
  * @param {number} year - Año completo (ej. 2026)
  * @param {number} month - Mes base 1 (1 a 12)
@@ -97,9 +92,8 @@ export const calculateWorkedDaysInMonth = (activeContract, targetDate = new Date
   return Math.max(0, daysWorked);
 };
 
-// REVISAR DESDE AQUIII
 /**
- * Calcula el bono de antigüedad según la escala legal sobre 3 Salarios Mínimos Nacionales.
+ * Calcula el bono de antigüedad según la escala legal sobre el Haber Básico del empleado.
  *
  * @param {Object} activeContract - Objeto del contrato activo
  * @param {Date} [targetDate=new Date()] - Fecha de cálculo
@@ -117,8 +111,9 @@ export const calculateSeniorityBonus = (activeContract, targetDate = new Date(),
     return { amount: 0, description: "No aplica para contrato de consultoría", percentage: 0 };
   }
 
-  if (workedDays <= 0) {
-    return { amount: 0, description: "Sin días trabajados en el mes", percentage: 0 };
+  const baseSalary = Number(activeContract.baseSalary) || 0;
+  if (baseSalary <= 0 || workedDays <= 0) {
+    return { amount: 0, description: "Sin sueldo o días trabajados", percentage: 0 };
   }
 
   const hireDateStr = String(activeContract.hireDate).split("T")[0];
@@ -142,40 +137,24 @@ export const calculateSeniorityBonus = (activeContract, targetDate = new Date(),
   }
   if (years < 0) years = 0;
 
-  // Escala legal de antigüedad (D.S. 21060):
+  // Escala legal de antigüedad (porcentaje sobre Haber Básico * 3):
   let percentage = 0;
   let description = `Menor a 2 años de antigüedad (ingreso: ${hireD}/${hireM}/${hireY})`;
 
-  if (years >= 25) {
-    percentage = 0.50;
-    description = `25 años o más (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
-  } else if (years >= 20) {
-    percentage = 0.42;
-    description = `20 a 24 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
-  } else if (years >= 15) {
-    percentage = 0.34;
-    description = `15 a 19 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
-  } else if (years >= 11) {
-    percentage = 0.26;
-    description = `11 a 14 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
-  } else if (years >= 8) {
-    percentage = 0.18;
-    description = `8 a 10 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
-  } else if (years >= 5) {
+  if (years >= 5) {
     percentage = 0.11;
-    description = `5 a 7 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
+    description = `5 años o más (11 %) - Contratado ${hireD}/${hireM}/${hireY}`;
   } else if (years >= 2) {
     percentage = 0.05;
-    description = `2 a 4 años (${percentage * 100} %) - Desde ${hireD}/${hireM}/${hireY}`;
+    description = `2 a 4 años (5 %) - Contratado ${hireD}/${hireM}/${hireY}`;
   }
 
   if (percentage === 0) {
     return { amount: 0, description, percentage: 0 };
   }
 
-  // Base legal (D.S. 21060): 3 Salarios Mínimos Nacionales
-  const calculationBase = MINIMUM_NATIONAL_SALARY * 3;
-  const fullMonthlyBonus = calculationBase * percentage;
+  // Base del bono = Haber Básico * % * 3
+  const fullMonthlyBonus = baseSalary * percentage * 3;
   const dailyBonusRate = fullMonthlyBonus / 30;
 
   // Verificar si es el MES ANIVERSARIO en que se alcanza el nuevo escalón
@@ -186,22 +165,17 @@ export const calculateSeniorityBonus = (activeContract, targetDate = new Date(),
   let bonusDays = 0;
 
   if (isAnniversaryMonth) {
-    // Si aún no se ha llegado al día del aniversario dentro del mes
     if (currentDay < hireD) {
       bonusDays = 0;
     } else {
-      // Desde el día de aniversario en adelante
       const isLastDay = currentDay >= daysInTargetMonth;
       if (isLastDay) {
-        // En mes completo de aniversario (28, 30 o 31 días), los días con bono = 30 - hireD
         bonusDays = 30 - hireD;
       } else {
-        // A mitad de mes: D - H
         bonusDays = currentDay - hireD;
       }
     }
   } else {
-    // Meses posteriores al aniversario: aplica para todos los días trabajados en el mes
     bonusDays = workedDays;
   }
 
@@ -252,7 +226,7 @@ export const calculateSalarySummary = (
   const dailyRate = baseSalary / 30;
   const basicEarnings = Math.round(dailyRate * workedDays * 100) / 100;
 
-  // Bono de Antigüedad sobre 3 SMN
+  // Bono de Antigüedad sobre Haber Básico del contrato
   const seniorityResult = calculateSeniorityBonus(activeContract, targetDate, workedDays);
   const seniorityBonus = seniorityResult.amount;
   const seniorityDescription = seniorityResult.description;
