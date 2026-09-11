@@ -1,359 +1,309 @@
-/**
- * Convierte un valor de fecha del backend a una fecha local
- * sin problemas de zona horaria.
- *
- * Soporta:
- * "2024-09-04"
- * "2024-09-04T00:00:00.000Z"
- */
-const parseDate = (dateValue) => {
-  if (!dateValue) return null;
+const GESTORA_RATE = 0.1271;
 
-  const datePart = String(dateValue).split("T")[0];
-  const [year, month, day] = datePart.split("-").map(Number);
+const SENIORITY_LEVELS = [
+  { years: 5, rate: 0.11 },
+  { years: 2, rate: 0.05 },
+];
 
-  if (!year || !month || !day) {
-    return null;
-  }
-
+const parseDate = (value) => {
+  if (!value) return null;
+  const [year, month, day] = String(value)
+    .split("T")[0]
+    .split("-")
+    .map(Number);
+  if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
 };
 
+const normalizeDate = (date) =>
+  new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
 
-/**
- * Compara únicamente año y mes.
- *
- * Retorna:
- * -1 -> dateA está antes
- *  0 -> mismo año y mes
- *  1 -> dateA está después
- */
-const compareYearMonth = (dateA, dateB) => {
-  const valueA =
-    dateA.getFullYear() * 12 + dateA.getMonth();
+const sameMonth = (dateA, dateB) =>
+  dateA.getFullYear() === dateB.getFullYear() &&
+  dateA.getMonth() === dateB.getMonth();
 
-  const valueB =
-    dateB.getFullYear() * 12 + dateB.getMonth();
+const isBeforeMonth = (dateA, dateB) =>
+  dateA.getFullYear() < dateB.getFullYear() ||
+  (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() < dateB.getMonth()
+  );
 
-  if (valueA < valueB) return -1;
-  if (valueA > valueB) return 1;
-
-  return 0;
-};
-
-
-/**
- * Último día calendario del mes.
- *
- * Ejemplos:
- * febrero 2026 -> 28
- * septiembre -> 30
- * octubre -> 31
- */
-const getLastDayOfMonth = (date) => {
-  return new Date(
+const getLastDayOfMonth = (date) =>
+  new Date(
     date.getFullYear(),
     date.getMonth() + 1,
     0
   ).getDate();
-};
 
-
-/**
- * Día equivalente para nómina de 30 días.
- *
- * Solo se usa cuando el empleado YA trabajaba
- * antes del mes que estamos calculando.
- *
- * Reglas:
- *
- * Mes de 31 días:
- * día 29 -> 29
- * día 30 -> 30
- * día 31 -> 30
- *
- * Mes de 30 días:
- * día 29 -> 29
- * día 30 -> 30
- *
- * Febrero 28 días:
- * día 27 -> 27
- * día 28 -> 30
- *
- * Febrero bisiesto:
- * día 28 -> 28
- * día 29 -> 30
+/*
+ * Nómina mensual de 30 días:
+ * - meses de 31 -> máximo 30
+ * - febrero -> el último día completa 30
  */
 const getPayrollDay = (date) => {
   const day = date.getDate();
   const lastDay = getLastDayOfMonth(date);
-
-  // En meses menores a 30 días,
-  // el último día completa los 30 días de nómina.
   if (lastDay < 30 && day === lastDay) {
     return 30;
   }
-
-  // En meses de 31 días nunca se pagan más de 30.
   return Math.min(day, 30);
 };
 
+const clampDays = (days) => Math.max(0, Math.min(days, 30));
 
-/**
- * Calcula los días trabajados del mes.
- *
- * REGLAS:
- *
- * 1. Si fue contratado antes del mes actual:
- *    se maneja como trabajador de mes completo.
- *
- * 2. Si fue contratado este mismo mes:
- *    se cuentan solamente los días reales
- *    transcurridos desde su fecha de ingreso.
- *
- *    Ejemplo:
- *    hireDate = 07/09
- *    hoy      = 10/09
- *    resultado = 3 días
- *
- * 3. Si existe endDate, el conteo se detiene
- *    en esa fecha.
- *
- * 4. Nunca devuelve menos de 0 ni más de 30.
- */
-export const calculateWorkedDays = (
-  hireDateValue,
-  endDateValue = null,
-  currentDate = new Date()
-) => {
-  const hireDate = parseDate(hireDateValue);
-
-  if (!hireDate) {
-    return 0;
+const getEffectiveDate = (currentDate, endDate) => {
+  const today = normalizeDate(currentDate);
+  if (!endDate || endDate >= today) {
+    return today;
   }
+  return endDate;
+};
 
-  const today = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    currentDate.getDate()
+const getAnniversary = (hireDate, years) =>
+  new Date(
+    hireDate.getFullYear() + years,
+    hireDate.getMonth(),
+    hireDate.getDate()
   );
 
-  const hireMonthComparison =
-    compareYearMonth(hireDate, today);
+const sumCurrentMonth = (records, field, currentDate) => {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  return records.reduce((total, record) => {
+    const recordDate = parseDate(record?.date);
+    if (
+      !recordDate ||
+      recordDate.getFullYear() !== year ||
+      recordDate.getMonth() !== month
+    ) {
+      return total;
+    }
+    return total + (Number(record?.[field]) || 0);
+  }, 0);
+};
 
-  /*
-   * El empleado todavía no ingresó.
-   *
-   * Puede ser:
-   * - contratado para un mes futuro
-   * - contratado más adelante este mismo mes
-   */
-  if (
-    hireMonthComparison > 0 ||
-    (
-      hireMonthComparison === 0 &&
-      hireDate.getDate() > today.getDate()
-    )
-  ) {
+/* -------------------------------------------------------
+   HABER BÁSICO
+------------------------------------------------------- */
+
+export const getBaseSalary = (contract) => {
+  const value = Number(contract?.baseSalary);
+  return Number.isFinite(value) && value >= 0
+    ? value
+    : 0;
+};
+
+/* -------------------------------------------------------
+   DÍAS TRABAJADOS
+------------------------------------------------------- */
+
+export const calculateWorkedDays = (contract, currentDate = new Date()) => {
+  const hireDate = parseDate(contract?.hireDate);
+  const endDate = parseDate(contract?.endDate);
+  const today = normalizeDate(currentDate);
+
+  if (!hireDate || hireDate > today) {
     return 0;
   }
 
-
-  const endDate = parseDate(endDateValue);
-
-  /*
-   * Determinamos hasta qué fecha contar:
-   *
-   * normalmente hoy;
-   * si el contrato terminó antes, usamos endDate.
-   */
-  let effectiveDate = today;
-
-  if (endDate && endDate < today) {
-    effectiveDate = endDate;
-  }
-
-
-  /*
-   * Si el contrato terminó antes del mes actual,
-   * no trabajó ningún día de este mes.
-   */
-  if (
-    endDate &&
-    compareYearMonth(endDate, today) < 0
-  ) {
+  // Terminó antes del mes actual.
+  if (endDate && isBeforeMonth(endDate, today)) {
     return 0;
   }
 
+  const effectiveDate = getEffectiveDate(today, endDate);
 
   /*
-   * CASO 1:
-   * Contratado DURANTE el mes actual.
-   *
-   * Aquí NO aplicamos redondeo de nómina.
-   * Se utilizan días calendario reales.
-   *
-   * Ejemplos:
-   *
-   * contratado 10 / mes termina 30
-   * 30 - 10 = 20
-   *
-   * contratado 10 / febrero termina 28
-   * 28 - 10 = 18
-   *
-   * contratado 10 / mes termina 31
-   * 31 - 10 = 21
+   * Ingresó durante el mes actual: días calendario reales, sin normalizar a 30
+   * 07 -> 10 = 3 días
    */
-  if (hireMonthComparison === 0) {
-    const workedDays =
+  if (sameMonth(hireDate, today)) {
+    return clampDays(
       effectiveDate.getDate() -
-      hireDate.getDate();
-
-    return Math.max(
-      0,
-      Math.min(workedDays, 30)
+      hireDate.getDate()
     );
   }
 
-
-  /*
-   * CASO 2:
-   * Contratado ANTES del mes actual.
-   *
-   * Aquí sí se utiliza el criterio
-   * de nómina mensual de 30 días.
-   */
-  const workedDays = getPayrollDay(
-    effectiveDate
-  );
-
-  return Math.max(
-    0,
-    Math.min(workedDays, 30)
+  /* Ya trabajaba antes del mes: nómina normalizada a 30. */
+  return clampDays(
+    getPayrollDay(effectiveDate)
   );
 };
 
+/* -------------------------------------------------------
+   SUELDO BÁSICO
+------------------------------------------------------- */
 
-/**
- * Obtiene el haber básico desde el contrato.
- *
- * El backend actualmente devuelve:
- * baseSalary: "3300"
- *
- * Por eso siempre lo convertimos a Number.
+const calculateBasicEarnings = (baseSalary, workedDays) => 
+  (baseSalary / 30) * workedDays;
+
+/* -------------------------------------------------------
+   BONO DE ANTIGÜEDAD
+------------------------------------------------------- */
+
+/*
+ * Bono completo mensual: baseSalary × porcentaje × 3
  */
-export const getBaseSalary = (contract) => {
-  const baseSalary =
-    Number(contract?.baseSalary);
+const getMonthlySeniorityBonus = (baseSalary, rate) => 
+  baseSalary * rate * 3;
 
-  if (
-    !Number.isFinite(baseSalary) ||
-    baseSalary < 0
-  ) {
-    return 0;
-  }
-
-  return baseSalary;
-};
-
-
-/**
- * Calcula el sueldo básico acumulado
- * según los días trabajados.
- *
- * Fórmula:
- *
- * Haber básico / 30 × días trabajados
+/*
+ * Calcula el bono considerando:
+ * < 2 años    -> 0 %
+ * 2 a <5 años -> 5 %
+ * >=5 años    -> 11 %
+ * Si cumple 2 o 5 años durante el mes, el cambio se aplica únicamente desde la fecha del aniversario
  */
-export const calculateBasicEarnings = (
-  baseSalary,
-  workedDays
-) => {
-  const salary = Number(baseSalary) || 0;
-  const days = Number(workedDays) || 0;
-
-  return (salary / 30) * days;
-};
-
-
-/**
- * Resumen salarial.
- *
- * Por ahora implementamos únicamente:
- *
- * - Haber básico
- * - Días trabajados
- * - Sueldo básico
- *
- * Los demás cálculos se irán agregando
- * posteriormente aquí.
- */
-export const calculateSalarySummary = ({
+const calculateSeniorityBonus = (
   contract,
-  currentDate = new Date(),
-}) => {
-  if (!contract) {
-    return {
-      baseSalary: 0,
-      workedDays: 0,
-      basicEarnings: 0,
+  baseSalary,
+  currentDate
+) => {
+  const hireDate = parseDate(contract?.hireDate);
+  const endDate = parseDate(contract?.endDate);
+  const today = normalizeDate(currentDate);
 
-      // Valores temporales para no romper
-      // los componentes inferiores.
-      seniorityBonus: 0,
-      seniorityDescription: "",
-      totalEarned: 0,
-      gestoraDeduction: 0,
-      deudasDeduction: 0,
-      anticiposDeduction: 0,
-      netPayable: 0,
+  if (!hireDate || !baseSalary) {
+    return {
+      amount: 0,
+      description: "Menos de 2 años",
     };
   }
 
+  const effectiveDate = getEffectiveDate(today, endDate);
+
+  if (endDate && isBeforeMonth(endDate, today)) {
+    return {
+      amount: 0,
+      description: "Contrato finalizado",
+    };
+  }
+
+  const anniversary2 = getAnniversary(hireDate, 2);
+  const anniversary5 = getAnniversary(hireDate, 5);
+
+  /* Todavía no cumplió 2 años */
+  if (effectiveDate < anniversary2) {
+    return {
+      amount: 0,
+      description: "Menos de 2 años",
+    };
+  }
+
+  const fullBonus5 = getMonthlySeniorityBonus(baseSalary, 0.05);
+  const fullBonus11 = getMonthlySeniorityBonus(baseSalary, 0.11);
 
   /*
-   * HABER BÁSICO
+   * Cumple 2 años DURANTE este mes.
+   *
+   * Ej:
+   * aniversario 07/09
+   * hoy 10/09
+   * => 3 días de bono.
    */
-  const baseSalary =
-    getBaseSalary(contract);
-
-
-  /*
-   * DÍAS TRABAJADOS
-   */
-  const workedDays =
-    calculateWorkedDays(
-      contract.hireDate,
-      contract.endDate,
-      currentDate
+  if (sameMonth(anniversary2, today)) {
+    const bonusDays = clampDays(
+      effectiveDate.getDate() -
+      anniversary2.getDate()
     );
-
+    return {
+      amount: (fullBonus5 / 30) * bonusDays,
+      description: `2 a 4 años (5 %) - ${bonusDays} días de bono`,
+    };
+  }
 
   /*
-   * SUELDO BÁSICO
+   * Entre 2 y 5 años.
+   *
+   * Si el derecho comenzó en meses anteriores,
+   * usa los mismos días de nómina del mes.
    */
-  const basicEarnings =
-    calculateBasicEarnings(
-      baseSalary,
-      workedDays
+  if (effectiveDate < anniversary5) {
+    const bonusDays = getPayrollDay(effectiveDate);
+    return {
+      amount: (fullBonus5 / 30) * bonusDays,
+      description: "2 a 4 años (5 %)",
+    };
+  }
+
+  /*
+   * Cumple 5 años DURANTE este mes.
+   *
+   * Antes del aniversario sigue cobrando 5 %.
+   * Desde el aniversario cobra 11 %.
+   */
+  if (sameMonth(anniversary5, today)) {
+    const totalPayrollDays = getPayrollDay(effectiveDate);
+    const daysAt11 = clampDays(
+      effectiveDate.getDate() - anniversary5.getDate()
     );
+    const daysAt5 = Math.max(totalPayrollDays - daysAt11, 0);
+    const amountAt5 = (fullBonus5 / 30) * daysAt5;
+    const amountAt11 = (fullBonus11 / 30) * daysAt11;
+    return {
+      amount: amountAt5 + amountAt11,
+      description: `5 años o más (11 %) - ${daysAt11} días al 11 %`,
+    };
+  }
 
+  /* Ya tenía 5 años antes del mes actual */
+  const bonusDays = getPayrollDay(effectiveDate);
 
+  return {
+    amount: (fullBonus11 / 30) * bonusDays,
+    description: "5 años o más (11 %)",
+  };
+};
+
+/* -------------------------------------------------------
+   DESCUENTOS
+------------------------------------------------------- */
+
+const calculateGestora = (totalEarned) =>
+  totalEarned * GESTORA_RATE;
+
+const calculateCurrentMonthDebts = (incidents, currentDate) =>
+  sumCurrentMonth(incidents, "discount", currentDate);
+
+const calculateCurrentMonthAdvances = (advances, currentDate) =>
+  sumCurrentMonth(advances, "amount", currentDate);
+
+/* -------------------------------------------------------
+   RESUMEN
+------------------------------------------------------- */
+
+export const calculateSalarySummary = ({
+  contract,
+  incidents = [],
+  advances = [],
+  currentDate = new Date(),
+}) => {
+  const baseSalary = getBaseSalary(contract);
+  const workedDays = calculateWorkedDays(contract, currentDate);
+  const basicEarnings = calculateBasicEarnings(baseSalary, workedDays);
+  const seniority = calculateSeniorityBonus(contract, baseSalary, currentDate);
+  const totalEarned = basicEarnings + seniority.amount;
+  const gestoraDeduction = calculateGestora(totalEarned);
+  const deudasDeduction = calculateCurrentMonthDebts(incidents, currentDate);
+  const anticiposDeduction = calculateCurrentMonthAdvances(advances, currentDate);
+  const totalDeductions = gestoraDeduction + deudasDeduction + anticiposDeduction;
+  const netPayable = totalEarned - totalDeductions;
   return {
     baseSalary,
     workedDays,
     basicEarnings,
-
-    /*
-     * Temporalmente en 0.
-     * Los iremos implementando después.
-     */
-    seniorityBonus: 0,
-    seniorityDescription: "",
-    totalEarned: 0,
-    gestoraDeduction: 0,
-    deudasDeduction: 0,
-    anticiposDeduction: 0,
-    netPayable: 0,
+    seniorityBonus: seniority.amount,
+    seniorityDescription: seniority.description,
+    totalEarned,
+    gestoraDeduction,
+    deudasDeduction,
+    anticiposDeduction,
+    totalDeductions,
+    netPayable,
   };
 };

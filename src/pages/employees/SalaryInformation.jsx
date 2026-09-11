@@ -8,7 +8,6 @@ import {
   SectionTitle,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
-import { calculateSalarySummary } from "../../utils/salaryCalculator";
 import {
   ContentDivider,
   DetailDescription,
@@ -33,6 +32,9 @@ import {
   TabDescription,
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
+import { calculateSalarySummary } from "../../utils/salaryCalculator";
+import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
+import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("es-BO", {
@@ -40,6 +42,7 @@ const formatCurrency = (amount = 0) =>
     currency: "BOB",
     currencyDisplay: "code",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
     .format(amount)
     .replace("BOB", "Bs");
@@ -52,8 +55,12 @@ const SalaryInformation = ({ employee }) => {
     employee?.contracts?.[0] ??
     null;
 
-  const salarySummary = calculateSalarySummary({
+  const { incidents = [] } = useAttendanceIncidents(employee?.id);
+  const { advances = [] } = useEmployeeAdvances(employee?.id);
+  const salary = calculateSalarySummary({
     contract: activeContract,
+    incidents,
+    advances,
   });
 
   return (
@@ -75,7 +82,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Haber básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salarySummary.baseSalary)}
+                {formatCurrency(salary.baseSalary)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -87,7 +94,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Días trabajados</SummaryLabel>
               <SummaryValue>
-                {salarySummary.workedDays}
+                {salary.workedDays}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -99,7 +106,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Sueldo básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salarySummary.basicEarnings)}
+                {formatCurrency(salary.basicEarnings)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -110,6 +117,7 @@ const SalaryInformation = ({ employee }) => {
 
         <ContentDivider />
 
+        {/* AUMENTOS */}
         <DetailGrid>
           <DetailSection>
             <DetailTitle>Aumentos</DetailTitle>
@@ -117,10 +125,10 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Bono de antigüedad</DetailLabel>
-                  <DetailDescription>{salarySummary.seniorityDescription}</DetailDescription>
+                  <DetailDescription>{salary.seniorityDescription}</DetailDescription>
                 </DetailInfo>
                 <DetailValue>
-                  {formatCurrency(salarySummary.seniorityBonus)}
+                  {formatCurrency(salary.seniorityBonus)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -128,11 +136,12 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Total ganado</HighlightLabel>
-            <HighlightValue>{formatCurrency(salarySummary.totalEarned)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salary.totalEarned)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
 
+        {/* DESCUENTOS */}
         <DetailGrid>
           <DetailSection>
             <DetailTitle $variant="danger">Descuentos</DetailTitle>
@@ -143,8 +152,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>AFP (12,71 % sobre Total Ganado)</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.gestoraDeduction)}
+                  - {formatCurrency(salary.gestoraDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -154,8 +162,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.deudasDeduction)}
+                  - {formatCurrency(salary.deudasDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -165,8 +172,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Adelantos del mes</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.anticiposDeduction)}
+                  - {formatCurrency(salary.anticiposDeduction)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -174,7 +180,7 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Líquido pagable</HighlightLabel>
-            <HighlightValue>{formatCurrency(salarySummary.netPayable)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salary.netPayable)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
