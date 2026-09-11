@@ -286,9 +286,17 @@ export const calculateSalarySummary = ({
   const baseSalary = getBaseSalary(contract);
   const workedDays = calculateWorkedDays(contract, currentDate);
   const basicEarnings = calculateBasicEarnings(baseSalary, workedDays);
-  const seniority = calculateSeniorityBonus(contract, baseSalary, currentDate);
+  const isFiscal = contract?.contractType !== "CONSULTING";
+  const seniority = isFiscal
+    ? calculateSeniorityBonus(contract, baseSalary, currentDate)
+    : {
+        amount: 0,
+        description: "No aplica para consultores",
+      };
   const totalEarned = basicEarnings + seniority.amount;
-  const gestoraDeduction = calculateGestora(totalEarned);
+  const gestoraDeduction = isFiscal
+    ? calculateGestora(totalEarned)
+    : 0;
   const deudasDeduction = calculateCurrentMonthDebts(incidents, currentDate);
   const anticiposDeduction = calculateCurrentMonthAdvances(advances, currentDate);
   const totalDeductions = gestoraDeduction + deudasDeduction + anticiposDeduction;
