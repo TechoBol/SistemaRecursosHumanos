@@ -1,14 +1,19 @@
+import { useMemo } from "react";
 import {
   CalendarDays,
   DollarSign,
   TrendingUp,
 } from "lucide-react";
+
 import {
   ActionButton,
   SectionTitle,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
 import { calculateSalarySummary } from "../../utils/salaryCalculator";
+import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
+import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
+
 import {
   ContentDivider,
   DetailDescription,
@@ -34,8 +39,8 @@ import {
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
 
-const formatCurrency = (amount = 0) =>
-  new Intl.NumberFormat("es-BO", {
+const formatCurrency = (amount = 0) => {
+  return new Intl.NumberFormat("es-BO", {
     style: "currency",
     currency: "BOB",
     currencyDisplay: "code",
@@ -43,18 +48,57 @@ const formatCurrency = (amount = 0) =>
   })
     .format(amount)
     .replace("BOB", "Bs");
+};
 
 const SalaryInformation = ({ employee }) => {
-  const activeContract =
-    employee?.contracts?.find(
-      (contract) => contract.isActive
-    ) ??
-    employee?.contracts?.[0] ??
-    null;
+  const activeContract = useMemo(() => {
+    return employee?.contracts?.find((c) => c.isActive) || employee?.contracts?.[0] || null;
+  }, [employee]);
 
-  const salarySummary = calculateSalarySummary({
-    contract: activeContract,
-  });
+  const { incidents = [] } = useAttendanceIncidents(employee?.id);
+  const { advances = [] } = useEmployeeAdvances(employee?.id);
+
+  const currentYear = new Date().getFullYear();
+  const currentMonthNum = new Date().getMonth() + 1;
+
+  // Suma de deudas (descuentos por asistencias/faltas/atrasos) del mes actual
+  const attendanceDiscountsTotal = useMemo(() => {
+    return incidents.reduce((sum, item) => {
+      if (!item.date) return sum;
+      const parts = item.date.split("-");
+      if (parts.length !== 3) return sum;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      if (y === currentYear && m === currentMonthNum) {
+        return sum + (Number(item.discount) || 0);
+      }
+      return sum;
+    }, 0);
+  }, [incidents, currentYear, currentMonthNum]);
+
+  // Suma de anticipos otorgados en el mes actual
+  const advanceTotal = useMemo(() => {
+    return advances.reduce((sum, item) => {
+      if (!item.date) return sum;
+      const parts = item.date.split("-");
+      if (parts.length !== 3) return sum;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      if (y === currentYear && m === currentMonthNum) {
+        return sum + (Number(item.amount) || 0);
+      }
+      return sum;
+    }, 0);
+  }, [advances, currentYear, currentMonthNum]);
+
+  const salarySummary = useMemo(() => {
+    return calculateSalarySummary(
+      activeContract,
+      new Date(),
+      attendanceDiscountsTotal,
+      advanceTotal
+    );
+  }, [activeContract, attendanceDiscountsTotal, advanceTotal]);
 
   return (
     <>
@@ -110,6 +154,7 @@ const SalaryInformation = ({ employee }) => {
 
         <ContentDivider />
 
+        {/* AUMENTOS */}
         <DetailGrid>
           <DetailSection>
             <DetailTitle>Aumentos</DetailTitle>
@@ -133,6 +178,7 @@ const SalaryInformation = ({ employee }) => {
           </HighlightCard>
         </DetailGrid>
 
+        {/* DESCUENTOS */}
         <DetailGrid>
           <DetailSection>
             <DetailTitle $variant="danger">Descuentos</DetailTitle>
@@ -143,8 +189,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>AFP (12,71 % sobre Total Ganado)</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.gestoraDeduction)}
+                  - {formatCurrency(salarySummary.gestoraDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -154,8 +199,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.deudasDeduction)}
+                  - {formatCurrency(salarySummary.deudasDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -165,8 +209,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Adelantos del mes</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  -{" "}
-                  {formatCurrency(salarySummary.anticiposDeduction)}
+                  - {formatCurrency(salarySummary.anticiposDeduction)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
