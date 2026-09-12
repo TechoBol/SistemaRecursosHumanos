@@ -159,7 +159,7 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Deudas</DetailLabel>
-                  <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
+                  <DetailDescription>Permisos y faltas</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
                   - {formatCurrency(salary.deudasDeduction)}
