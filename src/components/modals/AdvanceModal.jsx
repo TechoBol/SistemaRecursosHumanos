@@ -20,9 +20,12 @@ import {
   ModalSection,
   ModalTitle,
   PrimaryButton,
+  ToggleButton,
+  ToggleGroup,
 } from "../ui/Modal.styles";
 
 const INITIAL_FORM = {
+  type: "salary",
   amount: "",
   date: "",
   notes: "",
@@ -46,6 +49,7 @@ const AdvanceModal = ({
     }
     if (isEditMode && record) {
       setFormData({
+        type: record.type ?? "salary",
         amount: record.amount ?? "",
         date: record.date ?? "",
         notes: record.notes ?? "",
@@ -89,6 +93,13 @@ const AdvanceModal = ({
     }
   };
 
+  const handleSelectType = (type) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      type,
+    }));
+  };
+
   const handleOpenCalendar = () => {
     const input = dateInputRef.current;
     if (!input) {
@@ -119,6 +130,7 @@ const AdvanceModal = ({
     }
 
     const normalizedData = {
+      type: formData.type,
       amount: parsedAmount,
       date: formData.date,
       notes: formData.notes.trim(),
@@ -159,6 +171,30 @@ const AdvanceModal = ({
             <ModalSection $compact>
               <FormGrid $columns={1}>
                 <FormField>
+                  <FormLabel>Tipo</FormLabel>
+                  <ToggleGroup $columns={2}>
+                    <ToggleButton
+                      type="button"
+                      $active={formData.type === "salary"}
+                      $variant="primary"
+                      aria-pressed={formData.type === "salary"}
+                      onClick={() => handleSelectType("salary")}
+                    >
+                      Salario
+                    </ToggleButton>
+                    <ToggleButton
+                      type="button"
+                      $active={formData.type === "debt"}
+                      $variant="danger"
+                      aria-pressed={formData.type === "debt"}
+                      onClick={() => handleSelectType("debt")}
+                    >
+                      Deuda
+                    </ToggleButton>
+                  </ToggleGroup>
+                </FormField>
+
+                <FormField>
                   <FormLabel htmlFor="advance-amount">Monto del adelanto (Bs.)</FormLabel>
                   <FormInput
                     id="advance-amount"
@@ -170,7 +206,6 @@ const AdvanceModal = ({
                     value={formData.amount}
                     onChange={handleChange}
                     style={{ borderColor: errors.amount ? "#FF2B2B" : undefined }}
-                    autoFocus
                   />
                   {errors.amount && (
                     <FormErrorText>{errors.amount}</FormErrorText>
