@@ -69,9 +69,7 @@ const Employees = () => {
   };
 
   const handleViewEmployee = (employee) => {
-    navigate(`/empleados/${employee.id}`, {
-      state: { employee },
-    });
+    navigate(`/empleados/${employee.id}`);
   };
 
   const handleCloseModal = () => {

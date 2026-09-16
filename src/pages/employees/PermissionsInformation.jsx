@@ -4,7 +4,6 @@ import {
   CalendarX2,
   CircleAlert,
   ClipboardCheck,
-  Clock3,
   MoreVertical,
   Pencil,
   Plus,
@@ -202,13 +201,6 @@ const PermissionsInformation = ({ employee }) => {
         icon: ClipboardCheck,
       },
       {
-        id: "lateness",
-        label: "Atrasos",
-        value: String(summary.lateness),
-        variant: "primary",
-        icon: Clock3,
-      },
-      {
         id: "absences",
         label: "Faltas",
         value: String(summary.absences),
@@ -388,7 +380,7 @@ const PermissionsInformation = ({ employee }) => {
         <TabHeader>
           <div>
             <SectionTitle>Registros del mes actual</SectionTitle>
-            <TabDescription>Permisos, atrasos y faltas del mes actual</TabDescription>
+            <TabDescription>Permisos y faltas del mes actual</TabDescription>
           </div>
 
           <ActionButton type="button" onClick={handleOpenCreateModal}>
@@ -397,7 +389,7 @@ const PermissionsInformation = ({ employee }) => {
           </ActionButton>
         </TabHeader>
 
-        <SummaryGrid $columns={4}>
+        <SummaryGrid $columns={3}>
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
@@ -483,7 +475,6 @@ const PermissionsInformation = ({ employee }) => {
         isOpen={isModalOpen}
         mode={modalMode}
         record={selectedRecord}
-        baseSalary={baseSalary}
         onClose={handleCloseModal}
         onSubmit={handleSaveRecord}
       />

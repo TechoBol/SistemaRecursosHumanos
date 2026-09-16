@@ -286,6 +286,9 @@ const AdvancesInformation = ({ employee }) => {
 
   const renderAdvanceItem = (record) => {
     const { day, month } = parseRecordDate(record.date);
+    const isDebt = record.type === "debt";
+    const typeLabel = isDebt ? "Deuda" : "Salario";
+    const badgeType = isDebt ? "debt" : "salary";
 
     return (
       <IncidentItem key={record.id}>
@@ -295,11 +298,11 @@ const AdvancesInformation = ({ employee }) => {
             <IncidentDay>{day}</IncidentDay>
             <IncidentMonth>{month}</IncidentMonth>
           </IncidentDateBlock>
-          <IncidentIndicator $type="advance" />
+          <IncidentIndicator $type={badgeType} />
           <IncidentContent>
             <IncidentHeader>
-              <IncidentBadge $type="advance">Anticipo</IncidentBadge>
-              <IncidentReason>{record.notes || "Adelanto de sueldo"}</IncidentReason>
+              <IncidentBadge $type={badgeType}>{typeLabel}</IncidentBadge>
+              <IncidentReason>{record.notes || (isDebt ? "Deuda registrada" : "Adelanto de sueldo")}</IncidentReason>
             </IncidentHeader>
             <IncidentMeta>Registrado por {record.registeredBy || "Usuario"}</IncidentMeta>
           </IncidentContent>
@@ -333,15 +336,15 @@ const AdvancesInformation = ({ employee }) => {
                 <IncidentDay>{day}</IncidentDay>
                 <IncidentMonth>{month}</IncidentMonth>
               </IncidentDateBlock>
-              <IncidentIndicator $type="advance" />
+              <IncidentIndicator $type={badgeType} />
               <IncidentHeader>
-                <IncidentBadge $type="advance">Anticipo</IncidentBadge>
+                <IncidentBadge $type={badgeType}>{typeLabel}</IncidentBadge>
                 <IncidentDiscount>Bs {formatCurrency(record.amount)}</IncidentDiscount>
               </IncidentHeader>
             </MobileHeaderLeft>
             {renderMobileMenu(record)}
           </MobileHeaderRow>
-          <IncidentReason>{record.notes || "Adelanto de sueldo"}</IncidentReason>
+          <IncidentReason>{record.notes || (isDebt ? "Deuda registrada" : "Adelanto de sueldo")}</IncidentReason>
           <IncidentMeta>Registrado por {record.registeredBy || "Usuario"}</IncidentMeta>
         </MobileOnly>
       </IncidentItem>

@@ -1,19 +1,13 @@
-import { useMemo } from "react";
 import {
   CalendarDays,
   DollarSign,
   TrendingUp,
 } from "lucide-react";
-
 import {
   ActionButton,
   SectionTitle,
   TabContentCard,
 } from "../../components/ui/Employees.styles";
-import { calculateSalarySummary } from "../../utils/salaryCalculator";
-import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
-import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
-
 import {
   ContentDivider,
   DetailDescription,
@@ -38,67 +32,36 @@ import {
   TabDescription,
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
+import { calculateSalarySummary } from "../../utils/salaryCalculator";
+import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
+import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 
-const formatCurrency = (amount = 0) => {
-  return new Intl.NumberFormat("es-BO", {
+const formatCurrency = (amount = 0) =>
+  new Intl.NumberFormat("es-BO", {
     style: "currency",
     currency: "BOB",
     currencyDisplay: "code",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
     .format(amount)
     .replace("BOB", "Bs");
-};
 
 const SalaryInformation = ({ employee }) => {
-  const activeContract = useMemo(() => {
-    return employee?.contracts?.find((c) => c.isActive) || employee?.contracts?.[0] || null;
-  }, [employee]);
+  const activeContract =
+    employee?.contracts?.find(
+      (contract) => contract.isActive
+    ) ??
+    employee?.contracts?.[0] ??
+    null;
 
   const { incidents = [] } = useAttendanceIncidents(employee?.id);
   const { advances = [] } = useEmployeeAdvances(employee?.id);
-
-  const currentYear = new Date().getFullYear();
-  const currentMonthNum = new Date().getMonth() + 1;
-
-  // Suma de deudas (descuentos por asistencias/faltas/atrasos) del mes actual
-  const attendanceDiscountsTotal = useMemo(() => {
-    return incidents.reduce((sum, item) => {
-      if (!item.date) return sum;
-      const parts = item.date.split("-");
-      if (parts.length !== 3) return sum;
-      const y = Number(parts[0]);
-      const m = Number(parts[1]);
-      if (y === currentYear && m === currentMonthNum) {
-        return sum + (Number(item.discount) || 0);
-      }
-      return sum;
-    }, 0);
-  }, [incidents, currentYear, currentMonthNum]);
-
-  // Suma de anticipos otorgados en el mes actual
-  const advanceTotal = useMemo(() => {
-    return advances.reduce((sum, item) => {
-      if (!item.date) return sum;
-      const parts = item.date.split("-");
-      if (parts.length !== 3) return sum;
-      const y = Number(parts[0]);
-      const m = Number(parts[1]);
-      if (y === currentYear && m === currentMonthNum) {
-        return sum + (Number(item.amount) || 0);
-      }
-      return sum;
-    }, 0);
-  }, [advances, currentYear, currentMonthNum]);
-
-  const salarySummary = useMemo(() => {
-    return calculateSalarySummary(
-      activeContract,
-      new Date(),
-      attendanceDiscountsTotal,
-      advanceTotal
-    );
-  }, [activeContract, attendanceDiscountsTotal, advanceTotal]);
+  const salary = calculateSalarySummary({
+    contract: activeContract,
+    incidents,
+    advances,
+  });
 
   return (
     <>
@@ -119,7 +82,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Haber básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salarySummary.baseSalary)}
+                {formatCurrency(salary.baseSalary)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -131,7 +94,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Días trabajados</SummaryLabel>
               <SummaryValue>
-                {salarySummary.workedDays}
+                {salary.workedDays}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -143,7 +106,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Sueldo básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salarySummary.basicEarnings)}
+                {formatCurrency(salary.basicEarnings)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -162,10 +125,10 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Bono de antigüedad</DetailLabel>
-                  <DetailDescription>{salarySummary.seniorityDescription}</DetailDescription>
+                  <DetailDescription>{salary.seniorityDescription}</DetailDescription>
                 </DetailInfo>
                 <DetailValue>
-                  {formatCurrency(salarySummary.seniorityBonus)}
+                  {formatCurrency(salary.seniorityBonus)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -173,7 +136,7 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Total ganado</HighlightLabel>
-            <HighlightValue>{formatCurrency(salarySummary.totalEarned)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salary.totalEarned)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
@@ -189,17 +152,17 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>AFP (12,71 % sobre Total Ganado)</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salarySummary.gestoraDeduction)}
+                  - {formatCurrency(salary.gestoraDeduction)}
                 </DetailValue>
               </DetailItem>
 
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Deudas</DetailLabel>
-                  <DetailDescription>Permisos, atrasos y faltas</DetailDescription>
+                  <DetailDescription>Permisos y faltas</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salarySummary.deudasDeduction)}
+                  - {formatCurrency(salary.deudasDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -209,7 +172,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Adelantos del mes</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salarySummary.anticiposDeduction)}
+                  - {formatCurrency(salary.anticiposDeduction)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -217,7 +180,7 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Líquido pagable</HighlightLabel>
-            <HighlightValue>{formatCurrency(salarySummary.netPayable)}</HighlightValue>
+            <HighlightValue>{formatCurrency(salary.netPayable)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>

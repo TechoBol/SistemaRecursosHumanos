@@ -486,7 +486,7 @@ export const IncidentMonth = styled.span`
 export const IncidentIndicator = styled.div`
   width: 4px;
   align-self: stretch;
-  background-color: ${({ $type }) => $type === "absence" ? "#dc2626" : $type === "lateness" ? "#2563eb" : "#16a34a"};
+  background-color: ${({ $type }) => ($type === "absence" || $type === "debt") ? "#dc2626" : $type === "lateness" ? "#2563eb" : "#16a34a"};
   border-radius: 2px;
   flex-shrink: 0;
 `;
@@ -515,7 +515,7 @@ export const IncidentBadge = styled.span`
   border-radius: 12px;
   text-transform: capitalize;
   ${({ $type }) =>
-    $type === "absence"
+    ($type === "absence" || $type === "debt")
       ? `
         color: #b91c1c;
         background-color: #fee2e2;

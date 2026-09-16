@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -35,7 +35,6 @@ import {
 } from "../../components/ui/Employees.styles";
 import EmployeeModal from "../../components/modals/EmployeeModal";
 import { getSeniorityFull } from "../../utils/dateUtils";
-import { useLoginStore } from "../../components/store/loginStore";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useCompanies } from "../../hooks/useCompanies";
 import { useBranches } from "../../hooks/useBranches";
@@ -62,16 +61,19 @@ const DETAIL_TABS = [
   { id: "termination", label: "Desvinculación" },
 ];
 
-const mapDbEmployeeToUi = (emp) => {
-  if (!emp) return null;
-  const activeContract = emp.contracts ? emp.contracts.find((c) => c.isActive) : null;
+const mapDbEmployeeToUi = (employee) => {
+  if (!employee) return null;
+  const activeContract =
+    employee.contracts?.find((contract) => contract.isActive) ||
+    employee.contracts?.[0] ||
+    null;
   return {
-    ...emp,
-    firstName: emp.firstNames ?? "",
-    lastName: emp.lastNames ?? "",
-    ci: emp.documentNumber ?? "",
-    birthDate: emp.birthDate ? emp.birthDate.split("T")[0] : "",
-    status: emp.status === "ACTIVE" ? "Activo" : "Inactivo",
+    ...employee,
+    firstName: employee.firstNames ?? "",
+    lastName: employee.lastNames ?? "",
+    ci: employee.documentNumber ?? "",
+    birthDate: employee.birthDate ? employee.birthDate.split("T")[0] : "",
+    status: employee.status === "ACTIVE" ? "Activo" : "Inactivo",
     branch: activeContract?.branch?.name || "Sin sucursal",
     area: activeContract?.area?.name || "Sin área",
     positionCurrent: activeContract?.jobTitle?.name || "Sin cargo actual",
@@ -79,9 +81,9 @@ const mapDbEmployeeToUi = (emp) => {
     contractCompany: activeContract?.contractCompany?.name || "Sin empresa de contrato",
     consolidatedCompany: activeContract?.consolidatedCompany?.name || "Sin empresa consolidada",
     employeeType: activeContract?.contractType === "CONSULTING" ? "Consultor" : "Planta",
-    email: emp.email ?? "",
-    phone: emp.phone ?? "",
-    address: emp.address ?? "",
+    email: employee.email ?? "",
+    phone: employee.phone ?? "",
+    address: employee.address ?? "",
     seniority: getSeniorityFull(activeContract?.hireDate),
     contractDate: activeContract?.hireDate ? activeContract.hireDate.split("T")[0] : "",
   };
@@ -89,82 +91,84 @@ const mapDbEmployeeToUi = (emp) => {
 
 const formatDate = (dateValue) => {
   if (!dateValue) return "Sin fecha registrada";
-  const dateParts = dateValue.split("-");
-  if (dateParts.length !== 3) return dateValue;
-  const [year, month, day] = dateParts;
+  const [year, month, day] = dateValue.split("-");
+  if (!year || !month || !day) return dateValue;
   return `${day}/${month}/${year}`;
 };
 
 const EmployeeDetail = () => {
   const navigate = useNavigate();
-  const { token } = useLoginStore();
-  const location = useLocation();
   const { employeeId } = useParams();
-  const receivedEmployee = location.state?.employee;
-
   const { getEmployeeById, updateEmployee } = useEmployees();
   const { companies } = useCompanies();
   const { branches } = useBranches();
   const { areas } = useAreas();
   const { jobTitles } = useJobTitles();
-
-  const [dbEmployee, setDbEmployee] = useState(receivedEmployee);
+  const [employee, setEmployee] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("personal");
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
 
-  const fetchEmployeeData = useCallback(async () => {
-    if (!employeeId) return;
+  /* Unica función responsable de obtener el empleado actualizado desde backend */
+  const loadEmployee = async () => {
+    if (!employeeId) return null;
     const data = await getEmployeeById(Number(employeeId));
-    if (data) {
-      setDbEmployee(data);
-    }
-  }, [employeeId, getEmployeeById]);
+    if (data) setEmployee(data);
+    return data;
+  };
 
+  /* Se carga el empleado al ingresar al detalle o cambiar el ID de la URL */
   useEffect(() => {
-    if (!receivedEmployee) {
-      fetchEmployeeData();
+    let isMounted = true;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getEmployeeById(Number(employeeId));
+        if (isMounted && data) {
+          setEmployee(data);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    if (employeeId) {
+      load();
     }
-  }, [receivedEmployee, fetchEmployeeData]);
+    return () => {
+      isMounted = false;
+    };
+  }, [employeeId]);
 
   const uiEmployee = useMemo(() => {
-    return mapDbEmployeeToUi(dbEmployee) || {
-      id: Number(employeeId),
-      firstName: "",
-      lastName: "...",
-      ci: "",
-      status: "Activo",
-      branch: "",
-      area: "",
-      positionCurrent: "",
-      email: "",
-      phone: "",
-      consolidatedCompany: "",
-      contractDate: "",
-      seniority: "",
-    };
-  }, [dbEmployee, employeeId]);
+    return mapDbEmployeeToUi(employee);
+  }, [employee]);
 
   const fullName = useMemo(() => {
+    if (!uiEmployee) return "";
     return `${uiEmployee.firstName} ${uiEmployee.lastName}`.trim();
-  }, [uiEmployee.firstName, uiEmployee.lastName]);
+  }, [uiEmployee?.firstName, uiEmployee?.lastName]);
 
   const handleSaveEmployee = async (employeeData) => {
-    const updated = await updateEmployee(uiEmployee.id, employeeData);
-    if (updated) {
-      setDbEmployee(updated);
-      setIsEmployeeModalOpen(false);
-      successToast("Empleado actualizado correctamente.");
-    }
+    if (!employee?.id) return;
+    const updated = await updateEmployee(employee.id, employeeData);
+    if (!updated) return;
+    const refreshedEmployee = await loadEmployee();
+    if (!refreshedEmployee) return;
+    setIsEmployeeModalOpen(false);
+    successToast("Empleado actualizado correctamente.");
   };
 
   const renderTabContent = () => {
+    if (!uiEmployee) return null;
     switch (activeTab) {
       case "personal":
-        return <PersonalInformation employee={uiEmployee} />;
+        return <PersonalInformation employee={uiEmployee} />
       case "salary":
-        return <SalaryInformation employee={uiEmployee} />;
+        return <SalaryInformation employee={uiEmployee} />
       case "permissions":
-        return <PermissionsInformation employee={uiEmployee} />;
+        return <PermissionsInformation employee={uiEmployee} />
       case "advances":
         return <AdvancesInformation employee={uiEmployee} />;
       case "vacations":
@@ -174,11 +178,32 @@ const EmployeeDetail = () => {
       case "others":
         return <OtherEventsInformation />;
       case "termination":
-        return <TerminationInformation employee={uiEmployee} />;
+        return <TerminationInformation employee={uiEmployee} />
       default:
         return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <DetailPage>
+        <DetailContainer>
+          <DetailContent>Cargando información del empleado...</DetailContent>
+        </DetailContainer>
+      </DetailPage>
+    );
+  }
+
+  /* Si finalizó el GET pero no existe empleado */
+  if (!employee || !uiEmployee) {
+    return (
+      <DetailPage>
+        <DetailContainer>
+          <DetailContent>No se pudo obtener la información del empleado.</DetailContent>
+        </DetailContainer>
+      </DetailPage>
+    );
+  }
 
   return (
     <>
@@ -212,44 +237,50 @@ const EmployeeDetail = () => {
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <BriefcaseBusiness size={17} />
-                    Cargo de contrato: {uiEmployee.positionContract || "Sin cargo contrato"}
+                    Cargo de contrato:{" "}
+                    {uiEmployee.positionContract}
                   </EmployeeMetaItem>
                   <EmployeeMetaDivider />
                   <EmployeeMetaItem>
-                    Cargo actual: {uiEmployee.positionCurrent || "Sin cargo actual"}
+                    Cargo actual:{" "}
+                    {uiEmployee.positionCurrent}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
-                
+
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <MapPinned size={17} />
-                    Sucursal: {uiEmployee.branch || "Sin sucursal"}
+                    Sucursal:{" "}
+                    {uiEmployee.branch}
                   </EmployeeMetaItem>
                   <EmployeeMetaDivider />
                   <EmployeeMetaItem>
-                    Área: {uiEmployee.area || "Sin área"}
+                    Área: {uiEmployee.area}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
 
                 <EmployeeMeta>
                   <EmployeeMetaItem>
                     <Building2 size={20} />
-                    Contrato: {uiEmployee.contractCompany || "Sin empresa de contrato"}
+                    Contrato:{" "}
+                    {uiEmployee.contractCompany}
                   </EmployeeMetaItem>
                   <EmployeeMetaDivider />
                   <EmployeeMetaItem>
-                    Consolidada: {uiEmployee.consolidatedCompany || "Sin empresa consolidada"}
+                    Consolidada:{" "}
+                    {uiEmployee.consolidatedCompany}
                   </EmployeeMetaItem>
                 </EmployeeMeta>
 
                 <EmployeeMeta>
                   <EmployeeStatus $status={uiEmployee.status}>
-                    {uiEmployee.status || "Sin estado"}
+                    {uiEmployee.status}
                   </EmployeeStatus>
 
                   <EmployeeMetaItem>
                     <CalendarDays size={18} />
-                    Fecha de contrato: {formatDate(uiEmployee.contractDate)}
+                    Fecha de contrato:{" "}
+                    {formatDate(uiEmployee.contractDate)}
                   </EmployeeMetaItem>
 
                   <EmployeeMetaDivider />
@@ -296,14 +327,13 @@ const EmployeeDetail = () => {
 
                   <SecondaryButton
                     type="button"
-                    onClick={() => console.log("Ver historial")}
+                    onClick={() => console.log( "Ver historial") }
                   >
                     Historial
                   </SecondaryButton>
                 </ContactActionGroup>
               </ContactCard>
             </DetailHeaderGrid>
-
             {renderTabContent()}
           </DetailContent>
         </DetailContainer>
@@ -312,7 +342,7 @@ const EmployeeDetail = () => {
       <EmployeeModal
         isOpen={isEmployeeModalOpen}
         mode="edit"
-        employee={dbEmployee}
+        employee={employee}
         companies={companies}
         branches={branches}
         areas={areas}
