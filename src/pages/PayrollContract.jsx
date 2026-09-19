@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Search, Pencil, Calendar } from "lucide-react";
+import styled from "styled-components";
 
 import DataTable from "../components/table/DataTable";
+import PayrollModal from "../components/modals/PayrollModal";
+import { useCompanies } from "../hooks/useCompanies";
+import { usePayrolls } from "../hooks/usePayrolls";
 
 import {
+  ChipFilterButton,
+  ChipFilters,
+  FiltersWrapper,
   PageActions,
   PageContainer,
   PageHeader,
@@ -12,166 +19,339 @@ import {
   SearchInput,
 } from "../components/ui/Page.styles";
 
+import {
+  CellStack,
+  CellText,
+  CellTitle,
+  TableActionButton,
+  TableActions,
+  Badge,
+} from "../components/ui/table/TableCell.styles";
+
+const PeriodSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 14px;
+`;
+
+const PeriodSelect = styled.select`
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f573c;
+  outline: none;
+  cursor: pointer;
+`;
+
+const MONTHS = [
+  { value: 1, label: "Enero" },
+  { value: 2, label: "Febrero" },
+  { value: 3, label: "Marzo" },
+  { value: 4, label: "Abril" },
+  { value: 5, label: "Mayo" },
+  { value: 6, label: "Junio" },
+  { value: 7, label: "Julio" },
+  { value: 8, label: "Agosto" },
+  { value: 9, label: "Septiembre" },
+  { value: 10, label: "Octubre" },
+  { value: 11, label: "Noviembre" },
+  { value: 12, label: "Diciembre" },
+];
+
+const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1;
+const YEARS = [currentYear - 1, currentYear, currentYear + 1];
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
+};
+
 const PayrollContract = () => {
+  const { companies } = useCompanies();
+  const [activeCompanyId, setActiveCompanyId] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [searchValue, setSearchValue] = useState("");
 
-  // Datos temporales SOLO para visualizar la tabla
-  const rows = [
-    {
-      id: 1,
-      name: "Juan Pérez",
-      hireDate: "15/03/2022",
-      employeeType: "Fiscal",
-      basicSalary: "5.000,00",
-      workedDays: 30,
-      earnedBasicSalary: "5.000,00",
-      seniorityBonus: "150,00",
-      otherBonuses: "300,00",
-      totalEarned: "5.450,00",
-      gestora: "692,15",
-      permissionsAbsences: "0,00",
-      advances: "500,00",
-      totalDeductions: "1.192,15",
-      netPayable: "4.257,85",
-    },
-    {
-      id: 2,
-      name: "María López",
-      hireDate: "10/08/2024",
-      employeeType: "Consultor",
-      basicSalary: "4.500,00",
-      workedDays: 28,
-      earnedBasicSalary: "4.200,00",
-      seniorityBonus: "0,00",
-      otherBonuses: "200,00",
-      totalEarned: "4.400,00",
-      gestora: "558,36",
-      permissionsAbsences: "150,00",
-      advances: "0,00",
-      totalDeductions: "708,36",
-      netPayable: "3.691,64",
-    },
-  ];
+  const [selectedPayroll, setSelectedPayroll] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Inicializar automáticamente la primera empresa (SIN opción "Todas")
+  useEffect(() => {
+    if (companies.length > 0 && !activeCompanyId) {
+      setActiveCompanyId(companies[0].id);
+    }
+  }, [companies, activeCompanyId]);
+
+  const { payrolls, isLoading, updatePayroll } = usePayrolls(
+    activeCompanyId,
+    "contract",
+    selectedYear,
+    selectedMonth
+  );
+
+  const handleEditPayroll = (payroll) => {
+    setSelectedPayroll(payroll);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedPayroll(null);
+  };
+
+  const handleSubmitModal = async (formData) => {
+    if (selectedPayroll) {
+      const result = await updatePayroll(selectedPayroll.id, formData);
+      if (result) {
+        handleCloseModal();
+      }
+    }
+  };
 
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
+    if (!search) return payrolls;
 
-    if (!search) return rows;
-
-    return rows.filter((row) =>
-      `${row.name} ${row.employeeType}`
+    return payrolls.filter((row) =>
+      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType}`
         .toLowerCase()
         .includes(search)
     );
-  }, [searchValue]);
+  }, [payrolls, searchValue]);
 
   const columns = useMemo(
     () => [
       {
-        field: "name",
-        headerName: "Nombre",
-        minWidth: 190,
-        flex: 1,
+        field: "employeeName",
+        headerName: "Empleado",
+        minWidth: 200,
+        flex: 1.2,
+        renderCell: ({ row }) => (
+          <CellStack>
+            <CellTitle>{row.employeeName}</CellTitle>
+            <CellText>CI: {row.employeeDocumentNumber}</CellText>
+          </CellStack>
+        ),
       },
       {
         field: "hireDate",
         headerName: "Fecha de ingreso",
         minWidth: 135,
+        valueGetter: (_, row) =>
+          row.hireDate ? row.hireDate.split("-").reverse().join("/") : "-",
       },
       {
         field: "employeeType",
         headerName: "Tipo empleado",
-        minWidth: 135,
-      },
-      {
-        field: "basicSalary",
-        headerName: "Haber básico",
-        minWidth: 120,
-      },
-      {
-        field: "workedDays",
-        headerName: "Días trabajados",
         minWidth: 125,
       },
       {
-        field: "earnedBasicSalary",
+        field: "baseSalary",
+        headerName: "Haber básico",
+        minWidth: 120,
+        valueGetter: (_, row) => formatCurrency(row.baseSalary),
+      },
+      {
+        field: "workedDays",
+        headerName: "Días trab.",
+        minWidth: 95,
+      },
+      {
+        field: "earnedSalary",
         headerName: "Sueldo básico",
         minWidth: 120,
+        valueGetter: (_, row) => formatCurrency(row.earnedSalary),
       },
       {
         field: "seniorityBonus",
-        headerName: "Bono de antigüedad",
-        minWidth: 155,
+        headerName: "Bono antigüedad",
+        minWidth: 140,
+        valueGetter: (_, row) => formatCurrency(row.seniorityBonus),
       },
       {
         field: "otherBonuses",
         headerName: "Otros bonos",
         minWidth: 115,
+        valueGetter: (_, row) => formatCurrency(row.otherBonuses),
       },
       {
-        field: "totalEarned",
+        field: "grossPay",
         headerName: "Total ganado",
-        minWidth: 120,
+        minWidth: 125,
+        valueGetter: (_, row) => formatCurrency(row.grossPay),
       },
       {
-        field: "gestora",
-        headerName: "Gestora",
-        minWidth: 105,
+        field: "afpDeduction",
+        headerName: "Gestora (AFP)",
+        minWidth: 115,
+        valueGetter: (_, row) => formatCurrency(row.afpDeduction),
       },
       {
-        field: "permissionsAbsences",
+        field: "absenceDeduction",
         headerName: "Permisos/Faltas",
-        minWidth: 145,
+        minWidth: 135,
+        valueGetter: (_, row) => formatCurrency(row.absenceDeduction),
       },
       {
-        field: "advances",
+        field: "advanceDeduction",
         headerName: "Anticipos",
-        minWidth: 105,
+        minWidth: 110,
+        valueGetter: (_, row) => formatCurrency(row.advanceDeduction),
       },
       {
         field: "totalDeductions",
-        headerName: "Total descuentos",
-        minWidth: 145,
+        headerName: "Total desc.",
+        minWidth: 125,
+        valueGetter: (_, row) => formatCurrency(row.totalDeductions),
       },
       {
-        field: "netPayable",
+        field: "netSalary",
         headerName: "Líquido pagable",
         minWidth: 140,
+        valueGetter: (_, row) => formatCurrency(row.netSalary),
+      },
+      {
+        field: "status",
+        headerName: "Estado",
+        minWidth: 110,
+        renderCell: ({ row }) => {
+          const variants = {
+            DRAFT: "secondary",
+            GENERATED: "info",
+            APPROVED: "warning",
+            PAID: "success",
+            CANCELLED: "danger",
+          };
+          const labels = {
+            DRAFT: "Borrador",
+            GENERATED: "Generado",
+            APPROVED: "Aprobado",
+            PAID: "Pagado",
+            CANCELLED: "Cancelado",
+          };
+          return (
+            <Badge $variant={variants[row.status] || "secondary"}>
+              {labels[row.status] || row.status}
+            </Badge>
+          );
+        },
+      },
+      {
+        field: "actions",
+        headerName: "Acciones",
+        width: 90,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: ({ row }) => (
+          <TableActions>
+            <TableActionButton
+              type="button"
+              title="Editar nómina"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditPayroll(row);
+              }}
+            >
+              <Pencil size={18} />
+            </TableActionButton>
+          </TableActions>
+        ),
       },
     ],
     []
   );
 
   return (
-    <PageContainer>
-      <PageHeader>
-        <PageTitle>Nóminas por contrato</PageTitle>
-        
-        <PageActions>
-          <SearchContainer>
-            <Search size={21} />
-            <SearchInput
-              type="search"
-              value={searchValue}
-              placeholder="Buscar"
-              aria-label="Buscar empleado"
-              onChange={(event) => setSearchValue(event.target.value)}
-            />
-          </SearchContainer>
-        </PageActions>
-      </PageHeader>
+    <>
+      <PageContainer>
+        <PageHeader>
+          <PageTitle>Nóminas por contrato</PageTitle>
 
-      <DataTable
-        rows={filteredRows}
-        columns={columns}
-        pageSize={30}
-        pageSizeOptions={[30, 50, 100]}
-        height="610px"
-        rowHeight={60}
-        columnHeaderHeight={58}
-        disableColumnMenu
+          <PageActions>
+            <PeriodSelector>
+              <Calendar size={16} color="#2f573c" />
+              <PeriodSelect
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              >
+                {MONTHS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </PeriodSelect>
+              <PeriodSelect
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </PeriodSelect>
+            </PeriodSelector>
+
+            <SearchContainer>
+              <Search size={21} />
+              <SearchInput
+                type="search"
+                value={searchValue}
+                placeholder="Buscar empleado"
+                aria-label="Buscar empleado"
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+            </SearchContainer>
+          </PageActions>
+        </PageHeader>
+
+        <FiltersWrapper>
+          <ChipFilters>
+            {/* SIN opción "Todas", directo empresas */}
+            {companies.map((company) => (
+              <ChipFilterButton
+                key={company.id}
+                type="button"
+                $active={Number(activeCompanyId) === company.id}
+                onClick={() => setActiveCompanyId(company.id)}
+              >
+                {company.name}
+              </ChipFilterButton>
+            ))}
+          </ChipFilters>
+        </FiltersWrapper>
+
+        <DataTable
+          rows={filteredRows}
+          columns={columns}
+          loading={isLoading}
+          pageSize={30}
+          pageSizeOptions={[30, 50, 100]}
+          height="610px"
+          rowHeight={60}
+          columnHeaderHeight={58}
+          disableColumnMenu
+        />
+      </PageContainer>
+
+      <PayrollModal
+        isOpen={isModalOpen}
+        payroll={selectedPayroll}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitModal}
       />
-    </PageContainer>
+    </>
   );
 };
 
