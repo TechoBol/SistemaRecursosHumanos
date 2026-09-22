@@ -1,12 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import { Search, Pencil, Calendar } from "lucide-react";
 import styled from "styled-components";
-
 import DataTable from "../components/table/DataTable";
 import PayrollModal from "../components/modals/PayrollModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
-
 import {
   ChipFilterButton,
   ChipFilters,
@@ -17,8 +15,11 @@ import {
   PageTitle,
   SearchContainer,
   SearchInput,
+  TotalsGrid,
+  TotalCard,
+  TotalLabel,
+  TotalValue,
 } from "../components/ui/Page.styles";
-
 import {
   CellStack,
   CellText,
@@ -121,13 +122,31 @@ const PayrollContract = () => {
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
     if (!search) return payrolls;
-
     return payrolls.filter((row) =>
       `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType}`
         .toLowerCase()
         .includes(search)
     );
   }, [payrolls, searchValue]);
+
+  const totals = useMemo(() => {
+    return filteredRows.reduce(
+      (acc, row) => ({
+        baseSalary: acc.baseSalary + Number(row.baseSalary || 0),
+        earnedSalary: acc.earnedSalary + Number(row.earnedSalary || 0),
+        grossPay: acc.grossPay + Number(row.grossPay || 0),
+        totalDeductions: acc.totalDeductions + Number(row.totalDeductions || 0),
+        netSalary: acc.netSalary + Number(row.netSalary || 0),
+      }),
+      {
+        baseSalary: 0,
+        earnedSalary: 0,
+        grossPay: 0,
+        totalDeductions: 0,
+        netSalary: 0,
+      }
+    );
+  }, [filteredRows]);
 
   const columns = useMemo(
     () => [
@@ -315,6 +334,29 @@ const PayrollContract = () => {
             </SearchContainer>
           </PageActions>
         </PageHeader>
+
+        <TotalsGrid>
+          <TotalCard>
+            <TotalLabel>Haber Básico</TotalLabel>
+            <TotalValue>Bs {formatCurrency(totals.baseSalary)}</TotalValue>
+          </TotalCard>
+          <TotalCard>
+            <TotalLabel>Sueldo Básico</TotalLabel>
+            <TotalValue>Bs {formatCurrency(totals.earnedSalary)}</TotalValue>
+          </TotalCard>
+          <TotalCard $variant="dark">
+            <TotalLabel $variant="dark">Total Ganado</TotalLabel>
+            <TotalValue $variant="dark">Bs {formatCurrency(totals.grossPay)}</TotalValue>
+          </TotalCard>
+          <TotalCard $variant="danger">
+            <TotalLabel $variant="danger">Total Descuentos</TotalLabel>
+            <TotalValue $variant="danger">Bs {formatCurrency(totals.totalDeductions)}</TotalValue>
+          </TotalCard>
+          <TotalCard $variant="highlight">
+            <TotalLabel $variant="highlight">Líquido Pagable</TotalLabel>
+            <TotalValue $variant="highlight">Bs {formatCurrency(totals.netSalary)}</TotalValue>
+          </TotalCard>
+        </TotalsGrid>
 
         <FiltersWrapper>
           <ChipFilters>
