@@ -4,11 +4,11 @@ import { theme } from "../ui/Theme";
 export const PageContainer = styled.main`
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
   width: 100%;
   min-width: 0;
   @media (max-width: 768px) {
-    gap: 24px;
+    gap: 20px;
   }
 `;
 
@@ -140,6 +140,80 @@ export const AddButton = styled.button`
   }
 `;
 
+/* CARDS DE TOTALES DE NÓMINAS */
+export const TotalsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  width: 100%;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const TotalCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 1px solid
+    ${({ $variant }) =>
+      $variant === "danger"
+        ? "#fca5a5"
+        : $variant === "highlight"
+        ? "#bfdbfe"
+        : $variant === "dark"
+        ? "#cbd5e1"
+        : "#bbf7d0"};
+  background-color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#fee2e2"
+      : $variant === "highlight"
+      ? "#e0e7ff"
+      : $variant === "dark"
+      ? "#e2e8f0"
+      : "#dcfce7"};
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+`;
+
+export const TotalLabel = styled.span`
+  font-size: 13px;
+  font-weight: 500;
+  color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#991b1b"
+      : $variant === "highlight"
+      ? "#1e40af"
+      : $variant === "dark"
+      ? "#334155"
+      : "#14532d"};
+`;
+
+export const TotalValue = styled.span`
+  font-size: 21px;
+  font-weight: 700;
+  color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#dc2626"
+      : $variant === "highlight"
+      ? "#1d4ed8"
+      : $variant === "dark"
+      ? "#0f172a"
+      : "#15803d"};
+`;
+
 /* FILTROS */
 export const FiltersWrapper = styled.div`
   display: flex;
@@ -166,19 +240,20 @@ export const ChipFilterButton = styled.button`
   min-width: 82px;
   min-height: 36px;
   padding: 0 20px;
-  color: ${({ $active }) => $active ? theme.colors.white : theme.colors.textMuted};
+  color: ${({ $active }) => ($active ? theme.colors.white : theme.colors.textMuted)};
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  background-color: ${({ $active }) => $active ? theme.colors.primary : theme.colors.white};
-  border: 1px solid ${({ $active }) => $active ? theme.colors.primary : theme.colors.border};
+  background-color: ${({ $active }) => ($active ? theme.colors.primary : theme.colors.white)};
+  border: 1px solid ${({ $active }) => ($active ? theme.colors.primary : theme.colors.border)};
   border-radius: ${theme.radius.round};
   transition:
     color ${theme.transitions.fast},
     background-color ${theme.transitions.fast},
     border-color ${theme.transitions.fast},
     transform ${theme.transitions.fast};
-  &:hover { color: ${({ $active }) => $active ? theme.colors.white : theme.colors.primary};
+  &:hover {
+    color: ${({ $active }) => ($active ? theme.colors.white : theme.colors.primary)};
     border-color: ${theme.colors.primary};
   }
   &:active {
