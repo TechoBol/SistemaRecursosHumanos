@@ -475,6 +475,7 @@ const PermissionsInformation = ({ employee }) => {
         isOpen={isModalOpen}
         mode={modalMode}
         record={selectedRecord}
+        baseSalary={baseSalary}
         onClose={handleCloseModal}
         onSubmit={handleSaveRecord}
       />
