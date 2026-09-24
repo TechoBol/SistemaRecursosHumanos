@@ -20,39 +20,19 @@ import {
 } from "../ui/Modal.styles";
 
 const PayrollModal = ({ isOpen, payroll = null, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    workedDays: 30,
-    otherBonuses: 0,
-    absenceDeduction: 0,
-    advanceDeduction: 0,
-    status: "DRAFT",
-  });
+  const [status, setStatus] = useState("DRAFT");
 
   useEffect(() => {
     if (isOpen && payroll) {
-      setFormData({
-        workedDays: payroll.workedDays ?? 30,
-        otherBonuses: payroll.otherBonuses ?? 0,
-        absenceDeduction: payroll.absenceDeduction ?? 0,
-        advanceDeduction: payroll.advanceDeduction ?? 0,
-        status: payroll.status ?? "DRAFT",
-      });
+      setStatus(payroll.status ?? "DRAFT");
     }
   }, [isOpen, payroll]);
 
   if (!isOpen || !payroll) return null;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "status" ? value : Number(value),
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ status });
   };
 
   const handleOverlayClick = (e) => {
@@ -63,9 +43,9 @@ const PayrollModal = ({ isOpen, payroll = null, onClose, onSubmit }) => {
 
   return (
     <ModalOverlay $zIndex={1600} onMouseDown={handleOverlayClick}>
-      <ModalContainer $maxWidth="440px" role="dialog" aria-modal="true">
+      <ModalContainer $maxWidth="420px" role="dialog" aria-modal="true">
         <ModalHeader>
-          <ModalTitle>Editar registro de nómina</ModalTitle>
+          <ModalTitle>Editar estado de nómina</ModalTitle>
           <ModalCloseButton type="button" onClick={onClose}>
             <X size={21} />
           </ModalCloseButton>
@@ -85,75 +65,24 @@ const PayrollModal = ({ isOpen, payroll = null, onClose, onSubmit }) => {
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="workedDays">Días trabajados</FormLabel>
+                  <FormLabel>Días trabajados</FormLabel>
                   <FormInput
-                    id="workedDays"
-                    name="workedDays"
                     type="number"
-                    min="0"
-                    max="30"
-                    step="1"
-                    value={formData.workedDays}
-                    onChange={handleChange}
+                    value={payroll.workedDays ?? 30}
+                    disabled
                   />
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="otherBonuses">Otros bonos (Bs.)</FormLabel>
-                  <FormInput
-                    id="otherBonuses"
-                    name="otherBonuses"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.otherBonuses}
-                    onChange={handleChange}
-                  />
-                </FormField>
-
-                <FormField>
-                  <FormLabel htmlFor="absenceDeduction">
-                    Descuento Permisos/Faltas (Bs.)
-                  </FormLabel>
-                  <FormInput
-                    id="absenceDeduction"
-                    name="absenceDeduction"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.absenceDeduction}
-                    onChange={handleChange}
-                  />
-                </FormField>
-
-                <FormField>
-                  <FormLabel htmlFor="advanceDeduction">
-                    Descuento Anticipos (Bs.)
-                  </FormLabel>
-                  <FormInput
-                    id="advanceDeduction"
-                    name="advanceDeduction"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.advanceDeduction}
-                    onChange={handleChange}
-                  />
-                </FormField>
-
-                <FormField>
-                  <FormLabel htmlFor="status">Estado</FormLabel>
+                  <FormLabel htmlFor="status">Estado de la nómina</FormLabel>
                   <FormSelect
                     id="status"
                     name="status"
-                    value={formData.status}
-                    onChange={handleChange}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
                   >
                     <option value="DRAFT">Borrador</option>
-                    <option value="GENERATED">Generado</option>
-                    <option value="APPROVED">Aprobado</option>
                     <option value="PAID">Pagado</option>
-                    <option value="CANCELLED">Cancelado</option>
                   </FormSelect>
                 </FormField>
               </FormStack>
@@ -161,12 +90,8 @@ const PayrollModal = ({ isOpen, payroll = null, onClose, onSubmit }) => {
           </ModalContent>
 
           <ModalActions>
-            <CancelButton type="button" onClick={onClose}>
-              Cancelar
-            </CancelButton>
-            <PrimaryButton type="submit" $minWidth="160px">
-              Guardar cambios
-            </PrimaryButton>
+            <CancelButton type="button" onClick={onClose}>Cancelar</CancelButton>
+            <PrimaryButton type="submit" $minWidth="160px">Guardar estado</PrimaryButton>
           </ModalActions>
         </ModalForm>
       </ModalContainer>

@@ -295,7 +295,7 @@ const PayrollContract = () => {
     <>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Nóminas por contrato</PageTitle>
+          <PageTitle>Planilla Fiscal</PageTitle>
 
           <PageActions>
             <PeriodSelector>

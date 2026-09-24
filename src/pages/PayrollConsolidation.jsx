@@ -295,7 +295,7 @@ const PayrollConsolidation = () => {
     <>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Nóminas por consolidación</PageTitle>
+          <PageTitle>Planilla Consolidada</PageTitle>
 
           <PageActions>
             <PeriodSelector>
