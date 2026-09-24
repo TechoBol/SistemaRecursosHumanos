@@ -31,7 +31,7 @@ import {
 } from "../components/ui/Page.styles";
 import EmployeeModal from "../components/modals/EmployeeModal";
 import DataTable from "../components/table/DataTable";
-import { getSeniorityShort, formatLongDate } from "../utils/dateUtils";
+import { getSeniorityFull, formatLongDate } from "../utils/dateUtils";
 import { useEmployees } from "../hooks/useEmployees";
 import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
@@ -207,11 +207,11 @@ const Employees = () => {
       {
         field: "seniority",
         headerName: "Antigüedad",
-        minWidth: 130,
+        minWidth: 175,
         flex: 0.7,
         valueGetter: (_, row) => {
           const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
-          return getSeniorityShort(activeContract?.hireDate);
+          return getSeniorityFull(activeContract?.hireDate);
         },
       },
       {

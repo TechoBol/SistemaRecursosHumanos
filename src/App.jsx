@@ -29,8 +29,8 @@ const App = () => {
           <Route element={<AppLayout />}>
             <Route path="empleados" element={<Employees />} />
             <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
-            <Route path="nominas/contrato" element={<PayrollContract />} />
-            <Route path="nominas/consolidacion" element={<PayrollConsolidation />} />
+            <Route path="planilla/fiscal" element={<PayrollContract />} />
+            <Route path="planilla/consolidada" element={<PayrollConsolidation />} />
             <Route path="sucursales" element={<Branches />} />
             <Route path="areas" element={<Areas />} />
             <Route path="cargos" element={<JobTitles />} />

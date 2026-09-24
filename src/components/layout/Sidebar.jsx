@@ -48,10 +48,10 @@ import logoMenu from "../../assets/logo-menu.png";
 const MENU_ITEMS = [
   { id: "empleados", label: "Empleados", path: "/empleados", icon: UsersRound, },
   {
-    id: "nominas", label: "Nóminas", icon: DollarSign,
+    id: "planillas", label: "Planillas", icon: DollarSign,
     children: [
-      { id: "nomina-contrato", label: "Contrato", path: "/nominas/contrato", icon: FileSignature, },
-      { id: "nomina-consolidacion", label: "Consolidación", path: "/nominas/consolidacion", icon: Layers3, },
+      { id: "planilla-fiscal", label: "Fiscal", path: "/planilla/fiscal", icon: FileSignature, },
+      { id: "planilla-consolidada", label: "Consolidada", path: "/planilla/consolidada", icon: Layers3, },
     ],
   },
   { id: "sucursales", label: "Sucursales", path: "/sucursales", icon: Building2, },
@@ -71,7 +71,7 @@ const Sidebar = ({
 
   const [openMenus, setOpenMenus] = useState({
     empleados: true,
-    nominas: true,
+    planillas: true,
   });
 
   const closeMobileMenu = () => {
