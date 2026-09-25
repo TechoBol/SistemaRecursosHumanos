@@ -140,19 +140,44 @@ export const AddButton = styled.button`
   }
 `;
 
-/* CARDS DE TOTALES DE NÓMINAS */
+/* FECHAS DE CALENDARIO - MESES Y ANIOS */
+export const PeriodSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 14px;
+`;
+
+export const PeriodSelect = styled.select`
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2f573c;
+  outline: none;
+  cursor: pointer;
+`;
+
+/* CARDS DE TOTALES DE PLANILLAS */
 export const TotalsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
   width: 100%;
-  @media (max-width: 1200px) {
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  @media (max-width: 900px) {
     grid-template-columns: repeat(3, 1fr);
   }
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  @media (max-width: 480px) {
+  @media (max-width: 400px) {
     grid-template-columns: 1fr;
   }
 `;

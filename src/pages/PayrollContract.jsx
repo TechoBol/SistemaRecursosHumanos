@@ -19,6 +19,8 @@ import {
   TotalCard,
   TotalLabel,
   TotalValue,
+  PeriodSelector,
+  PeriodSelect,
 } from "../components/ui/Page.styles";
 import {
   CellStack,
@@ -28,27 +30,6 @@ import {
   TableActions,
   Badge,
 } from "../components/ui/table/TableCell.styles";
-
-const PeriodSelector = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 4px 14px;
-`;
-
-const PeriodSelect = styled.select`
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: #2f573c;
-  outline: none;
-  cursor: pointer;
-`;
 
 const MONTHS = [
   { value: 1, label: "Enero" },
@@ -82,7 +63,6 @@ const PayrollContract = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [searchValue, setSearchValue] = useState("");
-
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -134,14 +114,18 @@ const PayrollContract = () => {
       (acc, row) => ({
         baseSalary: acc.baseSalary + Number(row.baseSalary || 0),
         earnedSalary: acc.earnedSalary + Number(row.earnedSalary || 0),
+        totalBonuses: acc.totalBonuses + Number(row.seniorityBonus || 0) + Number(row.otherBonuses || 0),
         grossPay: acc.grossPay + Number(row.grossPay || 0),
+        afpDeduction: acc.afpDeduction + Number(row.afpDeduction || 0),
         totalDeductions: acc.totalDeductions + Number(row.totalDeductions || 0),
         netSalary: acc.netSalary + Number(row.netSalary || 0),
       }),
       {
         baseSalary: 0,
         earnedSalary: 0,
+        totalBonuses: 0,
         grossPay: 0,
+        afpDeduction: 0,
         totalDeductions: 0,
         netSalary: 0,
       }
@@ -344,9 +328,17 @@ const PayrollContract = () => {
             <TotalLabel>Sueldo Básico</TotalLabel>
             <TotalValue>Bs {formatCurrency(totals.earnedSalary)}</TotalValue>
           </TotalCard>
+          <TotalCard>
+            <TotalLabel>Total Bonos</TotalLabel>
+            <TotalValue>Bs {formatCurrency(totals.totalBonuses)}</TotalValue>
+          </TotalCard>
           <TotalCard $variant="dark">
             <TotalLabel $variant="dark">Total Ganado</TotalLabel>
             <TotalValue $variant="dark">Bs {formatCurrency(totals.grossPay)}</TotalValue>
+          </TotalCard>
+          <TotalCard $variant="danger">
+            <TotalLabel $variant="danger">Total Gestora</TotalLabel>
+            <TotalValue $variant="danger">Bs {formatCurrency(totals.afpDeduction)}</TotalValue>
           </TotalCard>
           <TotalCard $variant="danger">
             <TotalLabel $variant="danger">Total Descuentos</TotalLabel>
