@@ -31,7 +31,7 @@ import {
   Badge,
 } from "../components/ui/table/TableCell.styles";
 
-const MONTHS = [
+const ALL_MONTHS = [
   { value: 1, label: "Enero" },
   { value: 2, label: "Febrero" },
   { value: 3, label: "Marzo" },
@@ -46,9 +46,11 @@ const MONTHS = [
   { value: 12, label: "Diciembre" },
 ];
 
+const SYSTEM_START_YEAR = 2026;
+const SYSTEM_START_MONTH = 9; // Inicio de registros en Septiembre 2026
+
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1;
-const YEARS = [currentYear - 1, currentYear, currentYear + 1];
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat("es-BO", {
@@ -65,6 +67,32 @@ const PayrollContract = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Anios disponibles
+  const availableYears = useMemo(() => {
+    const years = [];
+    for (let y = currentYear; y >= SYSTEM_START_YEAR; y--) {
+      years.push(y);
+    }
+    return years;
+  }, []);
+
+  // Meses disponibles
+  const availableMonths = useMemo(() => {
+    const startM = selectedYear === SYSTEM_START_YEAR ? SYSTEM_START_MONTH : 1;
+    const endM = selectedYear === currentYear ? currentMonth : 12;
+    return ALL_MONTHS.filter((m) => m.value >= startM && m.value <= endM);
+  }, [selectedYear]);
+
+  // Ajustar mes seleccionado si el mes actual no está disponible para ese año
+  useEffect(() => {
+    if (availableMonths.length > 0) {
+      const exists = availableMonths.some((m) => m.value === selectedMonth);
+      if (!exists) {
+        setSelectedMonth(availableMonths[0].value);
+      }
+    }
+  }, [availableMonths, selectedMonth]);
 
   // Inicializar automáticamente la primera empresa (SIN opción "Todas")
   useEffect(() => {
@@ -288,7 +316,7 @@ const PayrollContract = () => {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
               >
-                {MONTHS.map((m) => (
+                {availableMonths.map((m) => (
                   <option key={m.value} value={m.value}>
                     {m.label}
                   </option>
@@ -298,7 +326,7 @@ const PayrollContract = () => {
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
               >
-                {YEARS.map((y) => (
+                {availableYears.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
