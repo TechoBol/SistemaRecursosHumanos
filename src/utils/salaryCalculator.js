@@ -261,6 +261,22 @@ const calculateSeniorityBonus = (
 };
 
 /* -------------------------------------------------------
+   OTROS BONOS PERSONALIZADOS
+------------------------------------------------------- */
+
+export const calculateBonusAmountForMonth = (bonus, workedDays) => {
+  const amount = Number(bonus?.amount) || 0;
+  if (amount <= 0 || bonus?.isActive === false) return 0;
+  return (amount / 30) * workedDays;
+};
+
+export const calculateTotalOtherBonuses = (bonuses = [], workedDays) => {
+  return bonuses.reduce((total, bonus) => {
+    return total + calculateBonusAmountForMonth(bonus, workedDays);
+  }, 0);
+};
+
+/* -------------------------------------------------------
    DESCUENTOS
 ------------------------------------------------------- */
 
@@ -281,6 +297,7 @@ export const calculateSalarySummary = ({
   contract,
   incidents = [],
   advances = [],
+  bonuses = [],
   currentDate = new Date(),
 }) => {
   const baseSalary = getBaseSalary(contract);
@@ -293,7 +310,14 @@ export const calculateSalarySummary = ({
         amount: 0,
         description: "No aplica para consultores",
       };
-  const totalEarned = basicEarnings + seniority.amount;
+
+  const otherBonusesTotal = calculateTotalOtherBonuses(
+    bonuses,
+    workedDays,
+    currentDate
+  );
+
+  const totalEarned = basicEarnings + seniority.amount + otherBonusesTotal;
   const gestoraDeduction = isFiscal
     ? calculateGestora(totalEarned)
     : 0;
@@ -307,6 +331,7 @@ export const calculateSalarySummary = ({
     basicEarnings,
     seniorityBonus: seniority.amount,
     seniorityDescription: seniority.description,
+    otherBonuses: otherBonusesTotal,
     totalEarned,
     gestoraDeduction,
     deudasDeduction,

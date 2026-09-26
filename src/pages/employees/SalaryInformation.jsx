@@ -1,7 +1,11 @@
+import { useState } from "react";
 import {
   CalendarDays,
   DollarSign,
   TrendingUp,
+  Pencil,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   ActionButton,
@@ -32,9 +36,18 @@ import {
   TabDescription,
   TabHeader,
 } from "../../components/ui/employees/EmployeeTabs.styles";
-import { calculateSalarySummary } from "../../utils/salaryCalculator";
+import {
+  TableActions,
+  TableActionButton,
+} from "../../components/ui/table/TableCell.styles";
+import {
+  calculateSalarySummary,
+  calculateBonusAmountForMonth,
+} from "../../utils/salaryCalculator";
 import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
 import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
+import { useEmployeeBonuses } from "../../hooks/useEmployeeBonuses";
+import EmployeeBonusModal from "../../components/modals/EmployeeBonusModal";
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("es-BO", {
@@ -57,11 +70,41 @@ const SalaryInformation = ({ employee }) => {
 
   const { incidents = [] } = useAttendanceIncidents(employee?.id);
   const { advances = [] } = useEmployeeAdvances(employee?.id);
+  const { bonuses = [], addBonus, updateBonus, deleteBonus } = useEmployeeBonuses(employee?.id);
+
+  const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
+  const [editingBonus, setEditingBonus] = useState(null);
+
   const salary = calculateSalarySummary({
     contract: activeContract,
     incidents,
     advances,
+    bonuses,
   });
+
+  const handleOpenAddBonus = () => {
+    setEditingBonus(null);
+    setIsBonusModalOpen(true);
+  };
+
+  const handleEditBonus = (bonus) => {
+    setEditingBonus(bonus);
+    setIsBonusModalOpen(true);
+  };
+
+  const handleDeleteBonus = async (id) => {
+    await deleteBonus(id);
+  };
+
+  const handleSubmitBonusModal = async (formData) => {
+    if (editingBonus) {
+      await updateBonus(editingBonus.id, formData);
+    } else {
+      await addBonus(formData);
+    }
+    setIsBonusModalOpen(false);
+    setEditingBonus(null);
+  };
 
   return (
     <>
@@ -72,8 +115,9 @@ const SalaryInformation = ({ employee }) => {
             <TabDescription>Información general del mes actual</TabDescription>
           </div>
 
-          <ActionButton type="button">
-            Actualizar haber básico
+          <ActionButton type="button" onClick={handleOpenAddBonus}>
+            <Plus size={17} />
+            Agregar otros bonos
           </ActionButton>
         </TabHeader>
 
@@ -131,6 +175,47 @@ const SalaryInformation = ({ employee }) => {
                   {formatCurrency(salary.seniorityBonus)}
                 </DetailValue>
               </DetailItem>
+
+              {bonuses.map((bonus) => {
+                const monthlyBonusAmount = calculateBonusAmountForMonth(
+                  bonus,
+                  salary.workedDays
+                );
+                return (
+                  <DetailItem key={bonus.id}>
+                    <DetailInfo>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <DetailLabel>{bonus.name}</DetailLabel>
+                        <TableActions style={{ width: "auto", height: "auto" }}>
+                          <TableActionButton
+                            type="button"
+                            title="Editar bono"
+                            onClick={() => handleEditBonus(bonus)}
+                            style={{ width: "26px", height: "26px" }}
+                          >
+                            <Pencil size={15} />
+                          </TableActionButton>
+                          <TableActionButton
+                            type="button"
+                            $danger
+                            title="Eliminar bono"
+                            onClick={() => handleDeleteBonus(bonus.id)}
+                            style={{ width: "26px", height: "26px" }}
+                          >
+                            <Trash2 size={15} />
+                          </TableActionButton>
+                        </TableActions>
+                      </div>
+                      <DetailDescription>
+                        Bono extra mensual — Base: {formatCurrency(bonus.amount)}
+                      </DetailDescription>
+                    </DetailInfo>
+                    <DetailValue>
+                      {formatCurrency(monthlyBonusAmount)}
+                    </DetailValue>
+                  </DetailItem>
+                );
+              })}
             </DetailList>
           </DetailSection>
 
@@ -192,6 +277,16 @@ const SalaryInformation = ({ employee }) => {
           No se encontraron registros de nóminas de meses anteriores
         </HistoryEmptyState>
       </TabContentCard>
+
+      <EmployeeBonusModal
+        isOpen={isBonusModalOpen}
+        onClose={() => {
+          setIsBonusModalOpen(false);
+          setEditingBonus(null);
+        }}
+        onSubmit={handleSubmitBonusModal}
+        initialData={editingBonus}
+      />
     </>
   );
 };
