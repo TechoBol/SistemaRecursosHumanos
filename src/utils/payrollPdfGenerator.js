@@ -1,8 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import techobolLogo from "../assets/logotechobol.png";
-import megadisLogo from "../assets/logomegadis.jpg";
-import rhinoconsLogo from "../assets/logorhinocons.png";
+import megadisLogo from "../assets/logomegadis.png";
+import rhinoconsLogo from "../assets/logorhinocons.jpeg";
 import {
   MONTH_NAMES,
   getPayrollTheme,
@@ -31,11 +31,11 @@ const COMPANY_LOGOS = {
   },
   MEGADIS: {
     src: megadisLogo,
-    format: "JPEG",
+    format: "PNG",
   },
   RHINOCONS: {
     src: rhinoconsLogo,
-    format: "PNG",
+    format: "JPEG",
   },
 };
 
