@@ -129,7 +129,7 @@ const drawUpdateMetadataBox = (
   doc.setFontSize(6.2);
   doc.setTextColor(...theme.mutedText);
   doc.text(
-    "Última actualización:",
+    "Generado:",
     textX,
     y + 4.8
   );
@@ -630,9 +630,9 @@ export const exportPayrollPdf = async ({
 
   const fileName =
     `${sanitizedCompanyName}_` +
-    `${payrollType}_` +
+    `${payrollType==="contract" ? "fiscal" : "consolidado"}_` +
     `${periodYear}_` +
     `${String(periodMonth).padStart(2, "0")}.pdf`;
 
-  doc.save(fileName);
+  doc.save(fileName); // descarga el pdf
 };
