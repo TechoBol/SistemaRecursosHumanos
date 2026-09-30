@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { theme } from "../ui/Theme";
 
 export const PageContainer = styled.main`
@@ -325,4 +325,55 @@ export const SwitchFilterButton = styled.button`
       color: #2f573c;
     }
   }
+`;
+
+/* BOTON DE EXPORTACION PDF */
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+export const ExportPdfButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  color: ${theme.colors.primary};
+  background: rgba(47, 87, 60, 0.08);
+  border: 1px solid rgba(47, 87, 60, 0.28);
+  border-radius: ${theme.radius.round};
+  transition: all ${theme.transitions.fast};
+  svg {
+    color: currentColor;
+  }
+  &:hover:not(:disabled) {
+    color: ${theme.colors.white};
+    background: ${theme.colors.primary};
+    border-color: ${theme.colors.primary};
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  @media (max-width: 600px) {
+    width: 100%;
+  }
+`;
+
+export const LoadingSpinner = styled.div`
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(47, 87, 60, 0.2);
+  border-top-color: ${theme.colors.primary};
+  border-radius: 50%;
+  animation: ${spin} 0.7s linear infinite;
 `;

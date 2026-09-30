@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
-import { Search, Pencil, Calendar } from "lucide-react";
-import styled from "styled-components";
+import { Search, Pencil, Calendar, FileDown } from "lucide-react";
 import DataTable from "../components/table/DataTable";
 import PayrollModal from "../components/modals/PayrollModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
+import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
+import { errorToast, successToast } from "../services/toasts";
 import {
   ChipFilterButton,
   ChipFilters,
@@ -21,6 +22,8 @@ import {
   TotalValue,
   PeriodSelector,
   PeriodSelect,
+  ExportPdfButton,
+  LoadingSpinner,
 } from "../components/ui/Page.styles";
 import {
   CellStack,
@@ -67,6 +70,7 @@ const PayrollConsolidation = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedPayroll, setSelectedPayroll] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Anios disponibles
   const availableYears = useMemo(() => {
@@ -99,6 +103,11 @@ const PayrollConsolidation = () => {
     if (companies.length > 0 && !activeCompanyId) {
       setActiveCompanyId(companies[0].id);
     }
+  }, [companies, activeCompanyId]);
+
+  // Empresa activa seleccionada
+  const activeCompany = useMemo(() => {
+    return companies.find((c) => c.id === Number(activeCompanyId)) || null;
   }, [companies, activeCompanyId]);
 
   const { payrolls, isLoading, updatePayroll } = usePayrolls(
@@ -142,23 +151,63 @@ const PayrollConsolidation = () => {
       (acc, row) => ({
         baseSalary: acc.baseSalary + Number(row.baseSalary || 0),
         earnedSalary: acc.earnedSalary + Number(row.earnedSalary || 0),
+        seniorityBonus: acc.seniorityBonus + Number(row.seniorityBonus || 0),
+        otherBonuses: acc.otherBonuses + Number(row.otherBonuses || 0),
         totalBonuses: acc.totalBonuses + Number(row.seniorityBonus || 0) + Number(row.otherBonuses || 0),
         grossPay: acc.grossPay + Number(row.grossPay || 0),
         afpDeduction: acc.afpDeduction + Number(row.afpDeduction || 0),
+        absenceDeduction: acc.absenceDeduction + Number(row.absenceDeduction || 0),
+        advanceDeduction: acc.advanceDeduction + Number(row.advanceDeduction || 0),
         totalDeductions: acc.totalDeductions + Number(row.totalDeductions || 0),
         netSalary: acc.netSalary + Number(row.netSalary || 0),
       }),
       {
         baseSalary: 0,
         earnedSalary: 0,
+        seniorityBonus: 0,
+        otherBonuses: 0,
         totalBonuses: 0,
         grossPay: 0,
         afpDeduction: 0,
+        absenceDeduction: 0,
+        advanceDeduction: 0,
         totalDeductions: 0,
         netSalary: 0,
       }
     );
   }, [filteredRows]);
+
+  const handleExportPdf = async () => {
+    if (!filteredRows || filteredRows.length === 0) {
+      errorToast("No hay registros en la planilla para generar el PDF.");
+      return;
+    }
+
+    try {
+      setIsGeneratingPdf(true);
+      setTimeout(async () => {
+        try {
+          await exportPayrollPdf({
+            payrolls: filteredRows,
+            company: activeCompany,
+            periodMonth: selectedMonth,
+            periodYear: selectedYear,
+            payrollType: "consolidated",
+            totals,
+          });
+          successToast("PDF generado exitosamente.");
+        } catch (err) {
+          console.error("Error al generar el PDF de planilla:", err);
+          errorToast("Ocurrió un error al generar el documento PDF.");
+        } finally {
+          setIsGeneratingPdf(false);
+        }
+      }, 50);
+    } catch (err) {
+      console.error("Error:", err);
+      setIsGeneratingPdf(false);
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -392,6 +441,25 @@ const PayrollConsolidation = () => {
               </ChipFilterButton>
             ))}
           </ChipFilters>
+
+          <ExportPdfButton
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isLoading || isGeneratingPdf || !filteredRows || filteredRows.length === 0}
+            title="Descargar Planilla en formato PDF"
+          >
+            {isGeneratingPdf ? (
+              <>
+                <LoadingSpinner />
+                <span>Generando PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileDown size={18} />
+                <span>Exportar Planilla</span>
+              </>
+            )}
+          </ExportPdfButton>
         </FiltersWrapper>
 
         <DataTable
