@@ -352,11 +352,13 @@ const PayrollConsolidation = () => {
     []
   );
 
+  const selectedMonthName = ALL_MONTHS.find((month) => month.value === selectedMonth)?.label || "";
+
   return (
     <>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Planilla Consolidada</PageTitle>
+          <PageTitle>Planilla Consolidada - {selectedMonthName}</PageTitle>
 
           <PageActions>
             <PeriodSelector>
