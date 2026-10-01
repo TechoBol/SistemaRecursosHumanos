@@ -352,15 +352,18 @@ const PayrollContract = () => {
     []
   );
 
+  const selectedMonthName = ALL_MONTHS.find((month) => month.value === selectedMonth)?.label || "";
+
   return (
     <>
       <PageContainer>
         <PageHeader>
-          <PageTitle>Planilla Fiscal</PageTitle>
+          <PageTitle>Planilla Fiscal - {selectedMonthName}</PageTitle>
 
           <PageActions>
             <PeriodSelector>
               <Calendar size={16} color="#2f573c" />
+              {/* MES */}
               <PeriodSelect
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -371,6 +374,7 @@ const PayrollContract = () => {
                   </option>
                 ))}
               </PeriodSelect>
+              {/* ANIO */}
               <PeriodSelect
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
