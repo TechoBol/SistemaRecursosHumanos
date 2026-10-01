@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   ChevronDown,
@@ -8,7 +8,6 @@ import {
   DollarSign,
   FileSignature,
   Layers3,
-  List,
   Menu,
   Settings,
   UserRound,
@@ -21,7 +20,6 @@ import {
   BrandLogo,
   BrandText,
   CollapseButton,
-  ExpandIndicator,
   MenuButton,
   MenuButtonContent,
   MenuGroup,
@@ -66,13 +64,10 @@ const Sidebar = ({
   mobileOpen,
   onCloseMobile,
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { fullName } = useLoginStore();
   const { logOut } = useAuthentication();
-
-  const [openMenus, setOpenMenus] = useState({
-    empleados: true,
-    planillas: true,
-  });
 
   const closeMobileMenu = () => {
     if (window.innerWidth <= 768) {
@@ -80,19 +75,21 @@ const Sidebar = ({
     }
   };
 
-  const toggleMenu = (menuId) => {
+  const handleGroupClick = (item) => {
+    const isInsideGroup = item.children.some(
+      (child) => location.pathname === child.path
+    );
+    // Si estoy fuera de Planillas, entrar a la primera opción: Fiscal
+    if (!isInsideGroup) {
+      const firstChildPath = item.children?.[0]?.path;
+      if (firstChildPath) {
+        navigate(firstChildPath);
+      }
+    }
+    // Si el sidebar está colapsado, expandirlo
     if (collapsed) {
       onToggleCollapse();
-      setOpenMenus((currentMenus) => ({
-        ...currentMenus,
-        [menuId]: true,
-      }));
-      return;
     }
-    setOpenMenus((currentMenus) => ({
-      ...currentMenus,
-      [menuId]: !currentMenus[menuId],
-    }));
   };
 
   const renderSimpleItem = (item) => {
@@ -117,17 +114,17 @@ const Sidebar = ({
 
   const renderGroupItem = (item) => {
     const Icon = item.icon;
-    const isOpen = Boolean(openMenus[item.id]);
+    const isGroupActive = item.children.some( // para planilla
+      (child) => location.pathname === child.path
+    );
     return (
       <MenuGroup key={item.id}>
         <MenuButton
           type="button"
           $collapsed={collapsed}
-          onClick={() => toggleMenu(item.id)}
-          aria-expanded={isOpen}
-          aria-label={`${isOpen ? "Cerrar" : "Abrir"} menú de ${
-            item.label
-          }`}
+          $active={isGroupActive}
+          onClick={() => handleGroupClick(item)}
+          aria-label={`Ir a ${item.label}`}
         >
           <MenuButtonContent>
             <MenuIcon>
@@ -137,19 +134,11 @@ const Sidebar = ({
               {item.label}
             </MenuLabel>
           </MenuButtonContent>
-          {!collapsed && (
-            <ExpandIndicator $open={isOpen}>
-              <ChevronDown size={17} />
-            </ExpandIndicator>
-          )}
+          {!collapsed && <ChevronDown size={17} />}
         </MenuButton>
 
         {!collapsed && (
-          <SubMenu
-            $open={isOpen}
-            $itemsCount={item.children.length}
-            $collapsed={collapsed}
-          >
+          <SubMenu $collapsed={collapsed}>
             {item.children.map((child) => {
               const ChildIcon = child.icon;
               return (
@@ -240,4 +229,4 @@ const Sidebar = ({
   );
 };
 
-export default Sidebar;
+export default Sidebar;/////////
