@@ -5,10 +5,12 @@ import PayrollModal from "../components/modals/PayrollModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
 import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
+import { exportPaymentSlipsPdf } from "../utils/paymentSlipPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
   ChipFilterButton,
   ChipFilters,
+  ExportActions,
   FiltersWrapper,
   PageActions,
   PageContainer,
@@ -177,12 +179,12 @@ const PayrollContract = () => {
     );
   }, [filteredRows]);
 
+  {/* PLANILLAS */}
   const handleExportPdf = async () => {
     if (!filteredRows || filteredRows.length === 0) {
       errorToast("No hay registros en la planilla para generar el PDF.");
       return;
     }
-
     try {
       setIsGeneratingPdf(true);
       setTimeout(async () => {
@@ -206,6 +208,25 @@ const PayrollContract = () => {
     } catch (err) {
       console.error("Error:", err);
       setIsGeneratingPdf(false);
+    }
+  };
+
+  {/* BOLETAS */}
+  const handleExportPaymentSlips = async () => {
+    if (!filteredRows?.length) {
+      errorToast("No hay registros para generar las boletas de pago.");
+      return;
+    }
+    try {
+      await exportPaymentSlipsPdf({
+        payrolls: filteredRows,
+        company: activeCompany,
+        periodMonth: selectedMonth,
+        periodYear: selectedYear,
+      });
+    } catch (err) {
+      console.error("Error al generar boletas de pago:", err);
+      errorToast("No se pudieron generar las boletas de pago.");
     }
   };
 
@@ -446,24 +467,41 @@ const PayrollContract = () => {
             ))}
           </ChipFilters>
 
-          <ExportPdfButton
-            type="button"
-            onClick={handleExportPdf}
-            disabled={isLoading || isGeneratingPdf || !filteredRows || filteredRows.length === 0}
-            title="Descargar Planilla en formato PDF"
-          >
-            {isGeneratingPdf ? (
-              <>
-                <LoadingSpinner />
-                <span>Generando PDF...</span>
-              </>
-            ) : (
-              <>
-                <FileDown size={18} />
-                <span>Exportar Planilla</span>
-              </>
-            )}
-          </ExportPdfButton>
+          <ExportActions>
+            <ExportPdfButton
+              type="button"
+              onClick={handleExportPaymentSlips}
+              disabled={isLoading || !filteredRows?.length}
+              title="Ver boletas de pago"
+            >
+              <FileDown size={18} />
+              <span>Boletas de Pago</span>
+            </ExportPdfButton>
+
+            <ExportPdfButton
+              type="button"
+              onClick={handleExportPdf}
+              disabled={
+                isLoading ||
+                isGeneratingPdf ||
+                !filteredRows ||
+                filteredRows.length === 0
+              }
+              title="Ver planilla en formato PDF"
+            >
+              {isGeneratingPdf ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Generando PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown size={18} />
+                  <span>Exportar Planilla</span>
+                </>
+              )}
+            </ExportPdfButton>
+          </ExportActions>
         </FiltersWrapper>
 
         <DataTable

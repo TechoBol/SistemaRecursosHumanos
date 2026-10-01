@@ -377,3 +377,8 @@ export const LoadingSpinner = styled.div`
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
 `;
+
+export const ExportActions = styled.div`
+  display: flex;
+  gap: 10px;
+`;
