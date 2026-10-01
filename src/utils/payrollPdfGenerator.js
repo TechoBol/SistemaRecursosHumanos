@@ -1,8 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import techobolLogo from "../assets/logotechobol.png";
-import megadisLogo from "../assets/logomegadis.jpg";
-import rhinoconsLogo from "../assets/logorhinocons.png";
+import megadisLogo from "../assets/logomegadis.png";
+import rhinoconsLogo from "../assets/logorhinocons.jpeg";
 import {
   MONTH_NAMES,
   getPayrollTheme,
@@ -31,11 +31,11 @@ const COMPANY_LOGOS = {
   },
   MEGADIS: {
     src: megadisLogo,
-    format: "JPEG",
+    format: "PNG",
   },
   RHINOCONS: {
     src: rhinoconsLogo,
-    format: "PNG",
+    format: "JPEG",
   },
 };
 
@@ -129,7 +129,7 @@ const drawUpdateMetadataBox = (
   doc.setFontSize(6.2);
   doc.setTextColor(...theme.mutedText);
   doc.text(
-    "Última actualización:",
+    "Generado:",
     textX,
     y + 4.8
   );
@@ -630,9 +630,9 @@ export const exportPayrollPdf = async ({
 
   const fileName =
     `${sanitizedCompanyName}_` +
-    `${payrollType}_` +
+    `${payrollType==="contract" ? "fiscal" : "consolidado"}_` +
     `${periodYear}_` +
     `${String(periodMonth).padStart(2, "0")}.pdf`;
 
-  doc.save(fileName);
+  doc.save(fileName); // descarga el pdf
 };

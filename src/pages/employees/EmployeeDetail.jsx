@@ -43,7 +43,6 @@ import { useJobTitles } from "../../hooks/useJobTitles";
 import { successToast } from "../../services/toasts";
 import AdvancesInformation from "./AdvancesInformation";
 import MemorandumsInformation from "./MemorandumsInformation";
-import OtherEventsInformation from "./OtherEventsInformation";
 import PermissionsInformation from "./PermissionsInformation";
 import PersonalInformation from "./PersonalInformation";
 import SalaryInformation from "./SalaryInformation";
@@ -56,9 +55,8 @@ const DETAIL_TABS = [
   { id: "permissions", label: "Permisos y faltas" },
   { id: "advances", label: "Anticipos" },
   { id: "vacations", label: "Vacaciones" },
-  { id: "memorandums", label: "Memorándums" },
-  { id: "others", label: "Otros" },
-  { id: "termination", label: "Desvinculación" },
+  //{ id: "memorandums", label: "Memorándums" },
+  //{ id: "termination", label: "Desvinculación" },
 ];
 
 const mapDbEmployeeToUi = (employee) => {
@@ -164,21 +162,19 @@ const EmployeeDetail = () => {
     if (!uiEmployee) return null;
     switch (activeTab) {
       case "personal":
-        return <PersonalInformation employee={uiEmployee} />
+        return <PersonalInformation employee={uiEmployee} />;
       case "salary":
-        return <SalaryInformation employee={uiEmployee} />
+        return <SalaryInformation employee={uiEmployee} />;
       case "permissions":
-        return <PermissionsInformation employee={uiEmployee} />
+        return <PermissionsInformation employee={uiEmployee} />;
       case "advances":
         return <AdvancesInformation employee={uiEmployee} />;
       case "vacations":
         return <VacationsInformation employee={uiEmployee} />;
       case "memorandums":
         return <MemorandumsInformation />;
-      case "others":
-        return <OtherEventsInformation />;
       case "termination":
-        return <TerminationInformation employee={uiEmployee} />
+        return <TerminationInformation employee={uiEmployee} />;
       default:
         return null;
     }

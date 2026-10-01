@@ -106,11 +106,15 @@ export const MenuButton = styled.button`
   justify-content: ${({ $collapsed }) => $collapsed ? "center" : "space-between"};
   gap: 8px;
   border-radius: ${({ theme }) => theme.radius.sm};
-  background-color: transparent;
+  background-color: ${({ $active }) => $active ? "rgba(255, 255, 255, 0.10)" : "transparent"};
   color: ${({ theme }) => theme.colors.textLight};
   cursor: pointer;
   &:hover {
-    background-color: ${({ theme }) => theme.colors.menuHover};
+    background-color: ${({ $collapsed, $active, theme }) => {
+      if ($active) return "rgba(255, 255, 255, 0.10)";
+      if ($collapsed) return theme.colors.menuHover;
+      return "transparent";
+    }};
   }
 `;
 
@@ -140,18 +144,7 @@ export const MenuLabel = styled.span`
   width: ${({ $collapsed }) => ($collapsed ? "0" : "auto")};
 `;
 
-export const ExpandIndicator = styled.span`
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  transition: transform ${({ theme }) => theme.transitions.fast};
-  transform: ${({ $open }) => $open ? "rotate(0deg)" : "rotate(-90deg)"};
-`;
-
 export const SubMenu = styled.div`
-  max-height: ${({ $open, $itemsCount }) => $open ? `${$itemsCount * 40}px` : "0"};
   margin-left: ${({ $collapsed }) => ($collapsed ? "0" : "15px")};
   padding-left: ${({ $collapsed }) => ($collapsed ? "0" : "10px")};
   border-left: ${({ $collapsed, theme }) =>
@@ -159,11 +152,6 @@ export const SubMenu = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0;
-  overflow: hidden;
-  opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition:
-    max-height ${({ theme }) => theme.transitions.normal},
-    opacity ${({ theme }) => theme.transitions.fast};
 `;
 
 export const MenuLink = styled(NavLink)`
@@ -174,7 +162,7 @@ export const MenuLink = styled(NavLink)`
   align-items: center;
   justify-content: ${({ $collapsed }) => $collapsed ? "center" : "flex-start"};
   gap: 10px;
-  border-radius: ${({ theme }) => theme.radius.round};
+  border-radius: ${({ theme }) => theme.radius.sm};
   color: ${({ theme }) => theme.colors.textLight};
   transition:
     background-color ${({ theme }) => theme.transitions.fast},
@@ -183,8 +171,9 @@ export const MenuLink = styled(NavLink)`
     background-color: ${({ theme }) => theme.colors.menuHover};
   }
   &.active {
-    background-color: ${({ theme }) => theme.colors.menuActive};
-    color: ${({ theme }) => theme.colors.menuActiveText};
+    background-color: rgba(255, 255, 255, 0.14);
+    color: ${({ theme }) => theme.colors.textLight};
+    font-weight: 600;
   }
 `;
 
@@ -202,8 +191,9 @@ export const SubMenuLink = styled(NavLink)`
     background-color: ${({ theme }) => theme.colors.menuHover};
   }
   &.active {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.16);
     color: ${({ theme }) => theme.colors.textLight};
+    font-weight: 600;
   }
 `;
 
@@ -221,15 +211,16 @@ export const SettingsLink = styled(NavLink)`
   align-items: center;
   justify-content: ${({ $collapsed }) => $collapsed ? "center" : "flex-start"};
   gap: 12px;
-  border-radius: ${({ theme }) => theme.radius.round};
+  border-radius: ${({ theme }) => theme.radius.sm};
   background-color: transparent;
   color: ${({ theme }) => theme.colors.textLight};
   &:hover {
     background-color: ${({ theme }) => theme.colors.menuHover};
   }
   &.active {
-    background-color: ${({ theme }) => theme.colors.menuActive};
-    color: ${({ theme }) => theme.colors.menuActiveText};
+    background-color: rgba(255, 255, 255, 0.14);
+    color: ${({ theme }) => theme.colors.textLight};
+    font-weight: 600;
   }
 `;
 
