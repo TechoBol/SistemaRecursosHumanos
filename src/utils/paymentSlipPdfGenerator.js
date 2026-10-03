@@ -521,69 +521,33 @@ export const exportPaymentSlipsPdf = async ({
   const logo = await getCompanyLogo(companyName);
 
   const doc = new jsPDF({
-    orientation: "landscape",
+    orientation: "portrait",
     unit: "mm",
-    format: "a4",
+    format: [165, 216],
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 6;
 
-  const pageMargin = 8;
-  const gap = 8;
-
-  const slipWidth = (pageWidth - pageMargin * 2 - gap) / 2;
-  const slipHeight = pageHeight - pageMargin * 2;
-
-  for (let index = 0; index < payrolls.length; index += 2) {
+  payrolls.forEach((payroll, index) => {
     if (index > 0) {
-      doc.addPage();
+      doc.addPage([165, 216], "portrait");
     }
-
-    // línea de corte central
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.2);
-    doc.setLineDashPattern([1.2, 1.2], 0);
-    doc.line(
-      pageWidth / 2,
-      pageMargin,
-      pageWidth / 2,
-      pageHeight - pageMargin
-    );
-    doc.setLineDashPattern([], 0);
-
-    // boleta izquierda
     drawSlip({
       doc,
-      payroll: payrolls[index],
+      payroll,
       company,
       month: periodMonth,
       year: periodYear,
       theme,
       logo,
-      x: pageMargin,
-      y: pageMargin,
-      width: slipWidth,
-      height: slipHeight,
+      x: margin,
+      y: margin,
+      width: pageWidth - margin * 2,
+      height: pageHeight - margin * 2,
     });
-
-    // boleta derecha
-    if (payrolls[index + 1]) {
-      drawSlip({
-        doc,
-        payroll: payrolls[index + 1],
-        company,
-        month: periodMonth,
-        year: periodYear,
-        theme,
-        logo,
-        x: pageMargin + slipWidth + gap,
-        y: pageMargin,
-        width: slipWidth,
-        height: slipHeight,
-      });
-    }
-  }
+  });
 
   const pdfBlob = doc.output("blob");
   const pdfUrl = URL.createObjectURL(pdfBlob);
@@ -593,4 +557,4 @@ export const exportPaymentSlipsPdf = async ({
   setTimeout(() => {
     URL.revokeObjectURL(pdfUrl);
   }, 60000);
-};//694
+};
