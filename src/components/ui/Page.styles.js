@@ -332,7 +332,7 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
-export const ExportPdfButton = styled.button`
+const BaseActionButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -343,19 +343,11 @@ export const ExportPdfButton = styled.button`
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  cursor: pointer;
-  color: ${theme.colors.primary};
-  background: rgba(47, 87, 60, 0.08);
-  border: 1px solid rgba(47, 87, 60, 0.28);
   border-radius: ${theme.radius.round};
+  cursor: pointer;
   transition: all ${theme.transitions.fast};
   svg {
     color: currentColor;
-  }
-  &:hover:not(:disabled) {
-    color: ${theme.colors.white};
-    background: ${theme.colors.primary};
-    border-color: ${theme.colors.primary};
   }
   &:active:not(:disabled) {
     transform: scale(0.98);
@@ -366,6 +358,42 @@ export const ExportPdfButton = styled.button`
   }
   @media (max-width: 600px) {
     width: 100%;
+  }
+`;
+
+export const ExportPdfButton = styled(BaseActionButton)`
+  color: ${theme.colors.primary};
+  background: rgba(47, 87, 60, 0.08);
+  border: 1px solid rgba(47, 87, 60, 0.28);
+  &:hover:not(:disabled) {
+    color: ${theme.colors.white};
+    background: ${theme.colors.primary};
+    border-color: ${theme.colors.primary};
+  }
+`;
+
+export const FinalizePayrollButton = styled(BaseActionButton)`
+  color: ${({ $isFinalized }) => $isFinalized ? "#15803d" : "#ffffff"};
+  background: ${({ $isFinalized }) => $isFinalized ? "#f0fdf4" : "#2f573c"};
+  border: 1px solid ${({ $isFinalized }) => $isFinalized ? "#bbf7d0" : "#2f573c"};
+  cursor: ${({ $isFinalized }) => $isFinalized ? "default" : "pointer"};
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  &:hover:not(:disabled) {
+    background: ${({ $isFinalized }) => $isFinalized ? "#f0fdf4" : "#244530"};
+    border-color: ${({ $isFinalized }) => $isFinalized ? "#bbf7d0" : "#244530"};
+    box-shadow: ${({ $isFinalized }) =>
+      $isFinalized
+        ? "0 1px 2px rgba(0, 0, 0, 0.05)"
+        : "0 4px 6px -1px rgba(0, 0, 0, 0.08)"};
+    transform: ${({ $isFinalized }) => $isFinalized ? "none" : "translateY(-1px)"};
+  }
+  &:disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    svg {
+      color: currentColor;
+    }
   }
 `;
 
@@ -381,4 +409,7 @@ export const LoadingSpinner = styled.div`
 export const ExportActions = styled.div`
   display: flex;
   gap: 10px;
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 `;
