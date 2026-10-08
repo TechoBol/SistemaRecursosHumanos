@@ -327,7 +327,7 @@ export const SwitchFilterButton = styled.button`
   }
 `;
 
-/* BOTON DE EXPORTACION PDF */
+/* BOTON DE BOLETAS, PLANILLAS, FINALIZAR  */
 const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
@@ -361,7 +361,7 @@ const BaseActionButton = styled.button`
   }
 `;
 
-export const ExportPdfButton = styled(BaseActionButton)`
+export const ActionSecondaryButton = styled(BaseActionButton)`
   color: ${theme.colors.primary};
   background: rgba(47, 87, 60, 0.08);
   border: 1px solid rgba(47, 87, 60, 0.28);
@@ -372,7 +372,7 @@ export const ExportPdfButton = styled(BaseActionButton)`
   }
 `;
 
-export const FinalizePayrollButton = styled(BaseActionButton)`
+export const ActionPrimaryButton = styled(BaseActionButton)`
   color: ${({ $isFinalized }) => $isFinalized ? "#15803d" : "#ffffff"};
   background: ${({ $isFinalized }) => $isFinalized ? "#f0fdf4" : "#2f573c"};
   border: 1px solid ${({ $isFinalized }) => $isFinalized ? "#bbf7d0" : "#2f573c"};
@@ -404,12 +404,4 @@ export const LoadingSpinner = styled.div`
   border-top-color: ${theme.colors.primary};
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
-`;
-
-export const ExportActions = styled.div`
-  display: flex;
-  gap: 10px;
-  @media (max-width: 600px) {
-    width: 100%;
-  }
 `;

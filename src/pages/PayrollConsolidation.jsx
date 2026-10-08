@@ -7,6 +7,7 @@ import { usePayrolls } from "../hooks/usePayrolls";
 import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
+  ActionSecondaryButton,
   ChipFilterButton,
   ChipFilters,
   FiltersWrapper,
@@ -22,7 +23,6 @@ import {
   TotalValue,
   PeriodSelector,
   PeriodSelect,
-  ExportPdfButton,
   LoadingSpinner,
 } from "../components/ui/Page.styles";
 import {
@@ -310,6 +310,7 @@ const PayrollConsolidation = () => {
             GENERATED: "info",
             APPROVED: "warning",
             PAID: "success",
+            CLOSED: "success",
             CANCELLED: "danger",
           };
           const labels = {
@@ -317,6 +318,7 @@ const PayrollConsolidation = () => {
             GENERATED: "Generado",
             APPROVED: "Aprobado",
             PAID: "Pagado",
+            CLOSED: "Finalizado",
             CANCELLED: "Cancelado",
           };
           return (
@@ -444,7 +446,7 @@ const PayrollConsolidation = () => {
             ))}
           </ChipFilters>
 
-          <ExportPdfButton
+          <ActionSecondaryButton
             type="button"
             onClick={handleExportPdf}
             disabled={isLoading || isGeneratingPdf || !filteredRows || filteredRows.length === 0}
@@ -461,7 +463,7 @@ const PayrollConsolidation = () => {
                 <span>Exportar Planilla</span>
               </>
             )}
-          </ExportPdfButton>
+          </ActionSecondaryButton>
         </FiltersWrapper>
 
         <DataTable
