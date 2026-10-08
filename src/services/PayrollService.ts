@@ -110,3 +110,41 @@ export const updatePayrollApi = async (
     return null;
   }
 };
+
+export const finalizePayrollApi = async (
+  token: string,
+  params: {
+    companyId: number;
+    companyType: "contract" | "consolidated";
+    year: number;
+    month: number;
+  }
+) => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/payroll/finalize`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(params),
+      }
+    );
+
+    const resData = await response.json();
+
+    if (!response.ok) {
+      errorToast(resData.message || "No se pudo finalizar la planilla.");
+      return null;
+    }
+
+    successToast(resData.message || "Planilla finalizada correctamente.");
+    return resData;
+  } catch (error) {
+    console.error("Error al finalizar planilla:", error);
+    errorToast("Error de conexión al finalizar la planilla.");
+    return null;
+  }
+};
