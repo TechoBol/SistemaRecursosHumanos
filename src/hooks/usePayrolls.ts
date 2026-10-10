@@ -3,6 +3,7 @@ import { useLoginStore } from "../components/store/loginStore";
 import {
   getPayrollsApi,
   updatePayrollApi,
+  finalizePayrollApi,
   PayrollItem,
 } from "../services/PayrollService";
 
@@ -63,6 +64,29 @@ export const usePayrolls = (
     }
   };
 
+  const finalizePayroll = async () => {
+    if (!token || !companyId) return null;
+    setIsLoading(true);
+    try {
+      const res = await finalizePayrollApi(token, {
+        companyId,
+        companyType,
+        year,
+        month,
+      });
+      if (res) {
+        await fetchPayrolls();
+        return res;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error en usePayrolls al finalizar planilla:", error);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPayrolls();
   }, [fetchPayrolls]);
@@ -72,5 +96,6 @@ export const usePayrolls = (
     isLoading,
     fetchPayrolls,
     updatePayroll,
+    finalizePayroll,
   };
 };

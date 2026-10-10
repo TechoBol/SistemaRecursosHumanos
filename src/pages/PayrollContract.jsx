@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
-import { Search, Pencil, Calendar, FileDown } from "lucide-react";
+import { Search, Pencil, Calendar, FileDown, CheckCircle2, Lock } from "lucide-react";
+import Swal from "sweetalert2";
 import DataTable from "../components/table/DataTable";
 import PayrollModal from "../components/modals/PayrollModal";
 import { useCompanies } from "../hooks/useCompanies";
@@ -8,9 +9,10 @@ import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
 import { exportPaymentSlipsPdf } from "../utils/paymentSlipPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
+  ActionPrimaryButton,
+  ActionSecondaryButton,
   ChipFilterButton,
   ChipFilters,
-  ExportActions,
   FiltersWrapper,
   PageActions,
   PageContainer,
@@ -24,7 +26,6 @@ import {
   TotalValue,
   PeriodSelector,
   PeriodSelect,
-  ExportPdfButton,
   LoadingSpinner,
 } from "../components/ui/Page.styles";
 import {
@@ -112,12 +113,54 @@ const PayrollContract = () => {
     return companies.find((c) => c.id === Number(activeCompanyId)) || null;
   }, [companies, activeCompanyId]);
 
-  const { payrolls, isLoading, updatePayroll } = usePayrolls(
+  const { payrolls, isLoading, updatePayroll, finalizePayroll } = usePayrolls(
     activeCompanyId,
     "contract",
     selectedYear,
     selectedMonth
   );
+
+  const isPayrollFinalized = useMemo(() => {
+    if (!payrolls || payrolls.length === 0) return false;
+    return payrolls.every((p) => ["CLOSED", "PAID", "APPROVED"].includes(p.status));
+  }, [payrolls]);
+
+  const canFinalize = useMemo(() => {
+    if (!payrolls || payrolls.length === 0 || isPayrollFinalized) return false;
+    const now = new Date();
+    const lastDayObj = new Date(selectedYear, selectedMonth, 0);
+    const startOfLastDay = new Date(
+      selectedYear,
+      selectedMonth - 1,
+      lastDayObj.getDate(),
+      0,
+      0,
+      0
+    );
+    return now >= startOfLastDay;
+  }, [payrolls, isPayrollFinalized, selectedYear, selectedMonth]);
+
+  const handleFinalizePayroll = async () => {
+    if (!canFinalize || isPayrollFinalized) return;
+
+    const monthObj = ALL_MONTHS.find((m) => m.value === selectedMonth);
+    const monthName = monthObj ? monthObj.label : selectedMonth;
+
+    const result = await Swal.fire({
+      title: `¿Finalizar planilla de ${monthName} ${selectedYear}?`,
+      text: "Una vez finalizada, la planilla quedará cerrada definitivamente y no se actualizará con nuevos registros o modificaciones.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2f573c",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, finalizar planilla",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      await finalizePayroll();
+    }
+  };
 
   const handleEditPayroll = (payroll) => {
     setSelectedPayroll(payroll);
@@ -138,15 +181,21 @@ const PayrollContract = () => {
     }
   };
 
+  // excluye a los empleados de tipo CONSULTOR
+  const fiscalPayrolls = useMemo(() => {
+    if (!payrolls) return [];
+    return payrolls.filter((p) => p.contractType !== "CONSULTING");
+  }, [payrolls]);
+
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
-    if (!search) return payrolls;
-    return payrolls.filter((row) =>
-      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType}`
+    if (!search) return fiscalPayrolls;
+    return fiscalPayrolls.filter((row) =>
+      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType} ${row.cityName || ""}`
         .toLowerCase()
         .includes(search)
     );
-  }, [payrolls, searchValue]);
+  }, [fiscalPayrolls, searchValue]);
 
   const totals = useMemo(() => {
     return filteredRows.reduce(
@@ -331,6 +380,7 @@ const PayrollContract = () => {
             GENERATED: "info",
             APPROVED: "warning",
             PAID: "success",
+            CLOSED: "success",
             CANCELLED: "danger",
           };
           const labels = {
@@ -338,6 +388,7 @@ const PayrollContract = () => {
             GENERATED: "Generado",
             APPROVED: "Aprobado",
             PAID: "Pagado",
+            CLOSED: "Finalizado",
             CANCELLED: "Cancelado",
           };
           return (
@@ -467,8 +518,8 @@ const PayrollContract = () => {
             ))}
           </ChipFilters>
 
-          <ExportActions>
-            <ExportPdfButton
+          <ChipFilters>
+            <ActionSecondaryButton
               type="button"
               onClick={handleExportPaymentSlips}
               disabled={isLoading || !filteredRows?.length}
@@ -476,9 +527,9 @@ const PayrollContract = () => {
             >
               <FileDown size={18} />
               <span>Boletas de Pago</span>
-            </ExportPdfButton>
+            </ActionSecondaryButton>
 
-            <ExportPdfButton
+            <ActionSecondaryButton
               type="button"
               onClick={handleExportPdf}
               disabled={
@@ -500,8 +551,34 @@ const PayrollContract = () => {
                   <span>Exportar Planilla</span>
                 </>
               )}
-            </ExportPdfButton>
-          </ExportActions>
+            </ActionSecondaryButton>
+
+            <ActionPrimaryButton
+              type="button"
+              onClick={handleFinalizePayroll}
+              disabled={isLoading || isPayrollFinalized || !canFinalize}
+              $isFinalized={isPayrollFinalized}
+              title={
+                isPayrollFinalized
+                  ? "La planilla de este mes ya se encuentra finalizada y cerrada."
+                  : !canFinalize
+                  ? "Se habilita a partir del último día del mes correspondiente"
+                  : "Finalizar y cerrar definitivamente la planilla de este mes"
+              }
+            >
+              {isPayrollFinalized ? (
+                <>
+                  <CheckCircle2 size={18} />
+                  <span>Planilla Finalizada</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={18} />
+                  <span>Finalizar planilla</span>
+                </>
+              )}
+            </ActionPrimaryButton>
+          </ChipFilters>
         </FiltersWrapper>
 
         <DataTable
