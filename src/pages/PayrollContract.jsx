@@ -181,15 +181,21 @@ const PayrollContract = () => {
     }
   };
 
+  // excluye a los empleados de tipo CONSULTOR
+  const fiscalPayrolls = useMemo(() => {
+    if (!payrolls) return [];
+    return payrolls.filter((p) => p.contractType !== "CONSULTING");
+  }, [payrolls]);
+
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
-    if (!search) return payrolls;
-    return payrolls.filter((row) =>
-      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType}`
+    if (!search) return fiscalPayrolls;
+    return fiscalPayrolls.filter((row) =>
+      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType} ${row.cityName || ""}`
         .toLowerCase()
         .includes(search)
     );
-  }, [payrolls, searchValue]);
+  }, [fiscalPayrolls, searchValue]);
 
   const totals = useMemo(() => {
     return filteredRows.reduce(

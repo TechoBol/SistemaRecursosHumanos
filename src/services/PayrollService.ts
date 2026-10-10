@@ -8,6 +8,10 @@ export interface PayrollItem {
   hireDate: string | null;
   employeeType: string;
   jobTitleName: string;
+  branchId?: number;
+  branchName?: string;
+  cityId?: number;
+  cityName?: string;
   contractCompanyId: number;
   contractCompanyName: string;
   consolidatedCompanyId: number;
