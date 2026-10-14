@@ -10,6 +10,13 @@ import {
   formatDatePdf,
   getFormattedUpdateTimestamp,
 } from "../components/ui/PayrollPDF.styles";
+import {
+  CONSOLIDATED_JOB_CATEGORIES,
+  findJobCategory,
+  getFiscalOrderForConsolidated,
+  formatBranchTitle,
+  calculatePayrollTotals,
+} from "./payrollClassification";
 
 const COMPANY_LOCATION = "Cochabamba - Bolivia";
 
@@ -143,197 +150,342 @@ const drawUpdateMetadataBox = (
   doc.text(timestamp.timeLine, textX, y + 12.6);
 };
 
-const groupPayrollsByBranch = (payrolls) => {
-  const groups = {};
+const sortEmployeesByName = (employees = []) =>
+  [...employees].sort((a, b) =>
+    getEmployeeFullName(a).localeCompare(getEmployeeFullName(b), "es", {
+      sensitivity: "base",
+    })
+  );
 
-  payrolls.forEach((payroll) => {
-    const branchName = (payroll.branchName || "CENTRAL").trim();
+const buildEmployeeTableRow = (employee, index, theme) => [
+  {
+    content: String(index),
+    styles: { halign: "center" },
+  },
+  {
+    content: getEmployeeFullName(employee).toUpperCase(),
+    styles: { halign: "left" },
+  },
+  {
+    content: (employee.jobTitleName || "-").toUpperCase(),
+    styles: { halign: "left" },
+  },
+  {
+    content: formatDatePdf(employee.hireDate),
+    styles: { halign: "center" },
+  },
+  {
+    content: formatMoneyPdf(employee.baseSalary),
+    styles: { halign: "right" },
+  },
+  {
+    content: String(employee.workedDays ?? 30),
+    styles: { halign: "center" },
+  },
+  {
+    content: formatMoneyPdf(employee.earnedSalary),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.seniorityBonus),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.otherBonuses),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.grossPay),
+    styles: { halign: "right", fontStyle: "bold" },
+  },
+  {
+    content: formatMoneyPdf(employee.afpDeduction),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.absenceDeduction),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.advanceDeduction),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.totalDeductions),
+    styles: { halign: "right" },
+  },
+  {
+    content: formatMoneyPdf(employee.netSalary),
+    styles: {
+      halign: "right",
+      fontStyle: "bold",
+      textColor: theme.primaryDark,
+    },
+  },
+];
 
-    if (!groups[branchName]) {
-      groups[branchName] = [];
-    }
+const buildTotalsRow = (
+  totals,
+  theme,
+  label = "TOTAL GENERAL",
+  level = "general"
+) => {
+  const isGeneral = level === "general";
+  const isFiscal = level === "fiscal";
 
-    groups[branchName].push(payroll);
-  });
+  let rowFillColor = theme.totalsBg;
+  let labelTextColor = theme.primaryDark;
+  let fontSize = 6.4;
 
-  return Object.keys(groups)
-    .sort((a, b) =>
-      a.localeCompare(b, "es", {
-        sensitivity: "base",
-      })
-    )
-    .map((branchName) => ({
-      branchName,
-      employees: groups[branchName].sort((a, b) =>
-        getEmployeeFullName(a).localeCompare(
-          getEmployeeFullName(b),
-          "es",
-          { sensitivity: "base" }
-        )
-      ),
-    }));
+  if (level === "division") {
+    rowFillColor = [248, 250, 252];
+    labelTextColor = [71, 85, 105];
+    fontSize = 6.0;
+  } else if (isFiscal) {
+    rowFillColor = theme.totalsBg;
+    labelTextColor = theme.primaryDark;
+    fontSize = 6.4;
+  } else {
+    rowFillColor = theme.totalsBg;
+    labelTextColor = theme.primaryDark;
+    fontSize = 6.8;
+  }
+
+  const baseStyle = {
+    halign: "right",
+    fontStyle: "bold",
+    fillColor: rowFillColor,
+    fontSize,
+  };
+
+  const netSalaryStyle = isGeneral
+    ? {
+        ...baseStyle,
+        fillColor: theme.liquidHighlightBg,
+        textColor: theme.liquidHighlightText,
+        fontSize: 7.2,
+      }
+    : isFiscal
+    ? {
+        ...baseStyle,
+        fillColor: theme.liquidHighlightBg,
+        textColor: theme.primaryDark,
+        fontSize: 6.6,
+      }
+    : {
+        ...baseStyle,
+        textColor: theme.primaryDark,
+      };
+
+  return [
+    {
+      content: label,
+      colSpan: 4,
+      styles: { ...baseStyle, textColor: labelTextColor },
+    },
+    {
+      content: formatMoneyPdf(totals.baseSalary),
+      styles: baseStyle,
+    },
+    {
+      content: "",
+      styles: { fillColor: rowFillColor },
+    },
+    {
+      content: formatMoneyPdf(totals.earnedSalary),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.seniorityBonus),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.otherBonuses),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.grossPay),
+      styles: { ...baseStyle, textColor: theme.primaryDark },
+    },
+    {
+      content: formatMoneyPdf(totals.afpDeduction),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.absenceDeduction),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.advanceDeduction),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.totalDeductions),
+      styles: baseStyle,
+    },
+    {
+      content: formatMoneyPdf(totals.netSalary),
+      styles: netSalaryStyle,
+    },
+  ];
 };
 
-const buildTableBody = (payrolls, theme) => {
-  const rows = [];
-  const groups = groupPayrollsByBranch(payrolls);
+const buildConsolidatedTableBody = (
+  payrolls,
+  theme,
+  consolidatedCompanyName
+) => {
+  const consolidatedKey = getCompanyKey(consolidatedCompanyName);
+  const orderedFiscalKeys = getFiscalOrderForConsolidated(consolidatedKey);
 
+  // 1. Agrupar empleados por empresa fiscal
+  const payrollsByFiscal = {};
+  payrolls.forEach((p) => {
+    const fiscalKey = getCompanyKey(p.contractCompanyName);
+    if (!payrollsByFiscal[fiscalKey]) {
+      payrollsByFiscal[fiscalKey] = [];
+    }
+    payrollsByFiscal[fiscalKey].push(p);
+  });
+
+  // Asegurar el orden de empresas fiscales solicitado para la empresa consolidada activa
+  const existingFiscalKeys = Object.keys(payrollsByFiscal);
+  const keysToProcess = [
+    ...orderedFiscalKeys.filter((k) => existingFiscalKeys.includes(k)),
+    ...existingFiscalKeys.filter((k) => !orderedFiscalKeys.includes(k)),
+  ];
+
+  const rows = [];
   let index = 1;
 
-  groups.forEach(({ branchName, employees }) => {
+  keysToProcess.forEach((fiscalKey) => {
+    const fiscalPayrolls = payrollsByFiscal[fiscalKey] || [];
+    if (fiscalPayrolls.length === 0) return;
+
+    // Header del Grupo Principal (Empresa Fiscal)
     rows.push([
       {
-        content: `  ${branchName.toUpperCase()}`,
+        content: `  EMPRESA FISCAL: ${fiscalKey}`,
         colSpan: 15,
         styles: {
-          fillColor: theme.branchBg,
-          textColor: theme.branchText,
+          fillColor: theme.subheaderBg,
+          textColor: [255, 255, 255],
           fontStyle: "bold",
-          fontSize: 7.2,
+          fontSize: 7.6,
           halign: "left",
-          cellPadding: {
-            top: 2.2,
-            bottom: 2.2,
-            left: 4,
-            right: 4,
-          },
+          cellPadding: { top: 2.4, bottom: 2.4, left: 4, right: 4 },
         },
       },
     ]);
 
-    employees.forEach((employee) => {
+    // Clasificar empleados en:
+    // 1. CENTRAL GERENTES
+    // 2. CENTRAL JEFE DE AREA
+    // 3. CENTRAL JEFES DE REGION
+    // 4. JEFES DE SECTOR
+    // 5. CENTRAL TECNICOS
+    // 6. Sucursales (para cualquier otro cargo)
+    const categoryBuckets = CONSOLIDATED_JOB_CATEGORIES.map((cat) => ({
+      key: cat.key,
+      title: cat.title,
+      employees: [],
+    }));
+
+    const branchBuckets = {};
+
+    fiscalPayrolls.forEach((employee) => {
+      const matchedCategory = findJobCategory(employee.jobTitleName);
+      if (matchedCategory) {
+        const bucket = categoryBuckets.find(
+          (b) => b.key === matchedCategory.key
+        );
+        if (bucket) {
+          bucket.employees.push(employee);
+          return;
+        }
+      }
+
+      // Si no coincide con ninguna categoría central, agrupar por sucursal
+      const branchTitle = formatBranchTitle(employee.branchName);
+      if (!branchBuckets[branchTitle]) {
+        branchBuckets[branchTitle] = [];
+      }
+      branchBuckets[branchTitle].push(employee);
+    });
+
+    const activeDivisions = [];
+
+    // 1. Las 5 categorías fijas
+    categoryBuckets.forEach((cat) => {
+      if (cat.employees.length > 0) {
+        activeDivisions.push({
+          title: cat.title,
+          employees: sortEmployeesByName(cat.employees),
+        });
+      }
+    });
+
+    // 2. Sucursales ordenadas alfabéticamente
+    const sortedBranchTitles = Object.keys(branchBuckets).sort((a, b) =>
+      a.localeCompare(b, "es", { sensitivity: "base" })
+    );
+
+    sortedBranchTitles.forEach((branchTitle) => {
+      activeDivisions.push({
+        title: branchTitle,
+        employees: sortEmployeesByName(branchBuckets[branchTitle]),
+      });
+    });
+
+    // Renderizar cada división con sus empleados y subtotales
+    activeDivisions.forEach((division) => {
+      // Header de la división (Categoría o Sucursal)
       rows.push([
         {
-          content: String(index),
-          styles: { halign: "center" },
-        },
-        {
-          content: getEmployeeFullName(employee).toUpperCase(),
-          styles: { halign: "left" },
-        },
-        {
-          content: (employee.jobTitleName || "-").toUpperCase(),
-          styles: { halign: "left" },
-        },
-        {
-          content: formatDatePdf(employee.hireDate),
-          styles: { halign: "center" },
-        },
-        {
-          content: formatMoneyPdf(employee.baseSalary),
-          styles: { halign: "right" },
-        },
-        {
-          content: String(employee.workedDays ?? 30),
-          styles: { halign: "center" },
-        },
-        {
-          content: formatMoneyPdf(employee.earnedSalary),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.seniorityBonus),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.otherBonuses),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.grossPay),
-          styles: { halign: "right", fontStyle: "bold" },
-        },
-        {
-          content: formatMoneyPdf(employee.afpDeduction),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.absenceDeduction),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.advanceDeduction),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.totalDeductions),
-          styles: { halign: "right" },
-        },
-        {
-          content: formatMoneyPdf(employee.netSalary),
-          styles: { halign: "right", fontStyle: "bold", textColor: theme.primaryDark },
+          content: `    ${division.title.toUpperCase()}`,
+          colSpan: 15,
+          styles: {
+            fillColor: theme.branchBg,
+            textColor: theme.branchText,
+            fontStyle: "bold",
+            fontSize: 7.0,
+            halign: "left",
+            cellPadding: { top: 2.0, bottom: 2.0, left: 6, right: 4 },
+          },
         },
       ]);
-      index++;
+
+      // Filas de empleados
+      division.employees.forEach((employee) => {
+        rows.push(buildEmployeeTableRow(employee, index, theme));
+        index++;
+      });
+
+      // Subtotal de la división (Categoría o Sucursal)
+      const divisionTotals = calculatePayrollTotals(division.employees);
+      rows.push(
+        buildTotalsRow(
+          divisionTotals,
+          theme,
+          `TOTAL ${division.title.toUpperCase()}`,
+          "division"
+        )
+      );
     });
+
+    // Subtotal de todo el grupo Empresa Fiscal
+    const fiscalTotals = calculatePayrollTotals(fiscalPayrolls);
+    rows.push(
+      buildTotalsRow(
+        fiscalTotals,
+        theme,
+        `TOTAL EMPRESA FISCAL: ${fiscalKey}`,
+        "fiscal"
+      )
+    );
   });
 
   return rows;
-};
-
-const buildTotalsRow = (totals, theme) => {
-  const totalStyle = {
-    halign: "right",
-    fontStyle: "bold",
-    fillColor: theme.totalsBg,
-  };
-
-  return [
-    {
-      content: "TOTAL GENERAL",
-      colSpan: 4,
-      styles: { ...totalStyle, textColor: theme.primaryDark },
-    },
-    {
-      content: formatMoneyPdf(totals.baseSalary),
-      styles: totalStyle,
-    },
-    {
-      content: "",
-      styles: { fillColor: theme.totalsBg },
-    },
-    {
-      content: formatMoneyPdf(totals.earnedSalary),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.seniorityBonus),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.otherBonuses),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.grossPay),
-      styles: { ...totalStyle, textColor: theme.primaryDark },
-    },
-    {
-      content: formatMoneyPdf(totals.afpDeduction),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.absenceDeduction),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.advanceDeduction),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.totalDeductions),
-      styles: totalStyle,
-    },
-    {
-      content: formatMoneyPdf(totals.netSalary),
-      styles: {
-        ...totalStyle,
-        fillColor: theme.liquidHighlightBg,
-        textColor: theme.liquidHighlightText,
-        fontSize: 7.4,
-      },
-    },
-  ];
 };
 
 const buildTableHeader = (theme) => [
@@ -623,23 +775,9 @@ export const exportPayrollPdf = async ({
         })
       );
 
-      const body = sortedEmployees.map((employee, idx) => [
-        { content: String(idx + 1), styles: { halign: "center" } },
-        { content: getEmployeeFullName(employee).toUpperCase(), styles: { halign: "left" } },
-        { content: (employee.jobTitleName || "-").toUpperCase(), styles: { halign: "left" } },
-        { content: formatDatePdf(employee.hireDate), styles: { halign: "center" } },
-        { content: formatMoneyPdf(employee.baseSalary), styles: { halign: "right" } },
-        { content: String(employee.workedDays ?? 30), styles: { halign: "center" } },
-        { content: formatMoneyPdf(employee.earnedSalary), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.seniorityBonus), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.otherBonuses), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.grossPay), styles: { halign: "right", fontStyle: "bold" } },
-        { content: formatMoneyPdf(employee.afpDeduction), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.absenceDeduction), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.advanceDeduction), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.totalDeductions), styles: { halign: "right" } },
-        { content: formatMoneyPdf(employee.netSalary), styles: { halign: "right", fontStyle: "bold", textColor: theme.primaryDark } },
-      ]);
+      const body = sortedEmployees.map((employee, idx) =>
+        buildEmployeeTableRow(employee, idx + 1, theme)
+      );
 
       body.push(buildTotalsRow(cityTotals, theme));
 
@@ -652,7 +790,7 @@ export const exportPayrollPdf = async ({
       });
     }
   } else {
-    // Planilla Consolidada (se mantiene con encabezado único y agrupación por sucursal)
+    // Planilla Consolidada (ordenada por Empresa Fiscal, Categorías Centrales y Sucursales)
     await drawHeader(
       doc,
       companyName,
@@ -663,8 +801,9 @@ export const exportPayrollPdf = async ({
       timestamp
     );
 
-    const body = buildTableBody(payrolls, theme);
-    body.push(buildTotalsRow(totals, theme));
+    const body = buildConsolidatedTableBody(payrolls, theme, companyName);
+    const overallTotals = totals || calculatePayrollTotals(payrolls);
+    body.push(buildTotalsRow(overallTotals, theme, "TOTAL GENERAL", "general"));
 
     autoTable(doc, {
       startY: 26,
