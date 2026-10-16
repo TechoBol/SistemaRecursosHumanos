@@ -11,8 +11,6 @@ import {
   formatMoneyPdf,
 } from "../components/ui/PayrollPDF.styles";
 
-const COMPANY_LOCATION = "Cochabamba - Bolivia";
-
 const COMPANY_LOGOS = {
   TECHOBOL: {
     src: techobolLogo,
@@ -84,6 +82,11 @@ const drawSlip = ({
   const companyName = company?.name || "";
   const companyTaxId = company?.taxId || "";
   const employeeName = getEmployeeName(payroll);
+  const employeeCity =
+    payroll.cityName && payroll.cityName !== "Sin Ciudad"
+      ? payroll.cityName.trim()
+      : "Cochabamba";
+  const employeeJobTitle = payroll.contractJobTitleName || "-";
 
   const padding = 5;
   const contentX = x + padding;
@@ -214,7 +217,7 @@ const drawSlip = ({
   }
 
   doc.text(
-    COMPANY_LOCATION,
+    `${employeeCity} - Bolivia`,
     companyTextX,
     companyInfoY
   );
@@ -326,7 +329,7 @@ const drawSlip = ({
 
   doc.text(employeeName.toUpperCase(), valueX, infoBoxY + 6);
   doc.text(
-    (payroll.jobTitleName || "-").toUpperCase(),
+    employeeJobTitle.toUpperCase(),
     valueX,
     infoBoxY + 12
   );
@@ -469,7 +472,7 @@ const drawSlip = ({
   doc.setFontSize(7.6);
   doc.setTextColor(...theme.primaryDark);
   doc.text(
-    `COCHABAMBA, ${formatFullDateEs().toUpperCase()}`,
+    `${employeeCity.toUpperCase()}, ${formatFullDateEs().toUpperCase()}`,
     x + width / 2,
     dateY,
     { align: "center" }

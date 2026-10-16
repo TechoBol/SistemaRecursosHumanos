@@ -191,7 +191,7 @@ const PayrollContract = () => {
     const search = searchValue.trim().toLowerCase();
     if (!search) return fiscalPayrolls;
     return fiscalPayrolls.filter((row) =>
-      `${row.employeeName} ${row.employeeDocumentNumber} ${row.jobTitleName} ${row.employeeType} ${row.cityName || ""}`
+      `${row.employeeName} ${row.employeeDocumentNumber} ${row.contractJobTitleName} ${row.jobTitleName} ${row.employeeType} ${row.cityName || ""}`
         .toLowerCase()
         .includes(search)
     );

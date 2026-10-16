@@ -157,6 +157,7 @@ const sortEmployeesByName = (employees = []) =>
     })
   );
 
+{/** CONTENIDO FILAS DE LA TABLA */}
 const buildEmployeeTableRow = (employee, index, theme) => [
   {
     content: String(index),
@@ -167,7 +168,7 @@ const buildEmployeeTableRow = (employee, index, theme) => [
     styles: { halign: "left" },
   },
   {
-    content: (employee.jobTitleName || "-").toUpperCase(),
+    content: (employee.contractJobTitleName || "-").toUpperCase(),
     styles: { halign: "left" },
   },
   {
@@ -501,7 +502,7 @@ const buildTableHeader = (theme) => [
       styles: { halign: "center", valign: "middle" },
     },
     {
-      content: "CARGO ACTUAL",
+      content: "CARGO",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -582,7 +583,8 @@ const drawHeader = async (
   theme,
   titleText,
   subtitle,
-  timestamp
+  timestamp,
+  locationText = COMPANY_LOCATION
 ) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -605,7 +607,7 @@ const drawHeader = async (
     doc.text(`NIT ${companyTaxId}`, companyTextX, 16.5);
   }
 
-  doc.text(COMPANY_LOCATION, companyTextX, 20.5);
+  doc.text(locationText, companyTextX, 20.5);
 
   // Título principal
   doc.setFont("helvetica", "bold");
@@ -732,6 +734,10 @@ export const exportPayrollPdf = async ({
       }
 
       const cityTitle = `PLANILLA FISCAL DE SUELDOS - ${cityName}`;
+      const cityLocation =
+        cityName && cityName !== "SIN CIUDAD"
+          ? `${cityName} - Bolivia`
+          : COMPANY_LOCATION;
       await drawHeader(
         doc,
         companyName,
@@ -739,7 +745,8 @@ export const exportPayrollPdf = async ({
         theme,
         cityTitle,
         subtitle,
-        timestamp
+        timestamp,
+        cityLocation
       );
 
       const cityTotals = cityPayrolls.reduce(
