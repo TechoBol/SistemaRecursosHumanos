@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
-import { Search, Pencil, Calendar, FileDown, CheckCircle2, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Eye, ChevronRight, Calendar, FileDown, CheckCircle2, Lock } from "lucide-react";
 import Swal from "sweetalert2";
 import DataTable from "../components/table/DataTable";
-import PayrollModal from "../components/modals/PayrollModal";
+import PayrollDetailModal from "../components/modals/PayrollDetailModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
 import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
@@ -66,13 +67,14 @@ const formatCurrency = (amount) => {
 };
 
 const PayrollContract = () => {
+  const navigate = useNavigate();
   const { companies } = useCompanies();
   const [activeCompanyId, setActiveCompanyId] = useState(null);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [searchValue, setSearchValue] = useState("");
-  const [selectedPayroll, setSelectedPayroll] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPayrollForCalculation, setSelectedPayrollForCalculation] = useState(null);
+  const [isCalculationModalOpen, setIsCalculationModalOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Anios disponibles
@@ -113,7 +115,7 @@ const PayrollContract = () => {
     return companies.find((c) => c.id === Number(activeCompanyId)) || null;
   }, [companies, activeCompanyId]);
 
-  const { payrolls, isLoading, updatePayroll, finalizePayroll } = usePayrolls(
+  const { payrolls, isLoading, finalizePayroll } = usePayrolls(
     activeCompanyId,
     "contract",
     selectedYear,
@@ -162,23 +164,14 @@ const PayrollContract = () => {
     }
   };
 
-  const handleEditPayroll = (payroll) => {
-    setSelectedPayroll(payroll);
-    setIsModalOpen(true);
+  const handleOpenCalculationDetails = (payroll) => {
+    setSelectedPayrollForCalculation(payroll);
+    setIsCalculationModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedPayroll(null);
-  };
-
-  const handleSubmitModal = async (formData) => {
-    if (selectedPayroll) {
-      const result = await updatePayroll(selectedPayroll.id, formData);
-      if (result) {
-        handleCloseModal();
-      }
-    }
+  const handleCloseCalculationModal = () => {
+    setIsCalculationModalOpen(false);
+    setSelectedPayrollForCalculation(null);
   };
 
   // excluye a los empleados de tipo CONSULTOR
@@ -401,7 +394,7 @@ const PayrollContract = () => {
       {
         field: "actions",
         headerName: "Acciones",
-        width: 90,
+        width: 110,
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
@@ -409,13 +402,25 @@ const PayrollContract = () => {
           <TableActions>
             <TableActionButton
               type="button"
-              title="Editar nómina"
+              title="Ver detalles de cálculo"
+              aria-label={`Ver detalles de cálculo de ${row.employeeName}`}
               onClick={(e) => {
                 e.stopPropagation();
-                handleEditPayroll(row);
+                handleOpenCalculationDetails(row);
               }}
             >
-              <Pencil size={18} />
+              <Eye size={18} />
+            </TableActionButton>
+            <TableActionButton
+              type="button"
+              title="Ver detalle del empleado"
+              aria-label={`Ver detalle del empleado ${row.employeeName}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/empleados/${row.employeeId}`);
+              }}
+            >
+              <ChevronRight size={22} />
             </TableActionButton>
           </TableActions>
         ),
@@ -594,11 +599,10 @@ const PayrollContract = () => {
         />
       </PageContainer>
 
-      <PayrollModal
-        isOpen={isModalOpen}
-        payroll={selectedPayroll}
-        onClose={handleCloseModal}
-        onSubmit={handleSubmitModal}
+      <PayrollDetailModal
+        isOpen={isCalculationModalOpen}
+        payroll={selectedPayrollForCalculation}
+        onClose={handleCloseCalculationModal}
       />
     </>
   );
