@@ -163,6 +163,7 @@ const EmployeeModal = ({
     if (!formData.areaId) nextErrors.areaId = "Selecciona un área.";
     if (!formData.jobTitleId) nextErrors.jobTitleId = "Selecciona un cargo.";
     if (!formData.contractDate) nextErrors.contractDate = "La fecha de inicio es obligatoria.";
+    if (!formData.baseSalary) nextErrors.baseSalary = "El salario base es obligatorio.";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -559,7 +560,9 @@ const EmployeeModal = ({
                     value={formData.baseSalary}
                     onChange={handleChange}
                     onKeyDown={handleKeyDownSalary}
+                    style={{ borderColor: errors.baseSalary ? "#FF2B2B" : undefined }}
                   />
+                  {errors.baseSalary && <FormErrorText>{errors.baseSalary}</FormErrorText>}
                 </FormField>
               </FormGrid>
             </ModalSection>
