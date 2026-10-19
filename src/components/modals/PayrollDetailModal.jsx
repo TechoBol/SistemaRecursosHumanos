@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import styled from "styled-components";
-import { X, Gift, Loader2 } from "lucide-react";
+import { X, Gift } from "lucide-react";
 import { useLoginStore } from "../store/loginStore";
 import { getAttendanceIncidentsApi } from "../../services/AttendanceIncidentService";
 import { getEmployeeAdvancesApi } from "../../services/EmployeeAdvanceService";
@@ -13,256 +12,26 @@ import {
   ModalContent,
   ModalActions,
   CancelButton,
+  ModalBlock,
+  ModalBlockTitle,
+  ModalSubtitle,
+  ModalTableCard,
+  ModalTable,
+  ModalTableHead,
+  ModalTableHeaderCell,
+  ModalTableRow,
+  ModalEmptyCell,
+  ModalTotalBar,
+  ModalBadge,
+  ModalInfoCard,
+  ModalInfoIcon,
+  ModalInfoColumn,
+  ModalInfoDivider,
+  ModalResultBar,
+  ModalLoading,
 } from "../ui/Modal.styles";
 
-const Section = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const SectionHeader = styled.h3`
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-`;
-
-const TableCard = styled.div`
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  overflow: hidden;
-  background-color: #ffffff;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-`;
-
-const TableHead = styled.thead`
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-
-  th {
-    padding: 10px 16px;
-    font-weight: 600;
-    color: #475569;
-    text-align: left;
-
-    &:last-child {
-      text-align: right;
-    }
-  }
-`;
-
-const TableRow = styled.tr`
-  border-bottom: 1px solid #f1f5f9;
-  transition: background-color 0.15s ease;
-
-  &:hover {
-    background-color: #f8fafc;
-  }
-
-  td {
-    padding: 10px 16px;
-    color: #1e293b;
-
-    &:last-child {
-      text-align: right;
-      font-weight: 600;
-      color: #0f172a;
-    }
-  }
-`;
-
-const EmptyRow = styled.td`
-  padding: 16px !important;
-  text-align: center !important;
-  color: #64748b !important;
-  font-weight: 400 !important;
-`;
-
-const TotalRowGreen = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  padding: 10px 16px;
-  background-color: #f0fdf4;
-  border-top: 1px solid #e2e8f0;
-  font-size: 14px;
-
-  .total-label {
-    color: #334155;
-    font-weight: 500;
-  }
-
-  .total-value {
-    color: #15803d;
-    font-weight: 700;
-    font-size: 15px;
-  }
-`;
-
-const TotalRowBlue = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  padding: 10px 16px;
-  background-color: #eff6ff;
-  border-top: 1px solid #e2e8f0;
-  font-size: 14px;
-
-  .total-label {
-    color: #334155;
-    font-weight: 500;
-  }
-
-  .total-value {
-    color: #1d4ed8;
-    font-weight: 700;
-    font-size: 15px;
-  }
-`;
-
-const Badge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 12px;
-  border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 600;
-  background-color: ${({ $bg }) => $bg || "#f1f5f9"};
-  color: ${({ $color }) => $color || "#334155"};
-`;
-
-const SeniorityCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 18px 22px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-`;
-
-const SeniorityIconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #16a34a;
-  flex-shrink: 0;
-`;
-
-const SeniorityInfoColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1.2;
-  font-size: 13.5px;
-  color: #334155;
-
-  .item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-
-    span.label {
-      color: #475569;
-    }
-
-    span.val {
-      font-weight: 600;
-      color: #0f172a;
-    }
-  }
-`;
-
-const SeniorityDivider = styled.div`
-  width: 1px;
-  height: 64px;
-  background-color: #cbd5e1;
-  opacity: 0.7;
-
-  @media (max-width: 600px) {
-    width: 100%;
-    height: 1px;
-  }
-`;
-
-const SeniorityDaysColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  font-size: 13.5px;
-  color: #334155;
-
-  .item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-
-    span.label {
-      color: #475569;
-    }
-
-    span.val {
-      font-weight: 600;
-      color: #0f172a;
-    }
-  }
-`;
-
-const SeniorityResultPill = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background-color: #dcfce7;
-  border-radius: 8px;
-  font-size: 13.5px;
-
-  .label {
-    color: #166534;
-    font-weight: 600;
-  }
-
-  .amount {
-    color: #15803d;
-    font-weight: 700;
-    font-size: 14.5px;
-  }
-`;
-
-const EmployeeSubtitle = styled.div`
-  font-size: 13px;
-  color: #64748b;
-  margin-top: 2px;
-  font-weight: 500;
-`;
-
-const LoadingWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-  color: #2f573c;
-  gap: 10px;
-  font-size: 14px;
-`;
-
+// =============== UTILIDADES ===============
 const formatMoney = (amount = 0) => {
   const formatted = new Intl.NumberFormat("es-BO", {
     minimumFractionDigits: 2,
@@ -281,17 +50,18 @@ const formatDate = (dateStr) => {
 const getIncidentInfo = (type) => {
   const t = String(type || "").toLowerCase();
   if (t === "permission" || t === "permiso") {
-    return { label: "Permiso", bg: "#dcfce7", color: "#166534" };
+    return {label: "Permiso", bg: "#dcfce7", color: "#166534"};
   }
   if (t === "absence" || t === "falta") {
-    return { label: "Falta", bg: "#fee2e2", color: "#991b1b" };
+    return {label: "Falta", bg: "#fee2e2", color: "#991b1b"};
   }
   if (t === "lateness" || t === "atraso") {
-    return { label: "Atraso", bg: "#fef3c7", color: "#b45309" };
+    return {label: "Atraso", bg: "#fef3c7",color: "#b45309"};
   }
-  return { label: type || "Incidencia", bg: "#f1f5f9", color: "#334155" };
+  return {label: type || "Incidencia", bg: "#f1f5f9", color: "#334155"};
 };
 
+// =============== CÁLCULO DEL BONO DE ANTIGÜEDAD ===============
 const getSeniorityDetails = (payroll) => {
   if (!payroll) return null;
 
@@ -323,21 +93,20 @@ const getSeniorityDetails = (payroll) => {
   }
 
   const [hYear, hMonth, hDay] = String(payroll.hireDate).split("T")[0].split("-").map(Number);
-  const hireDate = new Date(hYear, hMonth - 1, hDay);
-  const hireDateFormatted = `${String(hDay).padStart(2, "0")}/${String(hMonth).padStart(2, "0")}/${hYear}`;
-
+  const hireDateFormatted = `${String(hDay).padStart(2, "0")}/` + `${String(hMonth).padStart(2, "0")}/${hYear}`;
   const currentYear = Number(payroll.year);
-  const currentMonth = Number(payroll.month); // 1-12
-
+  const currentMonth = Number(payroll.month);
   const anniversary2 = new Date(hYear + 2, hMonth - 1, hDay);
   const anniversary5 = new Date(hYear + 5, hMonth - 1, hDay);
 
   const formatD = (d) =>
-    `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    `${String(d.getDate()).padStart(2, "0")}/` +
+    `${String(d.getMonth() + 1).padStart(2, "0")}/` +
+    `${d.getFullYear()}`;
 
   const monthEnd = new Date(currentYear, currentMonth, 0);
 
-  // Cumple 2 años en este período
+  // Cumple 2 años durante este período
   if (anniversary2.getFullYear() === currentYear && anniversary2.getMonth() === currentMonth - 1) {
     const annDay = anniversary2.getDate();
     const daysWithoutBonus = Math.min(annDay, totalWorkedDays);
@@ -353,7 +122,7 @@ const getSeniorityDetails = (payroll) => {
     };
   }
 
-  // Cumple 5 años en este período
+  // Cumple 5 años durante este período
   if (anniversary5.getFullYear() === currentYear && anniversary5.getMonth() === currentMonth - 1) {
     const annDay = anniversary5.getDate();
     const daysAt5 = Math.min(annDay, totalWorkedDays);
@@ -386,7 +155,7 @@ const getSeniorityDetails = (payroll) => {
     };
   }
 
-  // Entre 2 y 5 años (ya cumplió 2 años antes de este mes)
+  // Entre 2 y 5 años
   if (monthEnd < anniversary5) {
     return {
       hireDateFormatted,
@@ -399,7 +168,7 @@ const getSeniorityDetails = (payroll) => {
     };
   }
 
-  // 5 años o más (ya cumplió 5 años antes de este mes)
+  // 5 años o más
   return {
     hireDateFormatted,
     milestoneLabel: "Cumplió 5 años:",
@@ -411,12 +180,14 @@ const getSeniorityDetails = (payroll) => {
   };
 };
 
+// =============== COMPONENTE PRINCIPAL ===============
 const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
   const { token } = useLoginStore();
   const [incidents, setIncidents] = useState([]);
   const [advances, setAdvances] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // =============== CARGA DE DATOS ===============
   useEffect(() => {
     if (!isOpen || !payroll?.employeeId || !token) {
       setIncidents([]);
@@ -448,12 +219,13 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
     };
   }, [isOpen, payroll?.employeeId, token]);
 
+  // =============== FILTRADO POR PERÍODO ===============
   const periodIncidents = useMemo(() => {
     if (!payroll || !incidents.length) return [];
     return incidents.filter((inc) => {
       if (!inc.date) return false;
       const [y, m] = inc.date.split("T")[0].split("-").map(Number);
-      return y === Number(payroll.year) && m === Number(payroll.month);
+      return (y === Number(payroll.year) && m === Number(payroll.month));
     });
   }, [incidents, payroll]);
 
@@ -462,16 +234,15 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
     return advances.filter((adv) => {
       if (!adv.date) return false;
       const [y, m] = adv.date.split("T")[0].split("-").map(Number);
-      return y === Number(payroll.year) && m === Number(payroll.month);
+      return (y === Number(payroll.year) && m === Number(payroll.month));
     });
   }, [advances, payroll]);
 
-  const seniorityDetails = useMemo(() => {
-    return getSeniorityDetails(payroll);
-  }, [payroll]);
+  const seniorityDetails = useMemo(() => getSeniorityDetails(payroll), [payroll]);
 
   if (!isOpen || !payroll) return null;
 
+  // =============== TOTALES ===============
   const totalIncidentsDiscount = periodIncidents.reduce(
     (acc, inc) => acc + (Number(inc.discount) || 0),
     0
@@ -488,67 +259,63 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
     }
   };
 
+  // =============== VISTA ===============
   return (
     <ModalOverlay $zIndex={1600} onMouseDown={handleOverlayClick}>
       <ModalContainer $maxWidth="680px" role="dialog" aria-modal="true">
+        {/* ENCABEZADO */}
         <ModalHeader>
           <div>
             <ModalTitle>Detalles de cálculo de nómina</ModalTitle>
-            <EmployeeSubtitle>
-              {payroll.employeeName} · CI: {payroll.employeeDocumentNumber || "S/N"}
-            </EmployeeSubtitle>
+            <ModalSubtitle>{payroll.employeeName} · CI:{" "} {payroll.employeeDocumentNumber || "S/N"}</ModalSubtitle>
           </div>
           <ModalCloseButton type="button" onClick={onClose} aria-label="Cerrar modal">
             <X size={21} />
           </ModalCloseButton>
         </ModalHeader>
 
-        <ModalContent style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: "22px" }}>
+        {/* CONTENIDO */}
+        <ModalContent $padding="20px 22px" $mobilePadding="16px" $gap="22px">
           {isLoading ? (
-            <LoadingWrapper>
-              <Loader2 className="animate-spin" size={20} />
+            <ModalLoading>
               <span>Cargando detalles de cálculo...</span>
-            </LoadingWrapper>
+            </ModalLoading>
           ) : (
             <>
               {/* SECCIÓN 1: PERMISOS Y FALTAS */}
-              <Section>
-                <SectionHeader>Permisos y faltas</SectionHeader>
-                <TableCard>
-                  <Table>
-                    <TableHead>
+              <ModalBlock>
+                <ModalBlockTitle>Permisos y faltas</ModalBlockTitle>
+                <ModalTableCard>
+                  <ModalTable>
+                    <ModalTableHead>
                       <tr>
-                        <th style={{ width: "35%" }}>Tipo</th>
-                        <th style={{ width: "35%" }}>Fecha</th>
-                        <th style={{ width: "30%" }}>Descuento</th>
+                        <ModalTableHeaderCell $width="35%">Tipo</ModalTableHeaderCell>
+                        <ModalTableHeaderCell $width="35%">Fecha</ModalTableHeaderCell>
+                        <ModalTableHeaderCell $width="30%">Descuento</ModalTableHeaderCell>
                       </tr>
-                    </TableHead>
+                    </ModalTableHead>
                     <tbody>
                       {periodIncidents.length > 0 ? (
                         periodIncidents.map((inc, index) => {
                           const badge = getIncidentInfo(inc.type);
                           return (
-                            <TableRow key={inc.id || index}>
+                            <ModalTableRow key={inc.id || index}>
                               <td>
-                                <Badge $bg={badge.bg} $color={badge.color}>
-                                  {badge.label}
-                                </Badge>
+                                <ModalBadge $bg={badge.bg} $color={badge.color}>{badge.label}</ModalBadge>
                               </td>
                               <td>{formatDate(inc.date)}</td>
                               <td>{formatMoney(inc.discount)}</td>
-                            </TableRow>
+                            </ModalTableRow>
                           );
                         })
                       ) : (
                         <tr>
-                          <EmptyRow colSpan={3}>
-                            No se registraron permisos ni faltas en este período.
-                          </EmptyRow>
+                          <ModalEmptyCell colSpan={3}>No se registraron permisos ni faltas en este período.</ModalEmptyCell>
                         </tr>
                       )}
                     </tbody>
-                  </Table>
-                  <TotalRowGreen>
+                  </ModalTable>
+                  <ModalTotalBar $variant="success">
                     <span className="total-label">Total:</span>
                     <span className="total-value">
                       {formatMoney(
@@ -557,41 +324,39 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
                           : payroll.absenceDeduction || 0
                       )}
                     </span>
-                  </TotalRowGreen>
-                </TableCard>
-              </Section>
+                  </ModalTotalBar>
+                </ModalTableCard>
+              </ModalBlock>
 
-              {/* SECCIÓN 2: ANTICIPOS DEL MES */}
-              <Section>
-                <SectionHeader>Anticipos del mes</SectionHeader>
-                <TableCard>
-                  <Table>
-                    <TableHead>
+              {/* SECCIÓN 2: ANTICIPOS */}
+              <ModalBlock>
+                <ModalBlockTitle>Anticipos del mes</ModalBlockTitle>
+                <ModalTableCard>
+                  <ModalTable>
+                    <ModalTableHead>
                       <tr>
-                        <th style={{ width: "35%" }}>Fecha</th>
-                        <th style={{ width: "40%" }}>Concepto</th>
-                        <th style={{ width: "25%" }}>Monto</th>
+                        <ModalTableHeaderCell $width="35%">Fecha</ModalTableHeaderCell>
+                        <ModalTableHeaderCell $width="40%">Concepto</ModalTableHeaderCell>
+                        <ModalTableHeaderCell $width="25%">Monto</ModalTableHeaderCell>
                       </tr>
-                    </TableHead>
+                    </ModalTableHead>
                     <tbody>
                       {periodAdvances.length > 0 ? (
                         periodAdvances.map((adv, index) => (
-                          <TableRow key={adv.id || index}>
+                          <ModalTableRow key={adv.id || index}>
                             <td>{formatDate(adv.date)}</td>
                             <td>{adv.notes || "Adelanto salarial"}</td>
                             <td>{formatMoney(adv.amount)}</td>
-                          </TableRow>
+                          </ModalTableRow>
                         ))
                       ) : (
                         <tr>
-                          <EmptyRow colSpan={3}>
-                            No se registraron anticipos en este período.
-                          </EmptyRow>
+                          <ModalEmptyCell colSpan={3}>No se registraron anticipos en este período.</ModalEmptyCell>
                         </tr>
                       )}
                     </tbody>
-                  </Table>
-                  <TotalRowBlue>
+                  </ModalTable>
+                  <ModalTotalBar $variant="info">
                     <span className="total-label">Total:</span>
                     <span className="total-value">
                       {formatMoney(
@@ -600,20 +365,20 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
                           : payroll.advanceDeduction || 0
                       )}
                     </span>
-                  </TotalRowBlue>
-                </TableCard>
-              </Section>
+                  </ModalTotalBar>
+                </ModalTableCard>
+              </ModalBlock>
 
               {/* SECCIÓN 3: BONO DE ANTIGÜEDAD */}
-              <Section>
-                <SectionHeader>Bono de antigüedad</SectionHeader>
+              <ModalBlock>
+                <ModalBlockTitle>Bono de antigüedad</ModalBlockTitle>
                 {seniorityDetails && (
-                  <SeniorityCard>
-                    <SeniorityIconWrapper>
+                  <ModalInfoCard>
+                    <ModalInfoIcon>
                       <Gift size={32} />
-                    </SeniorityIconWrapper>
+                    </ModalInfoIcon>
 
-                    <SeniorityInfoColumn>
+                    <ModalInfoColumn $flex={1.2} $gap="6px">
                       <div className="item">
                         <span className="label">Fecha de ingreso:</span>
                         <span className="val">{seniorityDetails.hireDateFormatted}</span>
@@ -626,38 +391,35 @@ const PayrollDetailModal = ({ isOpen, payroll = null, onClose }) => {
                         <span className="label">Porcentaje aplicado:</span>
                         <span className="val">{seniorityDetails.percentage}</span>
                       </div>
-                    </SeniorityInfoColumn>
+                    </ModalInfoColumn>
 
-                    <SeniorityDivider />
+                    <ModalInfoDivider />
 
-                    <SeniorityDaysColumn>
+                    <ModalInfoColumn $spread>
                       <div className="item">
-                        <span className="label">
-                          {seniorityDetails.customDaysLabels?.without || "Días sin bono:"}
-                        </span>
+                        <span className="label">{seniorityDetails.customDaysLabels ?.without || "Días sin bono:"}</span>
                         <span className="val">{seniorityDetails.daysWithoutBonus}</span>
                       </div>
                       <div className="item">
-                        <span className="label">
-                          {seniorityDetails.customDaysLabels?.with || "Días con bono:"}
-                        </span>
+                        <span className="label">{seniorityDetails.customDaysLabels ?.with || "Días con bono:"}</span>
                         <span className="val">{seniorityDetails.daysWithBonus}</span>
                       </div>
-                      <SeniorityResultPill>
+                      <ModalResultBar>
                         <span className="label">Bono calculado:</span>
                         <span className="amount">
                           {formatMoney(payroll.seniorityBonus || seniorityDetails.calculatedBonus || 0)}
                         </span>
-                      </SeniorityResultPill>
-                    </SeniorityDaysColumn>
-                  </SeniorityCard>
+                      </ModalResultBar>
+                    </ModalInfoColumn>
+                  </ModalInfoCard>
                 )}
-              </Section>
+              </ModalBlock>
             </>
           )}
         </ModalContent>
 
-        <ModalActions style={{ paddingTop: "12px", borderTop: "1px solid rgba(199, 199, 199, 0.4)" }}>
+        {/* ACCIONES */}
+        <ModalActions $compact $divided>
           <CancelButton type="button" onClick={onClose}>
             Cerrar
           </CancelButton>

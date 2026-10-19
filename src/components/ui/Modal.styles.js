@@ -88,9 +88,9 @@ export const ModalContent = styled.div`
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 18px;
+  gap: ${({ $gap = "18px" }) => $gap};
   min-height: 0;
-  padding: 0 18px 0px 22px;
+  padding: ${({ $padding = "0 18px 0px 22px" }) => $padding};
   overflow-x: hidden;
   overflow-y: ${({ $scrollable = true }) => $scrollable ? "auto" : "visible"};
   scrollbar-width: thin;
@@ -109,7 +109,8 @@ export const ModalContent = styled.div`
     background-color: rgba(47, 87, 60, 0.78);
   }
   @media (max-width: 768px) {
-    padding: 0 12px 16px 16px;
+    padding: ${({ $mobilePadding = "0 12px 16px 16px" }) =>
+      $mobilePadding};
   }
 `;
 
@@ -304,7 +305,9 @@ export const ModalActions = styled.footer`
   gap: 12px;
   flex-shrink: 0;
   padding: 16px 22px 20px;
+  padding-top: ${({ $compact }) => ($compact ? "12px" : "16px")};
   background-color: ${theme.colors.background};
+  border-top: ${({ $divided }) => $divided ? "1px solid rgba(199, 199, 199, 0.4)" : "none"};
   @media (max-width: 480px) {
     align-items: stretch;
     flex-direction: column-reverse;
@@ -620,5 +623,231 @@ export const PreviewFrame = styled.div`
   @media (max-width: 480px) {
     height: 240px;
     max-height: 35vh;
+  }
+`;
+
+
+export const ModalBlock = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+export const ModalBlockTitle = styled.h3`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+`;
+
+export const ModalSubtitle = styled.div`
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+`;
+
+export const ModalTableCard = styled.div`
+  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+`;
+
+export const ModalTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+`;
+
+export const ModalTableHead = styled.thead`
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  th {
+    padding: 10px 16px;
+    font-weight: 600;
+    color: #475569;
+    text-align: left;
+
+    &:last-child {
+      text-align: right;
+    }
+  }
+`;
+
+export const ModalTableHeaderCell = styled.th`
+  width: ${({ $width = "auto" }) => $width};
+`;
+
+export const ModalTableRow = styled.tr`
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: #f8fafc;
+  }
+
+  td {
+    padding: 10px 16px;
+    color: #1e293b;
+
+    &:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: #0f172a;
+    }
+  }
+`;
+
+export const ModalEmptyCell = styled.td`
+  padding: 16px !important;
+  text-align: center !important;
+  color: #64748b !important;
+  font-weight: 400 !important;
+`;
+
+const totalBarVariants = {
+  success: {
+    background: "#f0fdf4",
+    color: "#15803d",
+  },
+  info: {
+    background: "#eff6ff",
+    color: "#1d4ed8",
+  },
+  default: {
+    background: "#f8fafc",
+    color: "#0f172a",
+  },
+};
+
+export const ModalTotalBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px 16px;
+  background-color: ${({ $variant = "default" }) => (totalBarVariants[$variant] || totalBarVariants.default).background};
+  border-top: 1px solid #e2e8f0;
+  font-size: 14px;
+  .total-label {
+    color: #334155;
+    font-weight: 500;
+  }
+  .total-value {
+    color: ${({ $variant = "default" }) =>
+      (totalBarVariants[$variant] || totalBarVariants.default).color};
+    font-weight: 700;
+    font-size: 15px;
+  }
+`;
+
+export const ModalBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: ${({ $bg = "#f1f5f9" }) => $bg};
+  color: ${({ $color = "#334155" }) => $color};
+`;
+
+export const ModalInfoCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 22px;
+  background-color: ${({ $bg = "#f0fdf4" }) => $bg};
+  border: 1px solid ${({ $borderColor = "#bbf7d0" }) => $borderColor};
+  border-radius: 12px;
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+export const ModalInfoIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: ${({ $color = "#16a34a" }) => $color};
+`;
+
+export const ModalInfoColumn = styled.div`
+  display: flex;
+  flex: ${({ $flex = 1 }) => $flex};
+  flex-direction: column;
+  gap: ${({ $gap = "8px" }) => $gap};
+  min-width: 0;
+  font-size: 13.5px;
+  color: #334155;
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: ${({ $spread }) =>
+      $spread ? "space-between" : "flex-start"};
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .label {
+    color: #475569;
+  }
+  .val {
+    font-weight: 600;
+    color: #0f172a;
+  }
+`;
+
+export const ModalInfoDivider = styled.div`
+  width: 1px;
+  height: 64px;
+  flex-shrink: 0;
+  background-color: #cbd5e1;
+  opacity: 0.7;
+  @media (max-width: 600px) {
+    width: 100%;
+    height: 1px;
+  }
+`;
+
+export const ModalResultBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: ${({ $bg = "#dcfce7" }) => $bg};
+  border-radius: 8px;
+  font-size: 13.5px;
+  .label {
+    color: ${({ $labelColor = "#166534" }) => $labelColor};
+    font-weight: 600;
+  }
+  .amount {
+    color: ${({ $valueColor = "#15803d" }) => $valueColor};
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+`;
+
+export const ModalLoading = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 30px;
+  color: ${theme.colors.primary};
+  font-size: 14px;
+  svg {
+    animation: modalLoadingSpin 1s linear infinite;
+  }
+  @keyframes modalLoadingSpin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
