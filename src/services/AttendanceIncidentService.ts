@@ -1,5 +1,37 @@
 import { errorToast, successToast } from "./toasts";
 
+/* OBTENER TODOS LOS REGISTROS DE ASISTENCIA (OPCIONALMENTE POR AÑO Y MES) */
+export const getAllAttendanceIncidentsApi = async (token: string, params?: { year?: number; month?: number }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.year) queryParams.append("year", String(params.year));
+    if (params?.month) queryParams.append("month", String(params.month));
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/attendance-incident/all${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      errorToast("No se pudieron obtener los registros de asistencia.");
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error al obtener registros de asistencia:", error);
+    errorToast("Error de conexión al obtener registros de asistencia.");
+    return null;
+  }
+};
+
 /* OBTENER REGISTROS DE ASISTENCIA DE UN EMPLEADO */
 export const getAttendanceIncidentsApi = async (token: string, employeeId: number) => {
   try {

@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./routes/ProtectedRoute";
 import Login from "./pages/Login";
 import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/employees/EmployeeDetail";
+import AbsenceControl from "./pages/AbsenceControl";
 import PayrollContract from "./pages/PayrollContract";
 import PayrollConsolidation from "./pages/PayrollConsolidation";
 import Branches from "./pages/Branches";
@@ -29,6 +30,7 @@ const App = () => {
           <Route element={<AppLayout />}>
             <Route path="empleados" element={<Employees />} />
             <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
+            <Route path="control-ausencias" element={<AbsenceControl />} />
             <Route path="planilla/fiscal" element={<PayrollContract />} />
             <Route path="planilla/consolidada" element={<PayrollConsolidation />} />
             <Route path="sucursales" element={<Branches />} />

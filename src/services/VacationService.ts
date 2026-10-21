@@ -1,5 +1,37 @@
 import { errorToast, successToast } from "./toasts";
 
+/* OBTENER TODAS LAS VACACIONES (OPCIONALMENTE POR AÑO Y MES) */
+export const getAllVacationsApi = async (token: string, params?: { year?: number; month?: number }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.year) queryParams.append("year", String(params.year));
+    if (params?.month) queryParams.append("month", String(params.month));
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/vacation/all${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      errorToast("No se pudieron obtener las vacaciones.");
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error al obtener vacaciones:", error);
+    errorToast("Error de conexión al obtener vacaciones.");
+    return null;
+  }
+};
+
 /* OBTENER VACACIONES DE UN EMPLEADO */
 export const getVacationsApi = async (token: string, employeeId: number) => {
   try {
