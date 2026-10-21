@@ -165,17 +165,17 @@ export const PeriodSelect = styled.select`
 /* CARDS DE TOTALES DE PLANILLAS */
 export const TotalsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(${({ $columns = 7 }) => $columns}, minmax(0, 1fr));
   gap: 12px;
   width: 100%;
   @media (max-width: 1400px) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(${({ $columns = 7 }) => Math.min($columns, 4)}, minmax(0, 1fr));
   }
   @media (max-width: 900px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(${({ $columns = 7 }) => Math.min($columns, 3)}, minmax(0, 1fr));
   }
   @media (max-width: 600px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(${({ $columns = 7 }) => Math.min($columns, 2)}, minmax(0, 1fr));
   }
   @media (max-width: 400px) {
     grid-template-columns: 1fr;
@@ -184,8 +184,9 @@ export const TotalsGrid = styled.div`
 
 export const TotalCard = styled.div`
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: ${({ $horizontal }) => $horizontal ? "row" : "column"};
+  align-items: ${({ $horizontal }) => $horizontal ? "center" : "stretch"};
+  justify-content: ${({ $horizontal }) => $horizontal ? "space-between" : "center"};
   gap: 6px;
   padding: 14px 18px;
   border-radius: 18px;
@@ -214,8 +215,8 @@ export const TotalCard = styled.div`
 `;
 
 export const TotalLabel = styled.span`
-  font-size: 13px;
-  font-weight: 500;
+  font-size: ${({ $emphasis }) => $emphasis ? "14px" : "13px"};
+  font-weight: ${({ $emphasis }) => $emphasis ? 700 : 500};
   color: ${({ $variant }) =>
     $variant === "danger"
       ? "#991b1b"
@@ -227,8 +228,8 @@ export const TotalLabel = styled.span`
 `;
 
 export const TotalValue = styled.span`
-  font-size: 21px;
-  font-weight: 700;
+  font-size: ${({ $large }) => $large ? "32px" : "21px"};
+  font-weight: ${({ $large }) => $large ? 800 : 700};
   color: ${({ $variant }) =>
     $variant === "danger"
       ? "#dc2626"
@@ -404,4 +405,190 @@ export const LoadingSpinner = styled.div`
   border-top-color: ${theme.colors.primary};
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
+`;
+
+// Complementa TotalCard, TotalLabel y TotalValue sin duplicarlos.
+export const SummaryCardIcon = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "highlight" ? "#2563eb" : "#16a34a"};
+  background-color: ${({ $variant }) => $variant === "danger" ? "rgba(225, 29, 72, 0.1)" : $variant === "highlight" ? "rgba(37, 99, 235, 0.1)" : "rgba(22, 163, 74, 0.1)"};
+`;
+
+export const SectionWrapper = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+`;
+
+export const SectionBar = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+`;
+
+export const SectionHeading = styled.h2`
+  margin: 0;
+  color: ${theme.colors.text};
+  font-size: 20px;
+  font-weight: 700;
+`;
+
+export const SectionCountText = styled.span`
+  color: ${theme.colors.textMuted};
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+export const CollapsibleCard = styled.div`
+  overflow: hidden;
+  background: ${theme.colors.white};
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  }
+`;
+
+export const CollapsibleHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: ${theme.colors.white};
+  cursor: pointer;
+  user-select: none;
+  &:hover { background: #fafafa; }
+  @media (max-width: 700px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+`;
+
+export const CollapsibleTitle = styled.h3`
+  margin: 0;
+  color: ${theme.colors.text};
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+`;
+
+export const CollapsibleActions = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  @media (max-width: 700px) {
+    width: 100%;
+    justify-content: space-between;
+  }
+`;
+
+export const CollapsibleBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 20px 20px;
+  background: #fafbfc;
+  border-top: 1px solid #f3f4f6;
+`;
+
+export const StatusPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: ${theme.radius.round};
+  font-size: 12px;
+  font-weight: 600;
+  background: ${({ $variant }) => $variant === "danger" ? "#fee2e2" : $variant === "success" ? "#dcfce7" : $variant === "info" ? "#dbeafe" : "#f3f4f6"};
+  color: ${({ $variant }) => $variant === "danger" ? "#dc2626" : $variant === "success" ? "#15803d" : $variant === "info" ? "#2563eb" : "#4b5563"};
+`;
+
+export const ActionIconButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: ${theme.colors.textMuted};
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: ${theme.radius.round};
+  &:hover {
+    color: ${theme.colors.primary};
+    background: rgba(47, 87, 60, 0.08);
+  }
+  &:focus-visible { outline: 2px solid ${theme.colors.primary}; }
+`;
+
+export const DetailItemRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid ${({ $variant }) => $variant === "danger" ? "#fecdd3" : $variant === "success" ? "#bbf7d0" : $variant === "info" ? "#bfdbfe" : $variant === "warning" ? "#fed7aa" : "#e5e7eb"};
+  border-radius: 12px;
+  background: ${({ $variant }) => $variant === "danger" ? "#fff1f2" : $variant === "success" ? "#f0fdf4" : $variant === "info" ? "#eff6ff" : $variant === "warning" ? "#fff7ed" : "#ffffff"};
+`;
+
+export const DetailItemTagGroup = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
+export const DetailItemLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "success" ? "#16a34a" : $variant === "info" ? "#2563eb" : $variant === "warning" ? "#ea580c" : "#374151"};
+  svg { flex-shrink: 0; }
+`;
+
+export const DetailItemText = styled.span`
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+export const DetailItemDescriptionBox = styled.div`
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-left: 24px;
+  color: #4b5563;
+  font-size: 12px;
+  strong { color: #1f2937; font-weight: 600; }
+`;
+
+export const EmptyStateBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  background: ${theme.colors.white};
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
 `;
