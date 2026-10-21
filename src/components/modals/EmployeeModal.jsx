@@ -128,10 +128,9 @@ const EmployeeModal = ({
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((currentForm) => {
-      const cleanValue = name === "baseSalary" ? value.replace(/[^0-9]/g, "") : value;
       const updated = {
         ...currentForm,
-        [name]: cleanValue,
+        [name]: value,
       };
       if (name === "areaId") {
         updated.jobTitleId = "";
@@ -163,7 +162,7 @@ const EmployeeModal = ({
     if (!formData.areaId) nextErrors.areaId = "Selecciona un área.";
     if (!formData.jobTitleId) nextErrors.jobTitleId = "Selecciona un cargo.";
     if (!formData.contractDate) nextErrors.contractDate = "La fecha de inicio es obligatoria.";
-    if (!formData.baseSalary) nextErrors.baseSalary = "El salario base es obligatorio.";
+    if (!formData.baseSalary || Number(formData.baseSalary) <= 0) nextErrors.baseSalary = "Ingrese un salario válido mayor a 0";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -194,24 +193,6 @@ const EmployeeModal = ({
   const handleDateChange = (event) => {
     handleChange(event);
     setOpenCalendar(null);
-  };
-
-  const handleKeyDownSalary = (event) => {
-    const allowedKeys = [
-      "Backspace",
-      "Delete",
-      "ArrowLeft",
-      "ArrowRight",
-      "Tab",
-      "Escape",
-      "Enter",
-    ];
-    if (allowedKeys.includes(event.key)) {
-      return;
-    }
-    if (!/^[0-9]$/.test(event.key)) {
-      event.preventDefault();
-    }
   };
 
   const title = isEditMode ? "Editar empleado" : "Agregar empleado";
@@ -555,14 +536,14 @@ const EmployeeModal = ({
                     id="baseSalary"
                     name="baseSalary"
                     type="number"
-                    step="1"
-                    pattern="[0-9]*"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
                     value={formData.baseSalary}
                     onChange={handleChange}
-                    onKeyDown={handleKeyDownSalary}
                     style={{ borderColor: errors.baseSalary ? "#FF2B2B" : undefined }}
                   />
-                  {errors.baseSalary && <FormErrorText>{errors.baseSalary}</FormErrorText>}
+                  {errors.baseSalary && (<FormErrorText>{errors.baseSalary}</FormErrorText>)}
                 </FormField>
               </FormGrid>
             </ModalSection>

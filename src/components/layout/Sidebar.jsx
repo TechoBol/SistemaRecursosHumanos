@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
+  CalendarCheck,
   ChevronDown,
   ChevronsLeft,
   ChevronsRight,
@@ -44,7 +45,8 @@ import useAuthentication from "../../hooks/useAuthentication";
 import logoMenu from "../../assets/logo-menu.png";
 
 const MENU_ITEMS = [
-  { id: "empleados", label: "Empleados", path: "/empleados", icon: UsersRound, },
+  { id: "empleados", label: "Empleados", path: "/empleados", icon: UsersRound },
+  { id: "control-ausencias", label: "Control de ausencias", path: "/control-ausencias", icon: CalendarCheck },
   {
     id: "planillas", label: "Planillas", icon: DollarSign,
     children: [
