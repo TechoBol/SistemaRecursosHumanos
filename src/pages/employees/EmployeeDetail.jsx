@@ -34,7 +34,7 @@ import {
   SecondaryButton,
 } from "../../components/ui/Employees.styles";
 import EmployeeModal from "../../components/modals/EmployeeModal";
-import { getSeniorityFull } from "../../utils/dateUtils";
+import { getSeniorityFull, getEmployeeStatus } from "../../utils/dateUtils";
 import { useEmployees } from "../../hooks/useEmployees";
 import { useCompanies } from "../../hooks/useCompanies";
 import { useBranches } from "../../hooks/useBranches";
@@ -65,13 +65,14 @@ const mapDbEmployeeToUi = (employee) => {
     employee.contracts?.find((contract) => contract.isActive) ||
     employee.contracts?.[0] ||
     null;
+  const statusInfo = getEmployeeStatus(employee);
   return {
     ...employee,
     firstName: employee.firstNames ?? "",
     lastName: employee.lastNames ?? "",
     ci: employee.documentNumber ?? "",
     birthDate: employee.birthDate ? employee.birthDate.split("T")[0] : "",
-    status: employee.status === "ACTIVE" ? "Activo" : "Inactivo",
+    status: statusInfo.label,
     branch: activeContract?.branch?.name || "Sin sucursal",
     area: activeContract?.area?.name || "Sin área",
     positionCurrent: activeContract?.jobTitle?.name || "Sin cargo actual",

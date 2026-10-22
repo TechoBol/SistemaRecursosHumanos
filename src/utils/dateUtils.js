@@ -76,3 +76,54 @@ export const formatLongDate = (dateString) => {
   ];
   return `${day} de ${months[month - 1]} de ${year}`;
 };
+
+export const getEmployeeStatus = (employee) => {
+  if (!employee) return { label: "Finalizado", variant: "danger" };
+
+  if (employee.status === "INACTIVE" || employee.status === "TERMINATED") {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  const activeContract = employee.contracts
+    ? employee.contracts.find((c) => c.isActive) || employee.contracts[0]
+    : null;
+
+  if (!activeContract) {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  if (
+    activeContract.isActive === false ||
+    activeContract.status === "ENDED" ||
+    activeContract.status === "CANCELLED"
+  ) {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  if (!activeContract.endDate) {
+    return { label: "Activo", variant: "success" };
+  }
+
+  const [endYear, endMonth, endDay] = activeContract.endDate
+    .split("T")[0]
+    .split("-")
+    .map(Number);
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  const endDateNorm = new Date(endYear, endMonth - 1, endDay);
+  const todayNorm = new Date(currentYear, currentMonth - 1, currentDay);
+
+  if (endDateNorm < todayNorm) {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  if (endYear === currentYear && endMonth === currentMonth) {
+    return { label: "Finaliza este mes", variant: "warning" };
+  }
+
+  return { label: "Activo", variant: "success" };
+};
