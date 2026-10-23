@@ -153,3 +153,68 @@ export const finalizePayrollApi = async (
     return null;
   }
 };
+
+export interface EmployeeSalaryBonusItem {
+  id: number;
+  name: string;
+  amount: number;
+  monthlyAmount: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface EmployeeSalarySummary {
+  year: number;
+  month: number;
+  baseSalary: number;
+  workedDays: number;
+  basicEarnings: number;
+  seniorityBonus: number;
+  seniorityDescription: string;
+  otherBonuses: number;
+  bonuses: EmployeeSalaryBonusItem[];
+  totalEarned: number;
+  gestoraDeduction: number;
+  deudasDeduction: number;
+  anticiposDeduction: number;
+  totalDeductions: number;
+  netPayable: number;
+  isFiscal: boolean;
+  history: PayrollItem[];
+}
+
+export const getEmployeeSalarySummaryApi = async (
+  token: string,
+  employeeId: number,
+  params?: { year?: number; month?: number }
+): Promise<EmployeeSalarySummary | null> => {
+  try {
+    const query = new URLSearchParams();
+    if (params?.year) query.append("year", String(params.year));
+    if (params?.month) query.append("month", String(params.month));
+
+    const queryString = query.toString() ? `?${query.toString()}` : "";
+    const response = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/payroll/employee/${employeeId}/summary${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      errorToast(data.message || "Error al obtener el resumen salarial.");
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error al obtener el resumen salarial:", error);
+    errorToast("Error de conexión al obtener el resumen salarial.");
+    return null;
+  }
+};
