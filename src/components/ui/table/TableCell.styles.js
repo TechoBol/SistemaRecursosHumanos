@@ -45,13 +45,20 @@ export const Badge = styled.span`
   color: ${({ $variant }) =>
     $variant === "danger"
       ? theme.colors.danger
+      : $variant === "warning"
+      ? "#b45309"
       : theme.colors.primary};
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
-  background-color: ${({ $variant }) => $variant === "danger" ? "#FFD8D8" : "#CFF7D5"};
+  background-color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#FFD8D8"
+      : $variant === "warning"
+      ? "#FEF3C7"
+      : "#CFF7D5"};
   border-radius: 999px;
 `;
 

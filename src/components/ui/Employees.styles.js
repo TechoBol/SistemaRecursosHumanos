@@ -162,9 +162,17 @@ export const EmployeeStatus = styled.span`
   color: ${({ $status }) =>
     $status === "Activo"
       ? theme.colors.primary
+      : $status === "Finaliza este mes"
+      ? "#b45309"
       : theme.colors.danger};
   font-size: 13px;
-  background-color: ${({ $status }) => $status === "Activo" ? "#cff7d5" : "#ffd8d8"};
+  font-weight: 500;
+  background-color: ${({ $status }) =>
+    $status === "Activo"
+      ? "#cff7d5"
+      : $status === "Finaliza este mes"
+      ? "#fef3c7"
+      : "#ffd8d8"};
   border-radius: ${theme.radius.round};
 `;
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   CalendarDays,
   DollarSign,
@@ -6,6 +6,8 @@ import {
   Pencil,
   Plus,
   Trash2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   ActionButton,
@@ -27,6 +29,16 @@ import {
   HighlightLabel,
   HighlightValue,
   HistoryEmptyState,
+  HistoryList,
+  HistoryItem,
+  HistoryHeader,
+  HistoryContent,
+  HistoryValue,
+  StatusBadge,
+  YearFilterSelect,
+  FilterLabel,
+  HistoryHeaderNew,
+  GroupSummaryText,
   SummaryCard,
   SummaryContent,
   SummaryGrid,
@@ -40,14 +52,25 @@ import {
   TableActions,
   TableActionButton,
 } from "../../components/ui/table/TableCell.styles";
-import {
-  calculateSalarySummary,
-  calculateBonusAmountForMonth,
-} from "../../utils/salaryCalculator";
-import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
-import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 import { useEmployeeBonuses } from "../../hooks/useEmployeeBonuses";
 import EmployeeBonusModal from "../../components/modals/EmployeeBonusModal";
+import { useLoginStore } from "../../components/store/loginStore";
+import { getEmployeeSalarySummaryApi } from "../../services/PayrollService";
+
+const MONTH_NAMES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
 
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("es-BO", {
@@ -61,26 +84,34 @@ const formatCurrency = (amount = 0) =>
     .replace("BOB", "Bs");
 
 const SalaryInformation = ({ employee }) => {
-  const activeContract =
-    employee?.contracts?.find(
-      (contract) => contract.isActive
-    ) ??
-    employee?.contracts?.[0] ??
-    null;
-
-  const { incidents = [] } = useAttendanceIncidents(employee?.id);
-  const { advances = [] } = useEmployeeAdvances(employee?.id);
+  const { token } = useLoginStore();
   const { bonuses = [], addBonus, updateBonus, deleteBonus } = useEmployeeBonuses(employee?.id);
 
   const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
   const [editingBonus, setEditingBonus] = useState(null);
+  const [salarySummary, setSalarySummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [expandedMonths, setExpandedMonths] = useState({});
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
-  const salary = calculateSalarySummary({
-    contract: activeContract,
-    incidents,
-    advances,
-    bonuses,
-  });
+  const fetchSalarySummary = useCallback(async () => {
+    if (!employee?.id || !token) return;
+    try {
+      setLoading(true);
+      const data = await getEmployeeSalarySummaryApi(token, employee.id);
+      if (data) {
+        setSalarySummary(data);
+      }
+    } catch (error) {
+      console.error("Error fetching salary summary from backend:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [employee?.id, token]);
+
+  useEffect(() => {
+    fetchSalarySummary();
+  }, [fetchSalarySummary]);
 
   const handleOpenAddBonus = () => {
     setEditingBonus(null);
@@ -94,6 +125,7 @@ const SalaryInformation = ({ employee }) => {
 
   const handleDeleteBonus = async (id) => {
     await deleteBonus(id);
+    fetchSalarySummary();
   };
 
   const handleSubmitBonusModal = async (formData) => {
@@ -104,7 +136,59 @@ const SalaryInformation = ({ employee }) => {
     }
     setIsBonusModalOpen(false);
     setEditingBonus(null);
+    fetchSalarySummary();
   };
+
+  const toggleMonthExpansion = (id) => {
+    setExpandedMonths((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const activeContract =
+    employee?.contracts?.find((c) => c.isActive) ??
+    employee?.contracts?.[0] ??
+    null;
+
+  // Si aún no cargó el resumen de backend, usamos valores seguros por defecto del contrato
+  const baseSalary = salarySummary?.baseSalary ?? Number(activeContract?.baseSalary || 0);
+  const workedDays = salarySummary?.workedDays ?? 0;
+  const basicEarnings = salarySummary?.basicEarnings ?? 0;
+  const seniorityBonus = salarySummary?.seniorityBonus ?? 0;
+  const seniorityDescription = salarySummary?.seniorityDescription ?? "Calculando...";
+  const serverBonuses = salarySummary?.bonuses ?? [];
+  const totalEarned = salarySummary?.totalEarned ?? 0;
+  const gestoraDeduction = salarySummary?.gestoraDeduction ?? 0;
+  const deudasDeduction = salarySummary?.deudasDeduction ?? 0;
+  const anticiposDeduction = salarySummary?.anticiposDeduction ?? 0;
+  const netPayable = salarySummary?.netPayable ?? 0;
+  const history = salarySummary?.history ?? [];
+
+  // Años disponibles basados en el historial y el año actual
+  const availableYears = useMemo(() => {
+    const years = new Set([new Date().getFullYear()]);
+    history.forEach((h) => {
+      if (h.year && !isNaN(Number(h.year))) {
+        years.add(Number(h.year));
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [history]);
+
+  // Historial filtrado por el año seleccionado (orden descendente de mes)
+  const filteredHistory = useMemo(() => {
+    return history
+      .filter((h) => Number(h.year) === selectedYear)
+      .sort((a, b) => b.month - a.month);
+  }, [history, selectedYear]);
+
+  // Resumen del año seleccionado
+  const yearSummary = useMemo(() => {
+    const count = filteredHistory.length;
+    const totalNet = filteredHistory.reduce((sum, h) => sum + (Number(h.netSalary) || 0), 0);
+    return { count, totalNet };
+  }, [filteredHistory]);
 
   return (
     <>
@@ -126,7 +210,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Haber básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salary.baseSalary)}
+                {formatCurrency(baseSalary)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -138,7 +222,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Días trabajados</SummaryLabel>
               <SummaryValue>
-                {salary.workedDays}
+                {workedDays}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -150,7 +234,7 @@ const SalaryInformation = ({ employee }) => {
             <SummaryContent>
               <SummaryLabel>Sueldo básico</SummaryLabel>
               <SummaryValue>
-                {formatCurrency(salary.basicEarnings)}
+                {formatCurrency(basicEarnings)}
               </SummaryValue>
             </SummaryContent>
             <SummaryIcon>
@@ -169,18 +253,15 @@ const SalaryInformation = ({ employee }) => {
               <DetailItem>
                 <DetailInfo>
                   <DetailLabel>Bono de antigüedad</DetailLabel>
-                  <DetailDescription>{salary.seniorityDescription}</DetailDescription>
+                  <DetailDescription>{seniorityDescription}</DetailDescription>
                 </DetailInfo>
                 <DetailValue>
-                  {formatCurrency(salary.seniorityBonus)}
+                  {formatCurrency(seniorityBonus)}
                 </DetailValue>
               </DetailItem>
 
-              {bonuses.map((bonus) => {
-                const monthlyBonusAmount = calculateBonusAmountForMonth(
-                  bonus,
-                  salary.workedDays
-                );
+              {serverBonuses.map((bonus) => {
+                const bonusRaw = bonuses.find((b) => b.id === bonus.id) || bonus;
                 return (
                   <DetailItem key={bonus.id}>
                     <DetailInfo>
@@ -190,7 +271,7 @@ const SalaryInformation = ({ employee }) => {
                           <TableActionButton
                             type="button"
                             title="Editar bono"
-                            onClick={() => handleEditBonus(bonus)}
+                            onClick={() => handleEditBonus(bonusRaw)}
                             style={{ width: "26px", height: "26px" }}
                           >
                             <Pencil size={15} />
@@ -211,7 +292,7 @@ const SalaryInformation = ({ employee }) => {
                       </DetailDescription>
                     </DetailInfo>
                     <DetailValue>
-                      {formatCurrency(monthlyBonusAmount)}
+                      {formatCurrency(bonus.monthlyAmount)}
                     </DetailValue>
                   </DetailItem>
                 );
@@ -221,7 +302,7 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Total ganado</HighlightLabel>
-            <HighlightValue>{formatCurrency(salary.totalEarned)}</HighlightValue>
+            <HighlightValue>{formatCurrency(totalEarned)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
@@ -237,7 +318,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>AFP (12,71 % sobre Total Ganado)</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salary.gestoraDeduction)}
+                  - {formatCurrency(gestoraDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -247,7 +328,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Permisos y faltas</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salary.deudasDeduction)}
+                  - {formatCurrency(deudasDeduction)}
                 </DetailValue>
               </DetailItem>
 
@@ -257,7 +338,7 @@ const SalaryInformation = ({ employee }) => {
                   <DetailDescription>Adelantos del mes</DetailDescription>
                 </DetailInfo>
                 <DetailValue $variant="danger">
-                  - {formatCurrency(salary.anticiposDeduction)}
+                  - {formatCurrency(anticiposDeduction)}
                 </DetailValue>
               </DetailItem>
             </DetailList>
@@ -265,17 +346,107 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Líquido pagable</HighlightLabel>
-            <HighlightValue>{formatCurrency(salary.netPayable)}</HighlightValue>
+            <HighlightValue>{formatCurrency(netPayable)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
       </TabContentCard>
 
       <TabContentCard>
-        <SectionTitle>Meses anteriores</SectionTitle>
-        <HistoryEmptyState>
-          No se encontraron registros de nóminas de meses anteriores
-        </HistoryEmptyState>
+        <TabHeader>
+          <div>
+            <SectionTitle>Meses anteriores</SectionTitle>
+          </div>
+          <div>
+            <FilterLabel htmlFor="salary-history-year-select">Gestión</FilterLabel>
+            <YearFilterSelect
+              id="salary-history-year-select"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </YearFilterSelect>
+          </div>
+        </TabHeader>
+
+        {filteredHistory.length > 0 && (
+          <HistoryHeaderNew>
+            <GroupSummaryText>
+              <strong>{yearSummary.count}</strong> nómina{yearSummary.count === 1 ? "" : "s"} en {selectedYear}
+            </GroupSummaryText>
+            <GroupSummaryText>
+              Total líquido acumulado <strong>{formatCurrency(yearSummary.totalNet)}</strong>
+            </GroupSummaryText>
+          </HistoryHeaderNew>
+        )}
+
+        {filteredHistory.length === 0 ? (
+          <HistoryEmptyState>
+            No se encontraron registros de nóminas para la gestión {selectedYear}
+          </HistoryEmptyState>
+        ) : (
+          <HistoryList>
+            {filteredHistory.map((record) => {
+              const monthName = MONTH_NAMES[record.month - 1] || `Mes ${record.month}`;
+              const isExpanded = !!expandedMonths[record.id];
+              return (
+                <HistoryItem key={record.id}>
+                  <HistoryHeader
+                    type="button"
+                    onClick={() => toggleMonthExpansion(record.id)}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <strong style={{ fontSize: "14px" }}>
+                        {monthName} {record.year}
+                      </strong>
+                      <StatusBadge $variant={record.status === "GENERATED" || record.status === "PAID" ? "success" : "neutral"}>
+                        {record.status === "PAID"
+                          ? "Pagado"
+                          : record.status === "GENERATED"
+                          ? "Generado"
+                          : "Borrador"}
+                      </StatusBadge>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <span>
+                        Líquido: <strong>{formatCurrency(record.netSalary)}</strong>
+                      </span>
+                      {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </div>
+                  </HistoryHeader>
+
+                  {isExpanded && (
+                    <HistoryContent>
+                      {[
+                        { label: "Haber Básico", value: formatCurrency(record.baseSalary) },
+                        { label: "Días Trabajados", value: record.workedDays },
+                        { label: "Sueldo Básico", value: formatCurrency(record.earnedSalary) },
+                        { label: "Bono Antigüedad", value: formatCurrency(record.seniorityBonus) },
+                        { label: "Otros Bonos", value: formatCurrency(record.otherBonuses) },
+                        { label: "Total Ganado", value: formatCurrency(record.grossPay), color: "#2f573c" },
+                        { label: "Gestora (12.71%)", value: `- ${formatCurrency(record.afpDeduction)}`, color: "#e53e3e" },
+                        { label: "Faltas / Permisos", value: `- ${formatCurrency(record.absenceDeduction)}`, color: "#e53e3e" },
+                        { label: "Anticipos", value: `- ${formatCurrency(record.advanceDeduction)}`, color: "#e53e3e" },
+                        { label: "Total Descuentos", value: `- ${formatCurrency(record.totalDeductions)}`, color: "#e53e3e" },
+                        { label: "Líquido Pagable", value: formatCurrency(record.netSalary), color: "#2f573c", fontSize: "16px" },
+                      ].map((item, idx) => (
+                        <HistoryValue key={idx}>
+                          <span>{item.label}</span>
+                          <strong style={{ ...(item.color ? { color: item.color } : {}), ...(item.fontSize ? { fontSize: item.fontSize } : {}) }}>
+                            {item.value}
+                          </strong>
+                        </HistoryValue>
+                      ))}
+                    </HistoryContent>
+                  )}
+                </HistoryItem>
+              );
+            })}
+          </HistoryList>
+        )}
       </TabContentCard>
 
       <EmployeeBonusModal

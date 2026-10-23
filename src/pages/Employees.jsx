@@ -31,7 +31,7 @@ import {
 } from "../components/ui/Page.styles";
 import EmployeeModal from "../components/modals/EmployeeModal";
 import DataTable from "../components/table/DataTable";
-import { getSeniorityFull, formatLongDate } from "../utils/dateUtils";
+import { getSeniorityFull, formatLongDate, getEmployeeStatus } from "../utils/dateUtils";
 import { useEmployees } from "../hooks/useEmployees";
 import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
@@ -94,7 +94,9 @@ const Employees = () => {
     const search = searchValue.trim().toLowerCase();
     
     return employees.filter((employee) => {
-      const activeContract = employee.contracts ? employee.contracts.find((c) => c.isActive) : null;
+      const activeContract = employee.contracts
+        ? employee.contracts.find((c) => c.isActive) || employee.contracts[0]
+        : null;
       
       // Filtrar por la empresa seleccionada en los chips
       let matchesCompany = true;
@@ -107,12 +109,14 @@ const Employees = () => {
         }
       }
 
+      const statusInfo = getEmployeeStatus(employee);
       const searchableContent = [
         employee.firstNames,
         employee.lastNames,
         employee.documentNumber,
         employee.email,
         employee.phone,
+        statusInfo.label,
         activeContract?.branch?.name,
         activeContract?.area?.name,
         activeContract?.jobTitle?.name,
@@ -136,7 +140,9 @@ const Employees = () => {
         sortable: false,
         valueGetter: (_, row) => `${row.firstNames} ${row.lastNames}`,
         renderCell: ({ row }) => {
-          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const activeContract = row.contracts
+            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
+            : null;
           const hiredText = activeContract?.hireDate
             ? `Contratado: ${formatLongDate(activeContract.hireDate)}`
             : "Sin contratación";
@@ -151,15 +157,16 @@ const Employees = () => {
       {
         field: "status",
         headerName: "Estado",
-        width: 105,
-        valueGetter: (_, row) => (row.status === "ACTIVE" ? "Activo" : "Inactivo"),
-        renderCell: ({ value }) => (
-          <Badge
-            $variant={value === "Activo" ? "success" : "danger"}
-          >
-            {value}
-          </Badge>
-        ),
+        width: 145,
+        valueGetter: (_, row) => getEmployeeStatus(row).label,
+        renderCell: ({ row }) => {
+          const statusInfo = getEmployeeStatus(row);
+          return (
+            <Badge $variant={statusInfo.variant}>
+              {statusInfo.label}
+            </Badge>
+          );
+        },
       },
       {
         field: "branch",
@@ -167,7 +174,9 @@ const Employees = () => {
         minWidth: 130,
         flex: 0.7,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const activeContract = row.contracts
+            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
+            : null;
           return activeContract?.branch?.name || "No seleccionada";
         },
       },
@@ -177,7 +186,9 @@ const Employees = () => {
         minWidth: 145,
         flex: 0.8,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const activeContract = row.contracts
+            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
+            : null;
           return activeContract?.area?.name || "No seleccionada";
         },
       },
@@ -187,7 +198,9 @@ const Employees = () => {
         minWidth: 190,
         flex: 1.1,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const activeContract = row.contracts
+            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
+            : null;
           return activeContract?.jobTitle?.name || "No seleccionado";
         },
       },
@@ -210,7 +223,9 @@ const Employees = () => {
         minWidth: 175,
         flex: 0.7,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts ? row.contracts.find((c) => c.isActive) : null;
+          const activeContract = row.contracts
+            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
+            : null;
           return getSeniorityFull(activeContract?.hireDate);
         },
       },
