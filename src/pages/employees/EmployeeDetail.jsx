@@ -221,7 +221,16 @@ const EmployeeDetail = () => {
           </DetailTabs>
 
           <DetailNavigation>
-            <BackButton type="button" onClick={() => navigate("/empleados")}>
+            <BackButton
+              type="button"
+              onClick={() => {
+                if (window.history.state?.idx > 0) {
+                  navigate(-1);
+                } else {
+                  navigate("/empleados", { replace: true });
+                }
+              }}
+            >
               <ArrowLeft size={17} />
               Atrás
             </BackButton>
