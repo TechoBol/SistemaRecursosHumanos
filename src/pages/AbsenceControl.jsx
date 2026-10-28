@@ -228,13 +228,19 @@ const AbsenceControl = () => {
       );
     });
 
-    // Ordenar: primero los que tienen más incidencias, luego por apellido
+    // Ordenar: alfabéticamente por apellido y luego por nombre
     filtered.sort((a, b) => {
+      const nameA = `${a.lastNames || ""} ${a.firstNames || ""}`.trim().toLowerCase();
+      const nameB = `${b.lastNames || ""} ${b.firstNames || ""}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+    // Ordenar: primero los que tienen más incidencias, luego por apellido
+    /*filtered.sort((a, b) => {
       const totalA = a.faltas.length + a.permisos.length + a.vacaciones.length + a.atrasos.length;
       const totalB = b.faltas.length + b.permisos.length + b.vacaciones.length + b.atrasos.length;
       if (totalB !== totalA) return totalB - totalA;
       return a.lastNames.localeCompare(b.lastNames);
-    });
+    });*/
 
     return {
       groupedEmployees: filtered,
@@ -387,7 +393,7 @@ const AbsenceControl = () => {
         ) : (
           groupedEmployees.map((emp) => {
             const isCollapsed = Boolean(collapsedEmployees[emp.id]);
-            const empFullName = `${emp.firstNames} ${emp.lastNames}`.trim().toUpperCase();
+            const empFullName = `${emp.lastNames} ${emp.firstNames}`.trim().toUpperCase();
 
             const items = [
               ...emp.faltas.map((f) => ({ ...f, category: "faltas" })),

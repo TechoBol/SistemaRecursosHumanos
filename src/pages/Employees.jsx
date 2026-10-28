@@ -127,6 +127,10 @@ const Employees = () => {
       const matchesSearch = !search || searchableContent.includes(search);
 
       return matchesCompany && matchesSearch;
+    }).sort((a, b) => {
+      const nameA = `${a.lastNames || ""} ${a.firstNames || ""}`.trim().toLowerCase();
+      const nameB = `${b.lastNames || ""} ${b.firstNames || ""}`.trim().toLowerCase();
+      return nameA.localeCompare(nameB);
     });
   }, [employees, searchValue, activeCompanyFilter, filterType]);
 
@@ -138,7 +142,7 @@ const Employees = () => {
         minWidth: 240,
         flex: 1.4,
         sortable: false,
-        valueGetter: (_, row) => `${row.firstNames} ${row.lastNames}`,
+        valueGetter: (_, row) => `${row.lastNames} ${row.firstNames}`.trim(),
         renderCell: ({ row }) => {
           const activeContract = row.contracts
             ? row.contracts.find((c) => c.isActive) || row.contracts[0]
@@ -148,7 +152,7 @@ const Employees = () => {
             : "Sin contratación";
           return (
             <CellStack>
-              <CellTitle>{row.firstNames} {row.lastNames}</CellTitle>
+              <CellTitle>{row.lastNames} {row.firstNames}</CellTitle>
               <CellText>{hiredText}</CellText>
             </CellStack>
           );
