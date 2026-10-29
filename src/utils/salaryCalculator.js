@@ -324,7 +324,7 @@ export const calculateSalarySummary = ({
   const deudasDeduction = calculateCurrentMonthDebts(incidents, currentDate);
   const anticiposDeduction = calculateCurrentMonthAdvances(advances, currentDate);
   const totalDeductions = gestoraDeduction + deudasDeduction + anticiposDeduction;
-  const netPayable = totalEarned - totalDeductions;
+  const netPayable = Number((totalEarned - totalDeductions).toFixed(1));
   return {
     baseSalary,
     workedDays,

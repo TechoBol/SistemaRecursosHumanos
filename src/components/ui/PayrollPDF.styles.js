@@ -71,6 +71,12 @@ export const formatMoneyPdf = (amount) =>
     maximumFractionDigits: 2,
   }).format(Number(amount) || 0);
 
+export const formatNetSalaryPdf = (amount) =>
+  new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Number(amount) || 0);
+
 export const formatDatePdf = (dateStr) => {
   if (!dateStr) return "-";
   const [year, month, day] = String(dateStr).split("T")[0].split("-");

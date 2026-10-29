@@ -7,6 +7,7 @@ import {
   MONTH_NAMES,
   getPayrollTheme,
   formatMoneyPdf,
+  formatNetSalaryPdf,
   formatDatePdf,
   getFormattedUpdateTimestamp,
 } from "../components/ui/PayrollPDF.styles";
@@ -216,7 +217,7 @@ const buildEmployeeTableRow = (employee, index, theme) => [
     styles: { halign: "right" },
   },
   {
-    content: formatMoneyPdf(employee.netSalary),
+    content: formatNetSalaryPdf(employee.netSalary),
     styles: {
       halign: "right",
       fontStyle: "bold",
@@ -325,7 +326,7 @@ const buildTotalsRow = (
       styles: baseStyle,
     },
     {
-      content: formatMoneyPdf(totals.netSalary),
+      content: formatNetSalaryPdf(totals.netSalary),
       styles: netSalaryStyle,
     },
   ];

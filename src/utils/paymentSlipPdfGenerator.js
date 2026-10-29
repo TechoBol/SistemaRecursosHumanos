@@ -9,6 +9,7 @@ import {
   MONTH_NAMES,
   getPayrollTheme,
   formatMoneyPdf,
+  formatNetSalaryPdf,
 } from "../components/ui/PayrollPDF.styles";
 
 const COMPANY_LOGOS = {
@@ -454,7 +455,7 @@ const drawSlip = ({
 
   doc.setFontSize(15);
   doc.text(
-    formatMoneyPdf(payroll.netSalary),
+    formatNetSalaryPdf(payroll.netSalary),
     contentRight - 4,
     liquidBoxY + 10.2,
     { align: "right" }

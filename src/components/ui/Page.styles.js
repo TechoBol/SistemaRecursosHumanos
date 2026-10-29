@@ -192,21 +192,17 @@ export const TotalCard = styled.div`
   border-radius: 18px;
   border: 1px solid
     ${({ $variant }) =>
-      $variant === "danger"
-        ? "#fca5a5"
-        : $variant === "highlight"
-        ? "#bfdbfe"
-        : $variant === "dark"
-        ? "#cbd5e1"
-        : "#bbf7d0"};
+      $variant === "danger" ? "#fca5a5"
+      : $variant === "highlight" ? "#bfdbfe"
+      : $variant === "purple" ? "#e9d5ff"
+      : $variant === "dark" ? "#cbd5e1"
+      : "#bbf7d0"};
   background-color: ${({ $variant }) =>
-    $variant === "danger"
-      ? "#fee2e2"
-      : $variant === "highlight"
-      ? "#e0e7ff"
-      : $variant === "dark"
-      ? "#e2e8f0"
-      : "#dcfce7"};
+    $variant === "danger" ? "#fee2e2"
+    : $variant === "highlight" ? "#e0e7ff"
+    : $variant === "purple" ? "#f3e8ff"
+    : $variant === "dark" ? "#e2e8f0"
+    : "#dcfce7"};
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   &:hover {
     transform: translateY(-2px);
@@ -218,26 +214,22 @@ export const TotalLabel = styled.span`
   font-size: ${({ $emphasis }) => $emphasis ? "14px" : "13px"};
   font-weight: ${({ $emphasis }) => $emphasis ? 700 : 500};
   color: ${({ $variant }) =>
-    $variant === "danger"
-      ? "#991b1b"
-      : $variant === "highlight"
-      ? "#1e40af"
-      : $variant === "dark"
-      ? "#334155"
-      : "#14532d"};
+    $variant === "danger" ? "#991b1b"
+    : $variant === "highlight" ? "#1e40af"
+    : $variant === "purple" ? "#6b21a8"
+    : $variant === "dark" ? "#334155"
+    : "#14532d"};
 `;
 
 export const TotalValue = styled.span`
   font-size: ${({ $large }) => $large ? "32px" : "21px"};
   font-weight: ${({ $large }) => $large ? 800 : 700};
   color: ${({ $variant }) =>
-    $variant === "danger"
-      ? "#dc2626"
-      : $variant === "highlight"
-      ? "#1d4ed8"
-      : $variant === "dark"
-      ? "#0f172a"
-      : "#15803d"};
+    $variant === "danger" ? "#dc2626"
+    : $variant === "highlight" ? "#1d4ed8"
+    : $variant === "purple" ? "#7e22ce"
+    : $variant === "dark" ? "#0f172a"
+    : "#15803d"};
 `;
 
 /* FILTROS */
@@ -416,8 +408,8 @@ export const SummaryCardIcon = styled.div`
   height: 46px;
   flex-shrink: 0;
   border-radius: 12px;
-  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "highlight" ? "#2563eb" : "#16a34a"};
-  background-color: ${({ $variant }) => $variant === "danger" ? "rgba(225, 29, 72, 0.1)" : $variant === "highlight" ? "rgba(37, 99, 235, 0.1)" : "rgba(22, 163, 74, 0.1)"};
+  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "highlight" || $variant === "info" ? "#2563eb" : $variant === "purple" ? "#7e22ce" : "#16a34a"};
+  background-color: ${({ $variant }) => $variant === "danger" ? "rgba(225, 29, 72, 0.1)" : $variant === "highlight" || $variant === "info" ? "rgba(37, 99, 235, 0.1)" : $variant === "purple" ? "rgba(126, 34, 206, 0.1)" : "rgba(22, 163, 74, 0.1)"};
 `;
 
 export const SectionWrapper = styled.section`
@@ -449,6 +441,7 @@ export const SectionCountText = styled.span`
 `;
 
 export const CollapsibleCard = styled.div`
+  min-width: 0;
   overflow: hidden;
   background: ${theme.colors.white};
   border: 1px solid #e5e7eb;
@@ -462,48 +455,97 @@ export const CollapsibleCard = styled.div`
 `;
 
 export const CollapsibleHeader = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
   padding: 16px 20px;
   background: ${theme.colors.white};
   cursor: pointer;
   user-select: none;
   &:hover { background: #fafafa; }
+
   @media (max-width: 700px) {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+    padding: 16px;
   }
 `;
 
 export const CollapsibleTitle = styled.h3`
+  min-width: 0;
   margin: 0;
   color: ${theme.colors.text};
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  overflow-wrap: anywhere;
 `;
 
 export const CollapsibleActions = styled.div`
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  min-width: 0;
+
   @media (max-width: 700px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     width: 100%;
-    justify-content: space-between;
+    align-items: end;
   }
 `;
 
+export const CollapsibleCounters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+`;
+
+export const CollapsibleControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+`;
+
 export const CollapsibleBody = styled.div`
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 4px 20px 20px;
+  padding: 12px 20px 20px;
   background: #fafbfc;
   border-top: 1px solid #f3f4f6;
+
+  @media (max-width: 700px) {
+    padding: 12px 16px 16px;
+  }
+`;
+
+{/*export const DetailItemsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+`;*/}
+
+export const DetailItemsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (max-width: 700px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 
 export const StatusPill = styled.span`
@@ -512,10 +554,11 @@ export const StatusPill = styled.span`
   gap: 6px;
   padding: 4px 12px;
   border-radius: ${theme.radius.round};
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
-  background: ${({ $variant }) => $variant === "danger" ? "#fee2e2" : $variant === "success" ? "#dcfce7" : $variant === "info" ? "#dbeafe" : "#f3f4f6"};
-  color: ${({ $variant }) => $variant === "danger" ? "#dc2626" : $variant === "success" ? "#15803d" : $variant === "info" ? "#2563eb" : "#4b5563"};
+  background: ${({ $variant }) => $variant === "danger" ? "#fee2e2" : $variant === "success" ? "#dcfce7" : $variant === "info" ? "#dbeafe" : $variant === "purple" ? "#f3e8ff" : "#f3f4f6"};
+  color: ${({ $variant }) => $variant === "danger" ? "#dc2626" : $variant === "success" ? "#15803d" : $variant === "info" ? "#2563eb" : $variant === "purple" ? "#7e22ce" : "#4b5563"};
 `;
 
 export const ActionIconButton = styled.button`
@@ -537,20 +580,44 @@ export const ActionIconButton = styled.button`
 `;
 
 export const DetailItemRow = styled.div`
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px 16px;
-  border: 1px solid ${({ $variant }) => $variant === "danger" ? "#fecdd3" : $variant === "success" ? "#bbf7d0" : $variant === "info" ? "#bfdbfe" : $variant === "warning" ? "#fed7aa" : "#e5e7eb"};
+  border: 1px solid ${({ $variant }) =>
+    $variant === "danger"
+      ? "#fecdd3"
+      : $variant === "success"
+      ? "#bbf7d0"
+      : $variant === "info"
+      ? "#bfdbfe"
+      : $variant === "warning"
+      ? "#fed7aa"
+      : $variant === "purple"
+      ? "#e9d5ff"
+      : "#e5e7eb"};
   border-radius: 12px;
-  background: ${({ $variant }) => $variant === "danger" ? "#fff1f2" : $variant === "success" ? "#f0fdf4" : $variant === "info" ? "#eff6ff" : $variant === "warning" ? "#fff7ed" : "#ffffff"};
+  background: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#fff1f2"
+      : $variant === "success"
+      ? "#f0fdf4"
+      : $variant === "info"
+      ? "#eff6ff"
+      : $variant === "warning"
+      ? "#fff7ed"
+      : $variant === "purple"
+      ? "#faf5ff"
+      : "#ffffff"};
 `;
 
 export const DetailItemTagGroup = styled.div`
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 10px;
+  min-width: 0;
+  gap: 6px 10px;
 `;
 
 export const DetailItemLabel = styled.span`
@@ -559,11 +626,24 @@ export const DetailItemLabel = styled.span`
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "success" ? "#16a34a" : $variant === "info" ? "#2563eb" : $variant === "warning" ? "#ea580c" : "#374151"};
+  color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#e11d48"
+      : $variant === "success"
+      ? "#16a34a"
+      : $variant === "info"
+      ? "#2563eb"
+      : $variant === "warning"
+      ? "#ea580c"
+      : $variant === "purple"
+      ? "#7e22ce"
+      : "#374151"};
   svg { flex-shrink: 0; }
 `;
 
 export const DetailItemText = styled.span`
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: #374151;
   font-size: 13px;
   font-weight: 500;
@@ -574,8 +654,15 @@ export const DetailItemDescriptionBox = styled.div`
   align-items: baseline;
   flex-wrap: wrap;
   gap: 8px 16px;
+  min-width: 0;
   padding-left: 24px;
   color: #4b5563;
+  overflow-wrap: anywhere;
+  > span { min-width: 0; }
+
+  @media (max-width: 700px) {
+    padding-left: 0;
+  }
   font-size: 12px;
   strong { color: #1f2937; font-weight: 600; }
 `;
