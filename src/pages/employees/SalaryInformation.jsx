@@ -83,6 +83,17 @@ const formatCurrency = (amount = 0) =>
     .format(amount)
     .replace("BOB", "Bs");
 
+const formatNetSalaryCurrency = (amount = 0) =>
+  new Intl.NumberFormat("es-BO", {
+    style: "currency",
+    currency: "BOB",
+    currencyDisplay: "code",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+    .format(amount)
+    .replace("BOB", "Bs");
+
 const SalaryInformation = ({ employee }) => {
   const { token } = useLoginStore();
   const { bonuses = [], addBonus, updateBonus, deleteBonus } = useEmployeeBonuses(employee?.id);
@@ -346,7 +357,7 @@ const SalaryInformation = ({ employee }) => {
 
           <HighlightCard>
             <HighlightLabel>Líquido pagable</HighlightLabel>
-            <HighlightValue>{formatCurrency(netPayable)}</HighlightValue>
+            <HighlightValue>{formatNetSalaryCurrency(netPayable)}</HighlightValue>
             <DollarSign size={54} strokeWidth={1.7} />
           </HighlightCard>
         </DetailGrid>
@@ -412,7 +423,7 @@ const SalaryInformation = ({ employee }) => {
 
                     <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                       <span>
-                        Líquido: <strong>{formatCurrency(record.netSalary)}</strong>
+                        Líquido: <strong>{formatNetSalaryCurrency(record.netSalary)}</strong>
                       </span>
                       {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </div>
@@ -431,7 +442,7 @@ const SalaryInformation = ({ employee }) => {
                         { label: "Faltas / Permisos", value: `- ${formatCurrency(record.absenceDeduction)}`, color: "#e53e3e" },
                         { label: "Anticipos", value: `- ${formatCurrency(record.advanceDeduction)}`, color: "#e53e3e" },
                         { label: "Total Descuentos", value: `- ${formatCurrency(record.totalDeductions)}`, color: "#e53e3e" },
-                        { label: "Líquido Pagable", value: formatCurrency(record.netSalary), color: "#2f573c", fontSize: "16px" },
+                        { label: "Líquido Pagable", value: formatNetSalaryCurrency(record.netSalary), color: "#2f573c", fontSize: "16px" },
                       ].map((item, idx) => (
                         <HistoryValue key={idx}>
                           <span>{item.label}</span>

@@ -63,6 +63,13 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
+const formatNetSalary = (amount) => {
+  return new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(amount || 0);
+};
+
 const PayrollConsolidation = () => {
   const navigate = useNavigate();
   const { companies } = useCompanies();
@@ -291,7 +298,7 @@ const PayrollConsolidation = () => {
         field: "netSalary",
         headerName: "Líquido pagable",
         minWidth: 140,
-        valueGetter: (_, row) => formatCurrency(row.netSalary),
+        valueGetter: (_, row) => formatNetSalary(row.netSalary),
       },
       {
         field: "status",
@@ -432,7 +439,7 @@ const PayrollConsolidation = () => {
           </TotalCard>
           <TotalCard $variant="highlight">
             <TotalLabel $variant="highlight">Líquido Pagable</TotalLabel>
-            <TotalValue $variant="highlight">Bs {formatCurrency(totals.netSalary)}</TotalValue>
+            <TotalValue $variant="highlight">Bs {formatNetSalary(totals.netSalary)}</TotalValue>
           </TotalCard>
         </TotalsGrid>
 
