@@ -1,5 +1,37 @@
 import { errorToast, successToast } from "./toasts";
 
+/* OBTENER TODOS LOS ANTICIPOS (OPCIONALMENTE POR AÑO Y MES) */
+export const getAllEmployeeAdvancesApi = async (token: string, params?: { year?: number; month?: number }) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.year) queryParams.append("year", String(params.year));
+    if (params?.month) queryParams.append("month", String(params.month));
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+    const response = await fetch(
+      `${import.meta.env.VITE_API_DOMAIN}/employee-advance/all-advances${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      errorToast("No se pudieron obtener los anticipos de sueldo.");
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error al obtener anticipos de sueldo:", error);
+    errorToast("Error de conexión al obtener anticipos de sueldo.");
+    return null;
+  }
+};
+
 /* OBTENER ANTICIPOS DE SUELDO DE UN EMPLEADO */
 export const getEmployeeAdvancesApi = async (token: string, employeeId: number) => {
   try {

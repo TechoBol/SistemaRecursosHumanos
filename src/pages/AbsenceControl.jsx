@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
+  Banknote,
   Calendar,
   CheckSquare,
   ChevronDown,
@@ -39,6 +40,7 @@ import {
   CollapsibleTitle,
   CollapsibleActions,
   CollapsibleBody,
+  DetailItemsGrid,
   StatusPill,
   ActionIconButton,
   DetailItemRow,
@@ -95,6 +97,14 @@ const formatVacationDateRange = (startDateStr, endDateStr, days) => {
   return `${start} al ${end} ${daysText}`;
 };
 
+const formatMoney = (amount = 0) => {
+  const formatted = new Intl.NumberFormat("es-BO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
+  return `Bs ${formatted}`;
+};
+
 const AbsenceControl = () => {
   const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -128,7 +138,7 @@ const AbsenceControl = () => {
     }
   }, [availableMonths, selectedMonth]);
 
-  const { incidents, vacations, isLoading } = useAbsenceControl(selectedYear, selectedMonth);
+  const { incidents, vacations, advances = [], isLoading } = useAbsenceControl(selectedYear, selectedMonth);
   const { employees } = useEmployees();
 
   // Mapear y agrupar por empleado
@@ -147,6 +157,7 @@ const AbsenceControl = () => {
         permisos: [],
         atrasos: [],
         vacaciones: [],
+        anticipos: [],
       });
     });
 
@@ -164,6 +175,7 @@ const AbsenceControl = () => {
           permisos: [],
           atrasos: [],
           vacaciones: [],
+          anticipos: [],
         };
         empMap.set(inc.employeeId, emp);
       }
@@ -191,18 +203,42 @@ const AbsenceControl = () => {
           permisos: [],
           atrasos: [],
           vacaciones: [],
+          anticipos: [],
         };
         empMap.set(vac.employeeId, emp);
       }
       emp.vacaciones.push(vac);
     });
 
-    // 4. Calcular KPIs
+    // 4. Asociar anticipos de sueldo
+    advances.forEach((adv) => {
+      let emp = empMap.get(adv.employeeId);
+      if (!emp) {
+        emp = {
+          id: adv.employeeId,
+          firstNames: adv.employee?.firstNames || "Empleado",
+          lastNames: adv.employee?.lastNames || `#${adv.employeeId}`,
+          documentNumber: adv.employee?.documentNumber || "",
+          status: adv.employee?.status || "ACTIVE",
+          faltas: [],
+          permisos: [],
+          atrasos: [],
+          vacaciones: [],
+          anticipos: [],
+        };
+        empMap.set(adv.employeeId, emp);
+      }
+      emp.anticipos.push(adv);
+    });
+
+    // 5. Calcular KPIs
     const permisosCount = incidents.filter((i) => i.type === "permission").length;
     const faltasCount = incidents.filter((i) => i.type === "absence").length;
     const vacacionesDaysTotal = vacations.reduce((sum, v) => sum + Number(v.days || 0), 0);
+    const anticiposCount = advances.length;
+    const anticiposAmountTotal = advances.reduce((sum, a) => sum + Number(a.amount || 0), 0);
 
-    // 5. Filtrar por término de búsqueda y registros
+    // 6. Filtrar por término de búsqueda y registros
     const term = searchTerm.trim().toLowerCase();
     const allEmps = Array.from(empMap.values());
 
@@ -211,7 +247,8 @@ const AbsenceControl = () => {
         emp.faltas.length > 0 ||
         emp.permisos.length > 0 ||
         emp.atrasos.length > 0 ||
-        emp.vacaciones.length > 0;
+        emp.vacaciones.length > 0 ||
+        emp.anticipos.length > 0;
 
       if (!term) {
         return hasRecords;
@@ -234,13 +271,6 @@ const AbsenceControl = () => {
       const nameB = `${b.lastNames || ""} ${b.firstNames || ""}`.trim().toLowerCase();
       return nameA.localeCompare(nameB);
     });
-    // Ordenar: primero los que tienen más incidencias, luego por apellido
-    /*filtered.sort((a, b) => {
-      const totalA = a.faltas.length + a.permisos.length + a.vacaciones.length + a.atrasos.length;
-      const totalB = b.faltas.length + b.permisos.length + b.vacaciones.length + b.atrasos.length;
-      if (totalB !== totalA) return totalB - totalA;
-      return a.lastNames.localeCompare(b.lastNames);
-    });*/
 
     return {
       groupedEmployees: filtered,
@@ -254,9 +284,13 @@ const AbsenceControl = () => {
         vacaciones: {
           total: vacacionesDaysTotal,
         },
+        anticipos: {
+          total: anticiposCount,
+          amount: anticiposAmountTotal,
+        },
       },
     };
-  }, [employees, incidents, vacations, searchTerm]);
+  }, [employees, incidents, vacations, advances, searchTerm]);
 
   // Toggle colapsar empleado
   const toggleEmployeeCollapse = (employeeId) => {
@@ -328,7 +362,7 @@ const AbsenceControl = () => {
       </PageHeader>
 
       {/* TARJETAS RESUMEN MENSUAL (KPIs) */}
-      <TotalsGrid $columns={3}>
+      <TotalsGrid $columns={4}>
         <TotalCard $horizontal>
           <div>
             <TotalLabel $emphasis>Permisos del mes</TotalLabel>
@@ -356,6 +390,23 @@ const AbsenceControl = () => {
           </div>
           <SummaryCardIcon $variant="highlight">
             <Palmtree size={26} strokeWidth={2.3} />
+          </SummaryCardIcon>
+        </TotalCard>
+
+        <TotalCard $horizontal>
+          <div>
+            <TotalLabel $emphasis>Anticipos del mes</TotalLabel>
+            <div>
+              <TotalValue $large>
+                {kpiData.anticipos.total}{" "}
+                <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>
+                  ({formatMoney(kpiData.anticipos.amount)})
+                </span>
+              </TotalValue>
+            </div>
+          </div>
+          <SummaryCardIcon $variant="info">
+            <Banknote size={26} strokeWidth={2.3} />
           </SummaryCardIcon>
         </TotalCard>
       </TotalsGrid>
@@ -400,6 +451,7 @@ const AbsenceControl = () => {
               ...emp.permisos.map((p) => ({ ...p, category: "permisos" })),
               ...emp.atrasos.map((a) => ({ ...a, category: "atrasos" })),
               ...emp.vacaciones.map((v) => ({ ...v, category: "vacaciones" })),
+              ...emp.anticipos.map((ant) => ({ ...ant, category: "anticipos" })),
             ].sort((a, b) => {
               const dateA = a.date || a.startDate || "";
               const dateB = b.date || b.startDate || "";
@@ -422,6 +474,9 @@ const AbsenceControl = () => {
                     </StatusPill>
                     <StatusPill $variant="info">
                       Vacaciones <strong>{emp.vacaciones.length}</strong>
+                    </StatusPill>
+                    <StatusPill $variant="purple">
+                      Anticipos <strong>{emp.anticipos.length}</strong>
                     </StatusPill>
 
                     {/* BOTÓN CHEVRON RIGHT: IR AL DETALLE DEL EMPLEADO */}
@@ -449,96 +504,124 @@ const AbsenceControl = () => {
                   <CollapsibleBody>
                     {items.length === 0 ? (
                       <PageDescription>
-                        El empleado no registra faltas, permisos ni vacaciones en este período.
+                        El empleado no registra faltas, permisos, vacaciones ni anticipos en este período.
                       </PageDescription>
                     ) : (
-                      items.map((item, idx) => {
-                        const isVacacion = item.category === "vacaciones";
-                        const isFalta = item.category === "faltas";
-                        const isPermiso = item.category === "permisos";
-                        const isAtraso = item.category === "atrasos";
+                      <DetailItemsGrid>
+                        {items.map((item, idx) => {
+                          const isVacacion = item.category === "vacaciones";
+                          const isFalta = item.category === "faltas";
+                          const isPermiso = item.category === "permisos";
+                          const isAtraso = item.category === "atrasos";
+                          const isAnticipo = item.category === "anticipos";
 
-                        const rowVariant = isFalta
-                          ? "danger"
-                          : isPermiso
-                          ? "success"
-                          : isVacacion
-                          ? "info"
-                          : "warning";
+                          const rowVariant = isFalta
+                            ? "danger"
+                            : isPermiso
+                            ? "success"
+                            : isVacacion
+                            ? "info"
+                            : isAnticipo
+                            ? "purple"
+                            : "warning";
 
-                        return (
-                          <DetailItemRow
-                            key={`${item.category}-${item.id || idx}`}
-                            $variant={rowVariant}
-                          >
-                            <DetailItemTagGroup>
-                                {/* ICONO Y TIPO */}
-                                <DetailItemLabel $variant={rowVariant}>
-                                  {isVacacion ? (
-                                    <Palmtree size={18} />
-                                  ) : isAtraso ? (
-                                    <Clock size={18} />
-                                  ) : (
-                                    <Calendar size={18} />
-                                  )}
-                                  {isVacacion
-                                    ? "Vacaciones"
-                                    : isFalta
-                                    ? "Faltas"
-                                    : isPermiso
-                                    ? "Permisos"
-                                    : "Atraso"}
-                                </DetailItemLabel>
+                          return (
+                            <DetailItemRow
+                              key={`${item.category}-${item.id || idx}`}
+                              $variant={rowVariant}
+                            >
+                              <DetailItemTagGroup>
+                                  {/* ICONO Y TIPO */}
+                                  <DetailItemLabel $variant={rowVariant}>
+                                    {isVacacion ? (
+                                      <Palmtree size={18} />
+                                    ) : isAtraso ? (
+                                      <Clock size={18} />
+                                    ) : isAnticipo ? (
+                                      <Banknote size={18} />
+                                    ) : (
+                                      <Calendar size={18} />
+                                    )}
+                                    {isVacacion
+                                      ? "Vacaciones"
+                                      : isFalta
+                                      ? "Faltas"
+                                      : isPermiso
+                                      ? "Permisos"
+                                      : isAnticipo
+                                      ? "Anticipo"
+                                      : "Atraso"}
+                                  </DetailItemLabel>
 
-                                {/* FECHA Y DURACIÓN */}
-                                <DetailItemText>
-                                  {isVacacion
-                                    ? formatVacationDateRange(
-                                        item.startDate,
-                                        item.endDate,
-                                        item.days
-                                      )
-                                    : `${formatDateBolivia(item.date)} ${formatIncidentDuration(
-                                        item.duration
-                                      )}`}
-                                </DetailItemText>
-                            </DetailItemTagGroup>
+                                  {/* FECHA Y DURACIÓN / MONTO */}
+                                  <DetailItemText>
+                                    {isVacacion
+                                      ? formatVacationDateRange(
+                                          item.startDate,
+                                          item.endDate,
+                                          item.days
+                                        )
+                                      : isAnticipo
+                                      ? `${formatDateBolivia(item.date)} - ${formatMoney(item.amount)}`
+                                      : `${formatDateBolivia(item.date)} ${formatIncidentDuration(
+                                          item.duration
+                                        )}`}
+                                  </DetailItemText>
+                              </DetailItemTagGroup>
 
-                            {/* MOTIVO Y DESCRIPCIÓN */}
-                            <DetailItemDescriptionBox>
-                              {isVacacion ? (
-                                <>
-                                  <span>
-                                    <strong>Tipo:</strong>{" "}
-                                    {item.type === "money" ? "Compensación monetaria" : "Días hábiles"}
-                                  </span>
-                                  {item.notes ? (
+                              {/* MOTIVO Y DESCRIPCIÓN */}
+                              <DetailItemDescriptionBox>
+                                {isVacacion ? (
+                                  <>
                                     <span>
-                                      <strong>Motivo / Notas:</strong> {item.notes}
+                                      <strong>Tipo:</strong>{" "}
+                                      {item.type === "money" ? "Compensación monetaria" : "Días hábiles"}
                                     </span>
-                                  ) : (
+                                    {item.notes ? (
+                                      <span>
+                                        <strong>Motivo / Notas:</strong> {item.notes}
+                                      </span>
+                                    ) : (
+                                      <span>
+                                        <strong>Motivo / Notas:</strong> Período vacacional aprobado
+                                      </span>
+                                    )}
+                                  </>
+                                ) : isAnticipo ? (
+                                  <>
                                     <span>
-                                      <strong>Motivo / Notas:</strong> Período vacacional aprobado
+                                      <strong>Tipo:</strong>{" "}
+                                      {item.type === "salary" ? "Anticipo de sueldo" : "Préstamo / Deuda"}
                                     </span>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <span>
-                                    <strong>Motivo:</strong>{" "}
-                                    {item.reason || (isFalta ? "Sin justificar" : "Permiso laboral")}
-                                  </span>
-                                  {item.description && (
+                                    {item.notes && (
+                                      <span>
+                                        <strong>Notas:</strong> {item.notes}
+                                      </span>
+                                    )}
+                                    {item.registeredBy && (
+                                      <span>
+                                        <strong>Registrado por:</strong> {item.registeredBy}
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
                                     <span>
-                                      <strong>Descripción:</strong> {item.description}
+                                      <strong>Motivo:</strong>{" "}
+                                      {item.reason || (isFalta ? "Sin justificar" : "Permiso laboral")}
                                     </span>
-                                  )}
-                                </>
-                              )}
-                            </DetailItemDescriptionBox>
-                          </DetailItemRow>
-                        );
-                      })
+                                    {item.description && (
+                                      <span>
+                                        <strong>Descripción:</strong> {item.description}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </DetailItemDescriptionBox>
+                            </DetailItemRow>
+                          );
+                        })}
+                      </DetailItemsGrid>
                     )}
                   </CollapsibleBody>
                 )}

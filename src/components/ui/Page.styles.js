@@ -501,9 +501,16 @@ export const CollapsibleBody = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 4px 20px 20px;
+  padding: 8px 20px 20px;
   background: #fafbfc;
   border-top: 1px solid #f3f4f6;
+`;
+
+export const DetailItemsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 12px;
+  width: 100%;
 `;
 
 export const StatusPill = styled.span`
@@ -514,8 +521,8 @@ export const StatusPill = styled.span`
   border-radius: ${theme.radius.round};
   font-size: 12px;
   font-weight: 600;
-  background: ${({ $variant }) => $variant === "danger" ? "#fee2e2" : $variant === "success" ? "#dcfce7" : $variant === "info" ? "#dbeafe" : "#f3f4f6"};
-  color: ${({ $variant }) => $variant === "danger" ? "#dc2626" : $variant === "success" ? "#15803d" : $variant === "info" ? "#2563eb" : "#4b5563"};
+  background: ${({ $variant }) => $variant === "danger" ? "#fee2e2" : $variant === "success" ? "#dcfce7" : $variant === "info" ? "#dbeafe" : $variant === "purple" ? "#f3e8ff" : "#f3f4f6"};
+  color: ${({ $variant }) => $variant === "danger" ? "#dc2626" : $variant === "success" ? "#15803d" : $variant === "info" ? "#2563eb" : $variant === "purple" ? "#7e22ce" : "#4b5563"};
 `;
 
 export const ActionIconButton = styled.button`
@@ -541,9 +548,31 @@ export const DetailItemRow = styled.div`
   flex-direction: column;
   gap: 6px;
   padding: 12px 16px;
-  border: 1px solid ${({ $variant }) => $variant === "danger" ? "#fecdd3" : $variant === "success" ? "#bbf7d0" : $variant === "info" ? "#bfdbfe" : $variant === "warning" ? "#fed7aa" : "#e5e7eb"};
+  border: 1px solid ${({ $variant }) =>
+    $variant === "danger"
+      ? "#fecdd3"
+      : $variant === "success"
+      ? "#bbf7d0"
+      : $variant === "info"
+      ? "#bfdbfe"
+      : $variant === "warning"
+      ? "#fed7aa"
+      : $variant === "purple"
+      ? "#e9d5ff"
+      : "#e5e7eb"};
   border-radius: 12px;
-  background: ${({ $variant }) => $variant === "danger" ? "#fff1f2" : $variant === "success" ? "#f0fdf4" : $variant === "info" ? "#eff6ff" : $variant === "warning" ? "#fff7ed" : "#ffffff"};
+  background: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#fff1f2"
+      : $variant === "success"
+      ? "#f0fdf4"
+      : $variant === "info"
+      ? "#eff6ff"
+      : $variant === "warning"
+      ? "#fff7ed"
+      : $variant === "purple"
+      ? "#faf5ff"
+      : "#ffffff"};
 `;
 
 export const DetailItemTagGroup = styled.div`
@@ -559,7 +588,18 @@ export const DetailItemLabel = styled.span`
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: ${({ $variant }) => $variant === "danger" ? "#e11d48" : $variant === "success" ? "#16a34a" : $variant === "info" ? "#2563eb" : $variant === "warning" ? "#ea580c" : "#374151"};
+  color: ${({ $variant }) =>
+    $variant === "danger"
+      ? "#e11d48"
+      : $variant === "success"
+      ? "#16a34a"
+      : $variant === "info"
+      ? "#2563eb"
+      : $variant === "warning"
+      ? "#ea580c"
+      : $variant === "purple"
+      ? "#7e22ce"
+      : "#374151"};
   svg { flex-shrink: 0; }
 `;
 
