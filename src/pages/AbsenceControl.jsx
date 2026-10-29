@@ -39,6 +39,8 @@ import {
   CollapsibleHeader,
   CollapsibleTitle,
   CollapsibleActions,
+  CollapsibleCounters,
+  CollapsibleControls,
   CollapsibleBody,
   DetailItemsGrid,
   StatusPill,
@@ -393,19 +395,12 @@ const AbsenceControl = () => {
           </SummaryCardIcon>
         </TotalCard>
 
-        <TotalCard $horizontal>
+        <TotalCard $variant="purple" $horizontal>
           <div>
-            <TotalLabel $emphasis>Anticipos del mes</TotalLabel>
-            <div>
-              <TotalValue $large>
-                {kpiData.anticipos.total}{" "}
-                <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>
-                  ({formatMoney(kpiData.anticipos.amount)})
-                </span>
-              </TotalValue>
-            </div>
+            <TotalLabel $variant="purple" $emphasis>Anticipos del mes</TotalLabel>
+            <div><TotalValue $variant="purple" $large>{kpiData.anticipos.total}</TotalValue></div>
           </div>
-          <SummaryCardIcon $variant="info">
+          <SummaryCardIcon $variant="purple">
             <Banknote size={26} strokeWidth={2.3} />
           </SummaryCardIcon>
         </TotalCard>
@@ -465,37 +460,37 @@ const AbsenceControl = () => {
                   <CollapsibleTitle>{empFullName}</CollapsibleTitle>
 
                   <CollapsibleActions>
-                    {/* CHIPS DE CONTADORES */}
-                    <StatusPill $variant="danger">
-                      Faltas <strong>{emp.faltas.length}</strong>
-                    </StatusPill>
-                    <StatusPill $variant="success">
-                      Permisos <strong>{emp.permisos.length}</strong>
-                    </StatusPill>
-                    <StatusPill $variant="info">
-                      Vacaciones <strong>{emp.vacaciones.length}</strong>
-                    </StatusPill>
-                    <StatusPill $variant="purple">
-                      Anticipos <strong>{emp.anticipos.length}</strong>
-                    </StatusPill>
+                    <CollapsibleCounters>
+                      <StatusPill $variant="danger">
+                        Faltas <strong>{emp.faltas.length}</strong>
+                      </StatusPill>
+                      <StatusPill $variant="success">
+                        Permisos <strong>{emp.permisos.length}</strong>
+                      </StatusPill>
+                      <StatusPill $variant="info">
+                        Vacaciones <strong>{emp.vacaciones.length}</strong>
+                      </StatusPill>
+                      <StatusPill $variant="purple">
+                        Anticipos <strong>{emp.anticipos.length}</strong>
+                      </StatusPill>
+                    </CollapsibleCounters>
 
-                    {/* BOTÓN CHEVRON RIGHT: IR AL DETALLE DEL EMPLEADO */}
-                    <TableActionButton
-                      type="button"
-                      title={`Ver detalle de ${empFullName}`}
-                      aria-label={`Ver detalle de ${empFullName}`}
-                      onClick={(e) => handleViewEmployeeDetail(emp.id, e)}
-                    >
-                      <ChevronRight size={22} />
-                    </TableActionButton>
-
-                    {/* BOTÓN COLAPSAR / EXPANDIR */}
-                    <ActionIconButton
-                      type="button"
-                      aria-label={isCollapsed ? "Expandir detalles" : "Colapsar detalles"}
-                    >
-                      {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-                    </ActionIconButton>
+                    <CollapsibleControls>
+                      <TableActionButton
+                        type="button"
+                        title={`Ver detalle de ${empFullName}`}
+                        aria-label={`Ver detalle de ${empFullName}`}
+                        onClick={(e) => handleViewEmployeeDetail(emp.id, e)}
+                      >
+                        <ChevronRight size={22} />
+                      </TableActionButton>
+                      <ActionIconButton
+                        type="button"
+                        aria-label={isCollapsed ? "Expandir detalles" : "Colapsar detalles"}
+                      >
+                        {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                      </ActionIconButton>
+                    </CollapsibleControls>
                   </CollapsibleActions>
                 </CollapsibleHeader>
 
@@ -577,13 +572,23 @@ const AbsenceControl = () => {
                                       <strong>Tipo:</strong>{" "}
                                       {item.type === "money" ? "Compensación monetaria" : "Días hábiles"}
                                     </span>
+                                    {item.amount > 0 && (
+                                      <span>
+                                        <strong>Monto:</strong> {formatMoney(item.amount)}
+                                      </span>
+                                    )}
                                     {item.notes ? (
                                       <span>
-                                        <strong>Motivo / Notas:</strong> {item.notes}
+                                        <strong>Notas:</strong> {item.notes}
                                       </span>
                                     ) : (
                                       <span>
                                         <strong>Motivo / Notas:</strong> Período vacacional aprobado
+                                      </span>
+                                    )}
+                                    {item.registeredBy && (
+                                      <span>
+                                        <strong>Registrado por:</strong> {item.registeredBy}
                                       </span>
                                     )}
                                   </>
@@ -610,9 +615,19 @@ const AbsenceControl = () => {
                                       <strong>Motivo:</strong>{" "}
                                       {item.reason || (isFalta ? "Sin justificar" : "Permiso laboral")}
                                     </span>
+                                    {item.discount > 0 && (
+                                      <span>
+                                        <strong>Descuento:</strong> {formatMoney(item.discount)}
+                                      </span>
+                                    )}
                                     {item.description && (
                                       <span>
                                         <strong>Descripción:</strong> {item.description}
+                                      </span>
+                                    )}
+                                    {item.registeredBy && (
+                                      <span>
+                                        <strong>Registrado por:</strong> {item.registeredBy}
                                       </span>
                                     )}
                                   </>
