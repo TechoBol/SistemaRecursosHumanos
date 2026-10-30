@@ -614,7 +614,7 @@ export const DetailItemRow = styled.div`
 
 export const DetailItemTagGroup = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   min-width: 0;
   gap: 6px 10px;
@@ -659,8 +659,7 @@ export const DetailItemDescriptionBox = styled.div`
   color: #4b5563;
   overflow-wrap: anywhere;
   > span { min-width: 0; }
-
-  @media (max-width: 700px) {
+  @media (max-width: 900px) {
     padding-left: 0;
   }
   font-size: 12px;
