@@ -341,6 +341,12 @@ const PayrollContract = () => {
         valueGetter: (_, row) => formatCurrency(row.grossPay),
       },
       {
+        field: "cnsContribution",
+        headerName: "Aporte CNS 10%",
+        minWidth: 130,
+        valueGetter: (_, row) => formatCurrency(Number(row.grossPay || 0) * 0.1),
+      },
+      {
         field: "afpDeduction",
         headerName: "Gestora (AFP)",
         minWidth: 115,

@@ -236,9 +236,8 @@ const AbsenceControl = () => {
     // 5. Calcular KPIs
     const permisosCount = incidents.filter((i) => i.type === "permission").length;
     const faltasCount = incidents.filter((i) => i.type === "absence").length;
-    const vacacionesDaysTotal = vacations.reduce((sum, v) => sum + Number(v.days || 0), 0);
+    const vacacionesCount = vacations.length;
     const anticiposCount = advances.length;
-    const anticiposAmountTotal = advances.reduce((sum, a) => sum + Number(a.amount || 0), 0);
 
     // 6. Filtrar por término de búsqueda y registros
     const term = searchTerm.trim().toLowerCase();
@@ -268,10 +267,17 @@ const AbsenceControl = () => {
     });
 
     // Ordenar: alfabéticamente por apellido y luego por nombre
-    filtered.sort((a, b) => {
+    {/*filtered.sort((a, b) => {
       const nameA = `${a.lastNames || ""} ${a.firstNames || ""}`.trim().toLowerCase();
       const nameB = `${b.lastNames || ""} ${b.firstNames || ""}`.trim().toLowerCase();
       return nameA.localeCompare(nameB);
+    });*/}
+    // Ordenar: primero los que tienen más incidencias, luego por apellido
+    filtered.sort((a, b) => {
+      const totalA = a.faltas.length + a.permisos.length + a.vacaciones.length + a.atrasos.length;
+      const totalB = b.faltas.length + b.permisos.length + b.vacaciones.length + b.atrasos.length;
+      if (totalB !== totalA) return totalB - totalA;
+      return a.lastNames.localeCompare(b.lastNames);
     });
 
     return {
@@ -284,11 +290,10 @@ const AbsenceControl = () => {
           total: faltasCount,
         },
         vacaciones: {
-          total: vacacionesDaysTotal,
+          total: vacacionesCount,
         },
         anticipos: {
           total: anticiposCount,
-          amount: anticiposAmountTotal,
         },
       },
     };
@@ -540,9 +545,9 @@ const AbsenceControl = () => {
                                     {isVacacion
                                       ? "Vacaciones"
                                       : isFalta
-                                      ? "Faltas"
+                                      ? "Falta"
                                       : isPermiso
-                                      ? "Permisos"
+                                      ? "Permiso"
                                       : isAnticipo
                                       ? "Anticipo"
                                       : "Atraso"}
