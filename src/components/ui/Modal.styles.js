@@ -137,7 +137,7 @@ export const ModalSection = styled.section`
 `;
 
 export const ModalSectionTitle = styled.h3`
-  margin: 0 0 18px;
+  margin: ${({ $noMargin }) => ($noMargin ? "0" : "0 0 18px")};
   color: ${theme.colors.text};
   font-size: 16px;
   font-weight: 500;
@@ -195,6 +195,7 @@ const controlStyles = `
 
 export const FormInput = styled.input`
   ${controlStyles}
+  border-color: ${({ $invalid }) => $invalid ? "#FF2B2B" : theme.colors.border};
   &[type="date"]::-webkit-calendar-picker-indicator,
   &[type="date"]::-webkit-inner-spin-button {
     display: none;
@@ -221,6 +222,7 @@ export const FormTextarea = styled.textarea`
 
 export const FormSelect = styled.select`
   ${controlStyles}
+  border-color: ${({ $invalid }) => $invalid ? "#FF2B2B" : theme.colors.border};
   cursor: pointer;
 `;
 
@@ -275,11 +277,9 @@ export const ToggleButton = styled.button`
   font-size: 13px;
   cursor: pointer;
   background-color: ${({ $active, $variant = "primary" }) => {
-    if (!$active) {
-      return theme.colors.white;
-    }
+    if (!$active) return theme.colors.white;
     if ($variant === "danger") return theme.colors.danger;
-    if ($variant === "info") return theme.colors.info;;
+    if ($variant === "info") return theme.colors.info;
     return theme.colors.primary;
   }};
   border: none;
@@ -290,14 +290,13 @@ export const ToggleButton = styled.button`
     border-right: 1px solid ${theme.colors.border};
   }
   &:hover {
-    background-color: ${({ $active, $variant = "primary" }) => {
-      if (!$active) {
-        return theme.colors.background;
-      }
-    }};
+    background-color: ${({ $active }) => !$active ? theme.colors.background : undefined};
   }
 `;
 
+// ============================================
+// ACCIONES Y BOTONES
+// ============================================
 export const ModalActions = styled.footer`
   display: flex;
   align-items: center;
@@ -406,6 +405,9 @@ export const FormErrorText = styled.span`
   line-height: 1.4;
 `;
 
+// ============================================
+// MULTISELECT
+// ============================================
 export const MultiSelect = styled.div`
   width: 100%;
 `;
@@ -543,6 +545,9 @@ export const MultiSelectOption = styled.button`
   }
 `;
 
+// ============================================
+// CARGA Y VISTA PREVIA DE ARCHIVOS
+// ============================================
 export const DropZone = styled.label`
   display: flex;
   flex-direction: column;
@@ -626,7 +631,9 @@ export const PreviewFrame = styled.div`
   }
 `;
 
-
+// ============================================
+// BLOQUES Y SUBTÍTULOS
+// ============================================
 export const ModalBlock = styled.section`
   display: flex;
   flex-direction: column;
@@ -647,6 +654,9 @@ export const ModalSubtitle = styled.div`
   color: #64748b;
 `;
 
+// ============================================
+// TABLAS DENTRO DEL MODAL
+// ============================================
 export const ModalTableCard = styled.div`
   overflow: hidden;
   background-color: #ffffff;
@@ -663,13 +673,11 @@ export const ModalTable = styled.table`
 export const ModalTableHead = styled.thead`
   background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-
   th {
     padding: 10px 16px;
     font-weight: 600;
     color: #475569;
     text-align: left;
-
     &:last-child {
       text-align: right;
     }
@@ -683,15 +691,12 @@ export const ModalTableHeaderCell = styled.th`
 export const ModalTableRow = styled.tr`
   border-bottom: 1px solid #f1f5f9;
   transition: background-color 0.15s ease;
-
   &:hover {
     background-color: #f8fafc;
   }
-
   td {
     padding: 10px 16px;
     color: #1e293b;
-
     &:last-child {
       text-align: right;
       font-weight: 600;
@@ -707,6 +712,9 @@ export const ModalEmptyCell = styled.td`
   font-weight: 400 !important;
 `;
 
+// ============================================
+// TOTALES Y RESUMENES
+// ============================================
 const totalBarVariants = {
   success: {
     background: "#f0fdf4",
@@ -747,7 +755,8 @@ export const ModalBadge = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 12px;
+  gap: ${({ $compact }) => ($compact ? "4px" : "0")};
+  padding: ${({ $compact }) => $compact ? "4px 10px" : "3px 12px"};
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
@@ -755,6 +764,9 @@ export const ModalBadge = styled.span`
   color: ${({ $color = "#334155" }) => $color};
 `;
 
+// ============================================
+// TARJETAS DE INFORMACIÓN
+// ============================================
 export const ModalInfoCard = styled.div`
   display: flex;
   align-items: center;
@@ -834,6 +846,9 @@ export const ModalResultBar = styled.div`
   }
 `;
 
+// ============================================
+// ESTADO DE CARGA
+// ============================================
 export const ModalLoading = styled.div`
   display: flex;
   align-items: center;
@@ -850,4 +865,124 @@ export const ModalLoading = styled.div`
       transform: rotate(360deg);
     }
   }
+`;
+
+// ============================================
+// ENCABEZADOS Y BOTONES REUTILIZABLES
+// ============================================
+export const ModalSectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+`;
+
+export const ModalOutlineButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #1a422b;
+  border: 1.5px solid #1a422b;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  &:hover {
+    background: #1a422b;
+    color: #ffffff;
+  }
+`;
+
+// ============================================
+// ACORDEONES REUTILIZABLES
+// ============================================
+export const ModalAccordionCard = styled.div`
+  border: 1.5px solid ${({ $highlighted }) => $highlighted ? "#278e54" : "#d0d7de"};
+  background: ${({ $highlighted }) => $highlighted ? "#fbfdfc" : "#f8f9fa"};
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+`;
+
+export const ModalAccordionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: ${({ $highlighted }) => $highlighted ? "#eaf5ee" : "#f1f5f9"};
+  cursor: pointer;
+  user-select: none;
+`;
+
+export const ModalAccordionLeading = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+export const ModalCircleIcon = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${({ $highlighted }) => $highlighted ? "#c8ebd4" : "#e2e8f0"};
+  color: ${({ $highlighted }) => $highlighted ? "#1e7e44" : "#64748b"};
+`;
+
+export const ModalAccordionInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const ModalAccordionTitle = styled.div`
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+`;
+
+export const ModalAccordionSubtitle = styled.div`
+  font-size: 0.8rem;
+  color: #64748b;
+`;
+
+export const ModalAccordionTrailing = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+export const ModalChevron = styled.div`
+  color: #475569;
+  display: flex;
+  align-items: center;
+`;
+
+export const ModalAccordionBody = styled.div`
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+`;
+
+// ============================================
+// ALERTAS REUTILIZABLES
+// ============================================
+export const ModalAlert = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
 `;

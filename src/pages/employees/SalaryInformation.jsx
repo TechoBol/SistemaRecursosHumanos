@@ -412,6 +412,11 @@ const SalaryInformation = ({ employee }) => {
                       <strong style={{ fontSize: "14px" }}>
                         {monthName} {record.year}
                       </strong>
+                      {record.contractCompanyName && (
+                        <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
+                          • {record.contractCompanyName}
+                        </span>
+                      )}
                       <StatusBadge $variant={record.status === "GENERATED" || record.status === "PAID" ? "success" : "neutral"}>
                         {record.status === "PAID"
                           ? "Pagado"
