@@ -159,81 +159,97 @@ const sortEmployeesByName = (employees = []) =>
   );
 
 {/** CONTENIDO FILAS DE LA TABLA */}
-const buildEmployeeTableRow = (employee, index, theme) => [
-  {
-    content: String(index),
-    styles: { halign: "center" },
-  },
-  {
-    content: getEmployeeFullName(employee).toUpperCase(),
-    styles: { halign: "left" },
-  },
-  {
-    content: (employee.contractJobTitleName || "-").toUpperCase(),
-    styles: { halign: "left" },
-  },
-  {
-    content: formatDatePdf(employee.hireDate),
-    styles: { halign: "center" },
-  },
-  {
-    content: formatMoneyPdf(employee.baseSalary),
-    styles: { halign: "right" },
-  },
-  {
-    content: String(employee.workedDays ?? 30),
-    styles: { halign: "center" },
-  },
-  {
-    content: formatMoneyPdf(employee.earnedSalary),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.seniorityBonus),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.otherBonuses),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.grossPay),
-    styles: { halign: "right", fontStyle: "bold" },
-  },
-  {
-    content: formatMoneyPdf(employee.afpDeduction),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.absenceDeduction),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.advanceDeduction),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatMoneyPdf(employee.totalDeductions),
-    styles: { halign: "right" },
-  },
-  {
-    content: formatNetSalaryPdf(employee.netSalary),
-    styles: {
-      halign: "right",
-      fontStyle: "bold",
-      textColor: theme.primaryDark,
+const buildEmployeeTableRow = (employee, index, theme, isFiscal = false) => {
+  const row = [
+    {
+      content: String(index),
+      styles: { halign: "center" },
     },
-  },
-];
+    {
+      content: getEmployeeFullName(employee).toUpperCase(),
+      styles: { halign: "left" },
+    },
+    {
+      content: (employee.contractJobTitleName || "-").toUpperCase(),
+      styles: { halign: "left" },
+    },
+    {
+      content: formatDatePdf(employee.hireDate),
+      styles: { halign: "center" },
+    },
+    {
+      content: formatMoneyPdf(employee.baseSalary),
+      styles: { halign: "right" },
+    },
+    {
+      content: String(employee.workedDays ?? 30),
+      styles: { halign: "center" },
+    },
+    {
+      content: formatMoneyPdf(employee.earnedSalary),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.seniorityBonus),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.otherBonuses),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.grossPay),
+      styles: { halign: "right", fontStyle: "bold" },
+    },
+  ];
+
+  if (isFiscal) {
+    const cns = Number(employee.grossPay || 0) * 0.1;
+    row.push({
+      content: formatMoneyPdf(cns),
+      styles: { halign: "right" },
+    });
+  }
+
+  row.push(
+    {
+      content: formatMoneyPdf(employee.afpDeduction),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.absenceDeduction),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.advanceDeduction),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatMoneyPdf(employee.totalDeductions),
+      styles: { halign: "right" },
+    },
+    {
+      content: formatNetSalaryPdf(employee.netSalary),
+      styles: {
+        halign: "right",
+        fontStyle: "bold",
+        textColor: theme.primaryDark,
+      },
+    }
+  );
+
+  return row;
+};
 
 const buildTotalsRow = (
   totals,
   theme,
   label = "TOTAL GENERAL",
-  level = "general"
+  level = "general",
+  isFiscal = false
 ) => {
   const isGeneral = level === "general";
-  const isFiscal = level === "fiscal";
+  const isFiscalDivision = level === "fiscal";
 
   let rowFillColor = theme.totalsBg;
   let labelTextColor = theme.primaryDark;
@@ -243,7 +259,7 @@ const buildTotalsRow = (
     rowFillColor = [248, 250, 252];
     labelTextColor = [71, 85, 105];
     fontSize = 6.0;
-  } else if (isFiscal) {
+  } else if (isFiscalDivision) {
     rowFillColor = theme.totalsBg;
     labelTextColor = theme.primaryDark;
     fontSize = 6.4;
@@ -267,7 +283,7 @@ const buildTotalsRow = (
         textColor: theme.liquidHighlightText,
         fontSize: 7.2,
       }
-    : isFiscal
+    : isFiscalDivision
     ? {
         ...baseStyle,
         fillColor: theme.liquidHighlightBg,
@@ -279,7 +295,7 @@ const buildTotalsRow = (
         textColor: theme.primaryDark,
       };
 
-  return [
+  const row = [
     {
       content: label,
       colSpan: 4,
@@ -309,6 +325,17 @@ const buildTotalsRow = (
       content: formatMoneyPdf(totals.grossPay),
       styles: { ...baseStyle, textColor: theme.primaryDark },
     },
+  ];
+
+  if (isFiscal) {
+    const cnsTotal = Number(totals.grossPay || 0) * 0.1;
+    row.push({
+      content: formatMoneyPdf(cnsTotal),
+      styles: baseStyle,
+    });
+  }
+
+  row.push(
     {
       content: formatMoneyPdf(totals.afpDeduction),
       styles: baseStyle,
@@ -328,8 +355,10 @@ const buildTotalsRow = (
     {
       content: formatNetSalaryPdf(totals.netSalary),
       styles: netSalaryStyle,
-    },
-  ];
+    }
+  );
+
+  return row;
 };
 
 const buildConsolidatedTableBody = (
@@ -490,8 +519,8 @@ const buildConsolidatedTableBody = (
   return rows;
 };
 
-const buildTableHeader = (theme) => [
-  [
+const buildTableHeader = (theme, isFiscal = false) => {
+  const firstRow = [
     {
       content: "N°",
       rowSpan: 2,
@@ -537,6 +566,17 @@ const buildTableHeader = (theme) => [
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
+  ];
+
+  if (isFiscal) {
+    firstRow.push({
+      content: "APORTE\nCNS 10%",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    });
+  }
+
+  firstRow.push(
     {
       content: "DESCUENTOS",
       colSpan: 3,
@@ -551,9 +591,10 @@ const buildTableHeader = (theme) => [
       content: "LÍQUIDO\nPAGABLE",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
-    },
-  ],
-  [
+    }
+  );
+
+  const secondRow = [
     {
       content: "ANTIGÜEDAD",
       styles: { halign: "center", valign: "middle", fillColor: theme.subheaderBg },
@@ -574,8 +615,10 @@ const buildTableHeader = (theme) => [
       content: "ANTICIPOS",
       styles: { halign: "center", valign: "middle", fillColor: theme.subheaderBg },
     },
-  ],
-];
+  ];
+
+  return [firstRow, secondRow];
+};
 
 const drawHeader = async (
   doc,
@@ -652,6 +695,8 @@ export const exportPayrollPdf = async ({
     format: "a4",
   });
 
+  const isFiscalPayroll = payrollType === "contract";
+
   const autoTableConfig = {
     theme: "grid",
     headStyles: {
@@ -686,26 +731,46 @@ export const exportPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    columnStyles: {
-      0: { cellWidth: 8, halign: "center" },
-      1: { cellWidth: 42, halign: "left" },
-      2: { cellWidth: 32, halign: "left" },
-      3: { cellWidth: 16, halign: "center" },
-      4: { cellWidth: 17, halign: "right" },
-      5: { cellWidth: 11, halign: "center" },
-      6: { cellWidth: 17, halign: "right" },
-      7: { cellWidth: 17, halign: "right" },
-      8: { cellWidth: 16, halign: "right" },
-      9: { cellWidth: 18, halign: "right", fontStyle: "bold" },
-      10: { cellWidth: 16, halign: "right" },
-      11: { cellWidth: 16, halign: "right" },
-      12: { cellWidth: 15, halign: "right" },
-      13: { cellWidth: 16, halign: "right" },
-      14: { cellWidth: 20, halign: "right", fontStyle: "bold" },
-    },
+    columnStyles: isFiscalPayroll
+      ? {
+          0: { cellWidth: 7, halign: "center" },
+          1: { cellWidth: 39, halign: "left" },
+          2: { cellWidth: 28, halign: "left" },
+          3: { cellWidth: 15, halign: "center" },
+          4: { cellWidth: 16, halign: "right" },
+          5: { cellWidth: 10, halign: "center" },
+          6: { cellWidth: 16, halign: "right" },
+          7: { cellWidth: 16, halign: "right" },
+          8: { cellWidth: 15, halign: "right" },
+          9: { cellWidth: 17, halign: "right", fontStyle: "bold" },
+          10: { cellWidth: 16, halign: "right" },
+          11: { cellWidth: 16, halign: "right" },
+          12: { cellWidth: 15, halign: "right" },
+          13: { cellWidth: 15, halign: "right" },
+          14: { cellWidth: 16, halign: "right" },
+          15: { cellWidth: 20, halign: "right", fontStyle: "bold" },
+        }
+      : {
+          0: { cellWidth: 8, halign: "center" },
+          1: { cellWidth: 42, halign: "left" },
+          2: { cellWidth: 32, halign: "left" },
+          3: { cellWidth: 16, halign: "center" },
+          4: { cellWidth: 17, halign: "right" },
+          5: { cellWidth: 11, halign: "center" },
+          6: { cellWidth: 17, halign: "right" },
+          7: { cellWidth: 17, halign: "right" },
+          8: { cellWidth: 16, halign: "right" },
+          9: { cellWidth: 18, halign: "right", fontStyle: "bold" },
+          10: { cellWidth: 16, halign: "right" },
+          11: { cellWidth: 16, halign: "right" },
+          12: { cellWidth: 15, halign: "right" },
+          13: { cellWidth: 16, halign: "right" },
+          14: { cellWidth: 20, halign: "right", fontStyle: "bold" },
+        },
 
     didParseCell: (data) => {
-      if (data.section === "head" && data.column.index === 14) {
+      const liquidColIndex = isFiscalPayroll ? 15 : 14;
+      if (data.section === "head" && data.column.index === liquidColIndex) {
         data.cell.styles.fillColor = theme.primaryDark;
       }
     },
@@ -784,15 +849,15 @@ export const exportPayrollPdf = async ({
       );
 
       const body = sortedEmployees.map((employee, idx) =>
-        buildEmployeeTableRow(employee, idx + 1, theme)
+        buildEmployeeTableRow(employee, idx + 1, theme, true)
       );
 
-      body.push(buildTotalsRow(cityTotals, theme));
+      body.push(buildTotalsRow(cityTotals, theme, "TOTAL GENERAL", "general", true));
 
       autoTable(doc, {
         startY: 26,
         margin: { top: 26, bottom: 12, left: 10, right: 10 },
-        head: buildTableHeader(theme),
+        head: buildTableHeader(theme, true),
         body,
         ...autoTableConfig,
       });
