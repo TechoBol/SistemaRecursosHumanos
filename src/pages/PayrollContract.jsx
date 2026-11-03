@@ -181,10 +181,10 @@ const PayrollContract = () => {
     setSelectedPayrollForCalculation(null);
   };
 
-  // excluye a los empleados de tipo CONSULTOR
+  // excluye a los empleados de tipo CONSULTOR y PROMOTOR
   const fiscalPayrolls = useMemo(() => {
     if (!payrolls) return [];
-    return payrolls.filter((p) => p.contractType !== "CONSULTING");
+    return payrolls.filter((p) => p.employeeType === "Fiscal");
   }, [payrolls]);
 
   const filteredRows = useMemo(() => {

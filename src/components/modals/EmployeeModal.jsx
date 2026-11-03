@@ -124,7 +124,7 @@ const EmployeeModal = ({
           contractCompanyId: c.contractCompanyId ? String(c.contractCompanyId) : "",
           contractJobTitleId: c.contractJobTitleId ? String(c.contractJobTitleId) : "",
           consolidatedCompanyId: c.consolidatedCompanyId ? String(c.consolidatedCompanyId) : "",
-          employeeType: c.contractType === "CONSULTING" ? "Consultor" : "Fiscal",
+          employeeType: c.contractType === "CONSULTING" ? "Consultor" : c.contractType === "PROMOTER" ? "Promotor" : "Fiscal",
           branchId: c.branchId ? String(c.branchId) : "",
           areaId: c.areaId ? String(c.areaId) : "",
           jobTitleId: c.jobTitleId ? String(c.jobTitleId) : "",
@@ -558,26 +558,20 @@ const EmployeeModal = ({
                           </FormField>
 
                           <FormField>
-                            <FormLabel>Tipo de contrato</FormLabel>
-                            <ToggleGroup>
-                              <ToggleButton
-                                type="button"
-                                $active={c.employeeType === "Fiscal"}
-                                aria-pressed={c.employeeType === "Fiscal"}
-                                onClick={() => handleContractChange(idx, "employeeType", "Fiscal")}
-                              >
-                                Fiscal
-                              </ToggleButton>
-
-                              <ToggleButton
-                                type="button"
-                                $active={c.employeeType === "Consultor"}
-                                aria-pressed={c.employeeType === "Consultor"}
-                                onClick={() => handleContractChange(idx, "employeeType", "Consultor")}
-                              >
-                                Consultor
-                              </ToggleButton>
-                            </ToggleGroup>
+                            <FormLabel htmlFor={`employeeType_${idx}`}>Tipo de contrato</FormLabel>
+                            <FormSelect
+                              id={`employeeType_${idx}`}
+                              value={c.employeeType || "Fiscal"}
+                              onChange={(e) => handleContractChange(idx, "employeeType", e.target.value)}
+                              $invalid={Boolean(errors[`contract_${idx}_employeeType`])}
+                            >
+                              <option value="Fiscal">Fiscal</option>
+                              <option value="Consultor">Consultor</option>
+                              <option value="Promotor">Promotor</option>
+                            </FormSelect>
+                            {errors[`contract_${idx}_employeeType`] && (
+                              <FormErrorText>{errors[`contract_${idx}_employeeType`]}</FormErrorText>
+                            )}
                           </FormField>
 
                           <FormField>
