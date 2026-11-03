@@ -67,7 +67,7 @@ const getSeniorityDetails = (payroll) => {
 
   const totalWorkedDays = Number(payroll.workedDays ?? 30);
 
-  if (payroll.employeeType === "Consultor") {
+  if (payroll.employeeType === "Consultor" || payroll.employeeType === "Promotor") {
     return {
       hireDateFormatted: payroll.hireDate ? formatDate(payroll.hireDate) : "-",
       milestoneLabel: "Cumple 2 años:",
