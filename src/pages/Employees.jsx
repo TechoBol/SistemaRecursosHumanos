@@ -6,7 +6,9 @@ import {
   Plus,
   Search,
   FileText,
+  Trash2,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import {
   Badge,
   CellStack,
@@ -41,7 +43,7 @@ import { successToast } from "../services/toasts";
 
 const Employees = () => {
   const navigate = useNavigate();
-  const { employees, isLoading, createEmployee, updateEmployee } = useEmployees();
+  const { employees, isLoading, createEmployee, updateEmployee, deleteEmployee } = useEmployees();
   const { companies } = useCompanies();
   const { branches } = useBranches();
   const { areas } = useAreas();
@@ -70,6 +72,25 @@ const Employees = () => {
 
   const handleViewEmployee = (employee) => {
     navigate(`/empleados/${employee.id}`);
+  };
+
+  const handleDeleteEmployee = async (employee) => {
+    const fullName = `${employee.firstNames} ${employee.lastNames}`.trim();
+
+    const result = await Swal.fire({
+      title: "¿Eliminar empleado?",
+      html: `¿Estás seguro de que deseas eliminar permanentemente a <b>${fullName}</b>?<br/><br/><small style="color: #b91c1c;"><b>Advertencia:</b> Esta acción borrará todos sus contratos y datos del sistema. Si ya cuenta con planillas de sueldo cerradas, la eliminación no será permitida.</small>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#b91c1c",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      await deleteEmployee(employee.id);
+    }
   };
 
   const handleCloseModal = () => {
@@ -236,7 +257,7 @@ const Employees = () => {
       {
         field: "actions",
         headerName: "Acciones",
-        width: 120,
+        width: 135,
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
@@ -252,6 +273,18 @@ const Employees = () => {
               }}
             >
               <Pencil size={19} />
+            </TableActionButton>
+            <TableActionButton
+              type="button"
+              title="Eliminar empleado"
+              aria-label={`Eliminar a ${row.firstNames} ${row.lastNames}`}
+              style={{ color: "#ef4444" }}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleDeleteEmployee(row);
+              }}
+            >
+              <Trash2 size={19} />
             </TableActionButton>
             <TableActionButton
               type="button"
