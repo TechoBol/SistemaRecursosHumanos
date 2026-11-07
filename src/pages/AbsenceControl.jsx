@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Banknote,
   Calendar,
+  FileDown,
   CheckSquare,
   ChevronDown,
   ChevronRight,
@@ -16,6 +17,7 @@ import {
 import { useAbsenceControl } from "../hooks/useAbsenceControl";
 import { useEmployees } from "../hooks/useEmployees";
 import {
+  ActionSecondaryButton,
   PageContainer,
   PageHeader,
   PageTitle,
@@ -53,6 +55,8 @@ import {
   EmptyStateBlock,
 } from "../components/ui/Page.styles";
 import { TableActionButton } from "../components/ui/table/TableCell.styles";
+import { exportAbsenceControlPdf } from "../utils/absenceControlPdfGenerator";
+import { errorToast, successToast } from "../services/toasts";
 
 const ALL_MONTHS = [
   { value: 1, label: "Enero" },
@@ -112,6 +116,7 @@ const AbsenceControl = () => {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [collapsedEmployees, setCollapsedEmployees] = useState({});
 
   // Años disponibles desde el inicio del sistema (2026) hasta el año actual
@@ -316,6 +321,31 @@ const AbsenceControl = () => {
   const selectedMonthObj = ALL_MONTHS.find((m) => m.value === selectedMonth);
   const selectedMonthName = selectedMonthObj ? selectedMonthObj.label : "";
 
+  // PDF: utiliza los mismos empleados filtrados del período visible.
+  const handleExportPdf = async () => {
+    if (!groupedEmployees.length || isLoading || isGeneratingPdf) {
+      if (!isLoading && !groupedEmployees.length) {
+        errorToast("No hay registros para generar el PDF.");
+      }
+      return;
+    }
+
+    try {
+      setIsGeneratingPdf(true);
+      await exportAbsenceControlPdf({
+        employees: groupedEmployees,
+        periodMonth: selectedMonth,
+        periodYear: selectedYear,
+      });
+      successToast("PDF generado exitosamente.");
+    } catch (error) {
+      console.error("Error al generar PDF de ausencias:", error);
+      errorToast("No se pudo generar el PDF de control de ausencias.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <PageContainer>
       {/* HEADER DE LA PÁGINA */}
@@ -416,10 +446,31 @@ const AbsenceControl = () => {
         <SectionBar>
           <SectionHeading>Vista agrupada por empleado</SectionHeading>
 
-          <SectionCountText>
-            {groupedEmployees.length}{" "}
-            {groupedEmployees.length === 1 ? "empleado mostrado" : "empleados mostrados"}
-          </SectionCountText>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            <SectionCountText>
+              {groupedEmployees.length}{" "}
+              {groupedEmployees.length === 1 ? "empleado mostrado" : "empleados mostrados"}
+            </SectionCountText>
+
+            <ActionSecondaryButton
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isLoading || isGeneratingPdf || groupedEmployees.length === 0}
+              title="Exportar control de ausencias a PDF"
+            >
+              {isGeneratingPdf ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Generando PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown size={18} />
+                  <span>Exportar PDF</span>
+                </>
+              )}
+            </ActionSecondaryButton>
+          </div>
         </SectionBar>
 
         {isLoading ? (
