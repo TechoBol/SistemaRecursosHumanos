@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarDays, MapPin, X, Plus, ChevronDown, ChevronUp, Briefcase, History, AlertCircle } from "lucide-react";
+import { getContractStatus } from "../../utils/dateUtils";
 import {
   CancelButton,
   FormField,
@@ -200,19 +201,7 @@ const EmployeeModal = ({
 
   const handleAddContract = () => {
     setValidationError("");
-    // Validar si existe al menos un contrato y si el último (más reciente) aún no finalizó
-    if (contracts.length > 0) {
-      const latestContract = contracts[0];
-      if (!latestContract.endDate) {
-        setValidationError(
-          "Para crear un nuevo contrato, primero debe finalizar el contrato anterior asignándole una fecha de fin de contrato."
-        );
-        setExpandedIndex(0);
-        return;
-      }
-    }
-
-    // Agregar nuevo contrato al inicio (más reciente)
+    // Agregar nuevo contrato al inicio para que el usuario pueda registrarlo libremente
     const newContract = {
       ...INITIAL_CONTRACT,
     };
@@ -251,13 +240,39 @@ const EmployeeModal = ({
       }
     });
 
-    // Validar coherencia entre contratos sucesivos (fecha inicio del nuevo >= fin del anterior)
-    for (let i = 0; i < contracts.length - 1; i++) {
-      const newer = contracts[i];
-      const older = contracts[i + 1];
+    // Validar coherencia y fechas de fin entre contratos
+    // Ordenar temporalmente por fecha de inicio para evaluar la cronología
+    const sortedIndices = contracts
+      .map((c, idx) => ({ ...c, originalIndex: idx }))
+      .sort((a, b) => {
+        const timeA = a.contractDate ? new Date(a.contractDate).getTime() : 0;
+        const timeB = b.contractDate ? new Date(b.contractDate).getTime() : 0;
+        return timeB - timeA; // [0] es el más reciente cronológicamente
+      });
+
+    // 1. Si hay múltiples contratos, solo el más reciente puede estar sin fecha de fin
+    // Todos los contratos anteriores deben tener obligatoriamente fecha fin
+    if (sortedIndices.length > 1) {
+      for (let i = 1; i < sortedIndices.length; i++) {
+        const pastContract = sortedIndices[i];
+        if (!pastContract.endDate) {
+          nextErrors[`contract_${pastContract.originalIndex}_endDate`] =
+            "Asigne una fecha de fin a este contrato anterior.";
+          setValidationError(
+            "No pueden existir dos o más contratos sin fecha de fin de contrato. Por favor, asigne una fecha de fin a los contratos más antiguos."
+          );
+        }
+      }
+    }
+
+    // 2. Validar coherencia entre contratos sucesivos (inicio del más nuevo >= fin del más antiguo)
+    for (let i = 0; i < sortedIndices.length - 1; i++) {
+      const newer = sortedIndices[i];
+      const older = sortedIndices[i + 1];
       if (newer.contractDate && older.endDate) {
         if (new Date(newer.contractDate) < new Date(older.endDate)) {
-          nextErrors[`contract_${i}_contractDate`] = "La fecha de inicio no debe ser menor a la fecha fin del contrato anterior.";
+          nextErrors[`contract_${newer.originalIndex}_contractDate`] =
+            "La fecha de inicio no debe ser menor a la fecha fin del contrato anterior.";
         }
       }
     }
@@ -281,8 +296,9 @@ const EmployeeModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateAll()) return;
-    // El contrato activo principal es el primero sin fecha fin o el primero
-    const primaryContract = contracts.find((c) => !c.endDate) || contracts[0];
+    // El contrato activo principal es el más vigente (activo según fechas) o el primero
+    const primaryContract =
+      contracts.find((c) => getContractStatus(c).isActive) || contracts[0];
     const payload = {
       ...personalData,
       id: employee?.id,
@@ -298,20 +314,24 @@ const EmployeeModal = ({
       endDate: primaryContract.endDate || null,
       baseSalary: primaryContract.baseSalary,
       // Array completo de contratos
-      contracts: contracts.map((c) => ({
-        id: c.id,
-        contractCompanyId: c.contractCompanyId,
-        contractJobTitleId: c.contractJobTitleId,
-        consolidatedCompanyId: c.consolidatedCompanyId,
-        employeeType: c.employeeType,
-        branchId: c.branchId,
-        areaId: c.areaId,
-        jobTitleId: c.jobTitleId,
-        contractDate: c.contractDate,
-        endDate: c.endDate || null,
-        baseSalary: c.baseSalary,
-        isActive: !c.endDate,
-      })),
+      contracts: contracts.map((c) => {
+        const contractStat = getContractStatus(c);
+        return {
+          id: c.id,
+          contractCompanyId: c.contractCompanyId,
+          contractJobTitleId: c.contractJobTitleId,
+          consolidatedCompanyId: c.consolidatedCompanyId,
+          employeeType: c.employeeType,
+          branchId: c.branchId,
+          areaId: c.areaId,
+          jobTitleId: c.jobTitleId,
+          contractDate: c.contractDate,
+          endDate: c.endDate || null,
+          baseSalary: c.baseSalary,
+          status: contractStat.isActive ? "ACTIVE" : "ENDED",
+          isActive: contractStat.isActive,
+        };
+      }),
     };
     onSubmit(payload);
   };
@@ -479,19 +499,32 @@ const EmployeeModal = ({
 
               {contracts.map((c, idx) => {
                 const isExpanded = expandedIndex === idx;
-                const isEnded = Boolean(c.endDate);
-                const isActive = !isEnded;
+                const statusInfo = getContractStatus(c);
+                const isActive = statusInfo.isActive;
                 const companyObj = companies.find((co) => String(co.id) === String(c.contractCompanyId));
                 const companyName = companyObj ? companyObj.name : "Empresa";
                 const jobObj = jobTitles.find((jt) => String(jt.id) === String(c.contractJobTitleId));
                 const jobName = jobObj ? jobObj.name : "Cargo contrato";
-                const statusLabel = isActive ? `Activo • ${c.employeeType}` : `Finalizado • ${c.employeeType}`;
+                const statusLabel = `${statusInfo.label} • ${c.employeeType}`;
                 const dateRangeText = `Periodo: ${formatDateDisplay(c.contractDate)} - ${formatDateDisplay(c.endDate)}`;
                 const salaryText = `Salario: Bs. ${c.baseSalary || "0.00"}`;
                 const currentAreaIdNum = Number(c.areaId);
                 const areaJobTitles = currentAreaIdNum
                   ? jobTitles.filter((jt) => jt.areas && jt.areas.some((a) => a.areaId === currentAreaIdNum))
                   : [];
+
+                const badgeBg =
+                  statusInfo.variant === "warning"
+                    ? "#fef3c7"
+                    : isActive
+                    ? "#dcfce7"
+                    : "#e2e8f0";
+                const badgeColor =
+                  statusInfo.variant === "warning"
+                    ? "#92400e"
+                    : isActive
+                    ? "#166534"
+                    : "#475569";
 
                 return (
                   <ModalAccordionCard key={c.id || idx} $highlighted={isActive}>
@@ -507,7 +540,7 @@ const EmployeeModal = ({
                       </ModalAccordionLeading>
 
                       <ModalAccordionTrailing>
-                        <ModalBadge $compact $bg={isActive ? "#dcfce7" : "#e2e8f0"} $color={isActive ? "#166534" : "#475569"}>{statusLabel}</ModalBadge>
+                        <ModalBadge $compact $bg={badgeBg} $color={badgeColor}>{statusLabel}</ModalBadge>
                         <ModalChevron>
                           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </ModalChevron>

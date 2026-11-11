@@ -127,3 +127,47 @@ export const getEmployeeStatus = (employee) => {
 
   return { label: "Activo", variant: "success" };
 };
+
+export const getContractStatus = (contract) => {
+  if (!contract) return { label: "Finalizado", variant: "danger", isActive: false };
+
+  if (
+    contract.isActive === false ||
+    contract.status === "ENDED" ||
+    contract.status === "CANCELLED"
+  ) {
+    return { label: "Finalizado", variant: "danger", isActive: false };
+  }
+
+  const rawEndDate = contract.endDate || contract.contractEndDate;
+  if (!rawEndDate) {
+    return { label: "Activo", variant: "success", isActive: true };
+  }
+
+  const [endYear, endMonth, endDay] = rawEndDate
+    .split("T")[0]
+    .split("-")
+    .map(Number);
+
+  if (!endYear || !endMonth || !endDay) {
+    return { label: "Activo", variant: "success", isActive: true };
+  }
+
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+
+  const endDateNorm = new Date(endYear, endMonth - 1, endDay);
+  const todayNorm = new Date(currentYear, currentMonth - 1, currentDay);
+
+  if (endDateNorm < todayNorm) {
+    return { label: "Finalizado", variant: "danger", isActive: false };
+  }
+
+  if (endYear === currentYear && endMonth === currentMonth) {
+    return { label: "Finaliza este mes", variant: "warning", isActive: true };
+  }
+
+  return { label: "Activo", variant: "success", isActive: true };
+};

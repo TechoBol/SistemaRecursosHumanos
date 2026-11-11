@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, ChevronRight, Calendar, FileDown, CheckCircle2, Lock } from "lucide-react";
+import { Search, Eye, ChevronRight, Calendar, FileDown, CheckCircle2, Lock, FileText } from "lucide-react";
 import Swal from "sweetalert2";
 import DataTable from "../components/table/DataTable";
 import PayrollDetailModal from "../components/modals/PayrollDetailModal";
@@ -279,6 +279,26 @@ const PayrollContract = () => {
     }
   };
 
+  {/* BOLETA INDIVIDUAL */}
+  const handleExportSinglePaymentSlip = async (row) => {
+    try {
+      // Usar la empresa de contrato de la fila (o la empresa activa del filtro)
+      const targetCompany =
+        companies.find((c) => c.id === Number(row.contractCompanyId)) ||
+        activeCompany;
+
+      await exportPaymentSlipsPdf({
+        payrolls: [row],
+        company: targetCompany,
+        periodMonth: selectedMonth,
+        periodYear: selectedYear,
+      });
+    } catch (err) {
+      console.error("Error al generar boleta individual:", err);
+      errorToast("No se pudo generar la boleta de pago del empleado.");
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -407,12 +427,23 @@ const PayrollContract = () => {
       {
         field: "actions",
         headerName: "Acciones",
-        width: 110,
+        width: 140,
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
         renderCell: ({ row }) => (
           <TableActions>
+            <TableActionButton
+              type="button"
+              title="Ver boleta de pago individual"
+              aria-label={`Ver boleta de pago de ${row.employeeName}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExportSinglePaymentSlip(row);
+              }}
+            >
+              <FileText size={18} />
+            </TableActionButton>
             <TableActionButton
               type="button"
               title="Ver detalles de cálculo"
