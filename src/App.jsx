@@ -6,6 +6,7 @@ import { theme } from "./components/ui/Theme";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 // PAGES
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import EmployeeDetail from "./pages/employees/EmployeeDetail";
 import AbsenceControl from "./pages/AbsenceControl";
@@ -28,6 +29,7 @@ const App = () => {
         {/* con rutas protegidas */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="empleados" element={<Employees />} />
             <Route path="/empleados/:employeeId" element={<EmployeeDetail />} />
             <Route path="control-ausencias" element={<AbsenceControl />} />
@@ -42,7 +44,7 @@ const App = () => {
         </Route>
 
         {/* Ruta inexistente */}
-        <Route path="*" element={<Navigate to="/empleados" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </ThemeProvider>
   );
