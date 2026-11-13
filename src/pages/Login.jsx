@@ -27,7 +27,7 @@ const Login = () => {
   const passwordRef = useRef(null);
 
   if (isLoggedIn) {
-    return <Navigate to="/empleados" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = (e) => {
