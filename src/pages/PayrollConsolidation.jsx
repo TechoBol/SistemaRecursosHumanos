@@ -5,7 +5,7 @@ import DataTable from "../components/table/DataTable";
 import PayrollDetailModal from "../components/modals/PayrollDetailModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
-import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
+import { exportConsolidatedPayrollPdf } from "../utils/consolidatedPayrollPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
   ActionSecondaryButton,
@@ -187,12 +187,11 @@ const PayrollConsolidation = () => {
       setIsGeneratingPdf(true);
       setTimeout(async () => {
         try {
-          await exportPayrollPdf({
+          await exportConsolidatedPayrollPdf({
             payrolls: filteredRows,
             company: activeCompany,
             periodMonth: selectedMonth,
             periodYear: selectedYear,
-            payrollType: "consolidated",
             totals,
           });
           successToast("PDF generado exitosamente.");
@@ -232,7 +231,7 @@ const PayrollConsolidation = () => {
       },
       {
         field: "employeeType",
-        headerName: "Tipo empleado",
+        headerName: "Tipo contrato",
         minWidth: 125,
       },
       {

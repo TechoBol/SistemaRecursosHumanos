@@ -21,17 +21,6 @@ import {
 
 const COMPANY_LOCATION = "Cochabamba - Bolivia";
 
-const PAYROLL_LABELS = {
-  contract: {
-    name: "Planilla Fiscal",
-    title: "PLANILLA FISCAL DE SUELDOS",
-  },
-  consolidated: {
-    name: "Planilla Consolidada",
-    title: "PLANILLA CONSOLIDADA DE SUELDOS",
-  },
-};
-
 const COMPANY_LOGOS = {
   TECHOBOL: {
     src: techobolLogo,
@@ -77,22 +66,12 @@ const drawCompanyLogo = async (doc, companyName) => {
   const image = await loadImage(logo.src);
   const maxWidth = 13;
   const maxHeight = 15;
-  const scale = Math.min(
-    maxWidth / image.width,
-    maxHeight / image.height
-  );
+  const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
   const width = image.width * scale;
   const height = image.height * scale;
   const x = 10;
   const y = 7 + (maxHeight - height) / 2;
-  doc.addImage(
-    image,
-    logo.format,
-    x,
-    y,
-    width,
-    height
-  );
+  doc.addImage(image, logo.format, x, y, width, height);
 };
 
 const drawUpdateMetadataBox = (
@@ -114,15 +93,7 @@ const drawUpdateMetadataBox = (
 
   doc.setDrawColor(...theme.primary);
   doc.setLineWidth(0.45);
-  doc.roundedRect(
-    iconX,
-    iconY,
-    5.2,
-    5.5,
-    0.5,
-    0.5,
-    "D"
-  );
+  doc.roundedRect(iconX, iconY, 5.2, 5.5, 0.5, 0.5, "D");
 
   doc.setFillColor(...theme.primary);
   doc.rect(iconX, iconY, 5.2, 1.8, "F");
@@ -136,11 +107,7 @@ const drawUpdateMetadataBox = (
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.2);
   doc.setTextColor(...theme.mutedText);
-  doc.text(
-    "Generado:",
-    textX,
-    y + 4.8
-  );
+  doc.text("Generado:", textX, y + 4.8);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.8);
@@ -158,9 +125,9 @@ const sortEmployeesByName = (employees = []) =>
     })
   );
 
-{/** CONTENIDO FILAS DE LA TABLA */}
-const buildEmployeeTableRow = (employee, index, theme, isFiscal = false) => {
-  const row = [
+/** FILA DE EMPLEADO (CONSOLIDADA: incluye columna Tipo Contrato) */
+const buildConsolidatedEmployeeTableRow = (employee, index, theme) => {
+  return [
     {
       content: String(index),
       styles: { halign: "center" },
@@ -170,11 +137,15 @@ const buildEmployeeTableRow = (employee, index, theme, isFiscal = false) => {
       styles: { halign: "left" },
     },
     {
-      content: (employee.contractJobTitleName || "-").toUpperCase(),
+      content: (employee.contractJobTitleName || employee.jobTitleName || "-").toUpperCase(),
       styles: { halign: "left" },
     },
     {
       content: formatDatePdf(employee.hireDate),
+      styles: { halign: "center" },
+    },
+    {
+      content: (employee.employeeType || "Fiscal").toUpperCase(),
       styles: { halign: "center" },
     },
     {
@@ -201,17 +172,6 @@ const buildEmployeeTableRow = (employee, index, theme, isFiscal = false) => {
       content: formatMoneyPdf(employee.grossPay),
       styles: { halign: "right", fontStyle: "bold" },
     },
-  ];
-
-  if (isFiscal) {
-    const cns = Number(employee.grossPay || 0) * 0.1;
-    row.push({
-      content: formatMoneyPdf(cns),
-      styles: { halign: "right" },
-    });
-  }
-
-  row.push(
     {
       content: formatMoneyPdf(employee.afpDeduction),
       styles: { halign: "right" },
@@ -235,18 +195,16 @@ const buildEmployeeTableRow = (employee, index, theme, isFiscal = false) => {
         fontStyle: "bold",
         textColor: theme.primaryDark,
       },
-    }
-  );
-
-  return row;
+    },
+  ];
 };
 
-const buildTotalsRow = (
+/** FILAS DE TOTALES (CONSOLIDADA: colSpan 5 en etiqueta inicial para cubrir N°, Nombre, Cargo, Ingreso, Tipo Contrato) */
+const buildConsolidatedTotalsRow = (
   totals,
   theme,
   label = "TOTAL GENERAL",
-  level = "general",
-  isFiscal = false
+  level = "general"
 ) => {
   const isGeneral = level === "general";
   const isFiscalDivision = level === "fiscal";
@@ -295,10 +253,10 @@ const buildTotalsRow = (
         textColor: theme.primaryDark,
       };
 
-  const row = [
+  return [
     {
       content: label,
-      colSpan: 4,
+      colSpan: 5,
       styles: { ...baseStyle, textColor: labelTextColor },
     },
     {
@@ -325,17 +283,6 @@ const buildTotalsRow = (
       content: formatMoneyPdf(totals.grossPay),
       styles: { ...baseStyle, textColor: theme.primaryDark },
     },
-  ];
-
-  if (isFiscal) {
-    const cnsTotal = Number(totals.grossPay || 0) * 0.1;
-    row.push({
-      content: formatMoneyPdf(cnsTotal),
-      styles: baseStyle,
-    });
-  }
-
-  row.push(
     {
       content: formatMoneyPdf(totals.afpDeduction),
       styles: baseStyle,
@@ -355,10 +302,8 @@ const buildTotalsRow = (
     {
       content: formatNetSalaryPdf(totals.netSalary),
       styles: netSalaryStyle,
-    }
-  );
-
-  return row;
+    },
+  ];
 };
 
 const buildConsolidatedTableBody = (
@@ -379,7 +324,6 @@ const buildConsolidatedTableBody = (
     payrollsByFiscal[fiscalKey].push(p);
   });
 
-  // Asegurar el orden de empresas fiscales solicitado para la empresa consolidada activa
   const existingFiscalKeys = Object.keys(payrollsByFiscal);
   const keysToProcess = [
     ...orderedFiscalKeys.filter((k) => existingFiscalKeys.includes(k)),
@@ -393,109 +337,91 @@ const buildConsolidatedTableBody = (
     const fiscalPayrolls = payrollsByFiscal[fiscalKey] || [];
     if (fiscalPayrolls.length === 0) return;
 
-    // Header del Grupo Principal (Empresa Fiscal)
+    // Header del Grupo Principal (Empresa Fiscal) - 16 columnas en total
     rows.push([
       {
         content: `  EMPRESA FISCAL: ${fiscalKey}`,
-        colSpan: 15,
+        colSpan: 16,
         styles: {
-          fillColor: theme.subheaderBg,
-          textColor: [255, 255, 255],
-          fontStyle: "bold",
-          fontSize: 7.6,
           halign: "left",
-          cellPadding: { top: 2.4, bottom: 2.4, left: 4, right: 4 },
+          fontStyle: "bold",
+          fillColor: theme.subheaderBg,
+          textColor: theme.white,
+          fontSize: 7.2,
+          cellPadding: { top: 2.2, bottom: 2.2, left: 3 },
         },
       },
     ]);
 
-    // Clasificar empleados en:
-    // 1. CENTRAL GERENTES
-    // 2. CENTRAL JEFE DE AREA
-    // 3. CENTRAL JEFES DE REGION
-    // 4. JEFES DE SECTOR
-    // 5. CENTRAL TECNICOS
-    // 6. Sucursales (para cualquier otro cargo)
-    const categoryBuckets = CONSOLIDATED_JOB_CATEGORIES.map((cat) => ({
-      key: cat.key,
-      title: cat.title,
-      employees: [],
-    }));
+    // 2. Clasificar empleados en Categorías Centrales y Sucursales
+    const centralEmployees = [];
+    const branchEmployeesMap = {};
 
-    const branchBuckets = {};
-
-    fiscalPayrolls.forEach((employee) => {
-      const matchedCategory = findJobCategory(employee.jobTitleName);
-      if (matchedCategory) {
-        const bucket = categoryBuckets.find(
-          (b) => b.key === matchedCategory.key
-        );
-        if (bucket) {
-          bucket.employees.push(employee);
-          return;
+    fiscalPayrolls.forEach((p) => {
+      const category = findJobCategory(p.contractJobTitleName);
+      if (category) {
+        centralEmployees.push({ payroll: p, category });
+      } else {
+        const branchKey = (p.branchName || "SIN SUCURSAL").trim();
+        if (!branchEmployeesMap[branchKey]) {
+          branchEmployeesMap[branchKey] = [];
         }
+        branchEmployeesMap[branchKey].push(p);
       }
-
-      // Si no coincide con ninguna categoría central, agrupar por sucursal
-      const branchTitle = formatBranchTitle(employee.branchName);
-      if (!branchBuckets[branchTitle]) {
-        branchBuckets[branchTitle] = [];
-      }
-      branchBuckets[branchTitle].push(employee);
     });
 
-    const activeDivisions = [];
+    const divisionSections = [];
 
-    // 1. Las 5 categorías fijas
-    categoryBuckets.forEach((cat) => {
-      if (cat.employees.length > 0) {
-        activeDivisions.push({
-          title: cat.title,
-          employees: sortEmployeesByName(cat.employees),
+    // Secciones centrales (Directorio, Gerencia General, Administración)
+    CONSOLIDATED_JOB_CATEGORIES.forEach((cat) => {
+      const emps = centralEmployees
+        .filter((item) => item.category.key === cat.key)
+        .map((item) => item.payroll);
+      if (emps.length > 0) {
+        divisionSections.push({
+          title: cat.name,
+          payrolls: sortEmployeesByName(emps),
         });
       }
     });
 
-    // 2. Sucursales ordenadas alfabéticamente
-    const sortedBranchTitles = Object.keys(branchBuckets).sort((a, b) =>
+    // Secciones de Sucursales
+    const sortedBranchKeys = Object.keys(branchEmployeesMap).sort((a, b) =>
       a.localeCompare(b, "es", { sensitivity: "base" })
     );
 
-    sortedBranchTitles.forEach((branchTitle) => {
-      activeDivisions.push({
-        title: branchTitle,
-        employees: sortEmployeesByName(branchBuckets[branchTitle]),
+    sortedBranchKeys.forEach((branchName) => {
+      const emps = branchEmployeesMap[branchName];
+      divisionSections.push({
+        title: formatBranchTitle(branchName),
+        payrolls: sortEmployeesByName(emps),
       });
     });
 
-    // Renderizar cada división con sus empleados y subtotales
-    activeDivisions.forEach((division) => {
-      // Header de la división (Categoría o Sucursal)
+    // Construir filas por cada división
+    divisionSections.forEach((division) => {
       rows.push([
         {
           content: `    ${division.title.toUpperCase()}`,
-          colSpan: 15,
+          colSpan: 16,
           styles: {
+            halign: "left",
+            fontStyle: "bold",
             fillColor: theme.branchBg,
             textColor: theme.branchText,
-            fontStyle: "bold",
-            fontSize: 7.0,
-            halign: "left",
-            cellPadding: { top: 2.0, bottom: 2.0, left: 6, right: 4 },
+            fontSize: 6.6,
+            cellPadding: { top: 1.8, bottom: 1.8, left: 4 },
           },
         },
       ]);
 
-      // Filas de empleados
-      division.employees.forEach((employee) => {
-        rows.push(buildEmployeeTableRow(employee, index, theme));
-        index++;
+      division.payrolls.forEach((emp) => {
+        rows.push(buildConsolidatedEmployeeTableRow(emp, index++, theme));
       });
 
-      // Subtotal de la división (Categoría o Sucursal)
-      const divisionTotals = calculatePayrollTotals(division.employees);
+      const divisionTotals = calculatePayrollTotals(division.payrolls);
       rows.push(
-        buildTotalsRow(
+        buildConsolidatedTotalsRow(
           divisionTotals,
           theme,
           `TOTAL ${division.title.toUpperCase()}`,
@@ -504,10 +430,10 @@ const buildConsolidatedTableBody = (
       );
     });
 
-    // Subtotal de todo el grupo Empresa Fiscal
+    // Subtotal de la Empresa Fiscal
     const fiscalTotals = calculatePayrollTotals(fiscalPayrolls);
     rows.push(
-      buildTotalsRow(
+      buildConsolidatedTotalsRow(
         fiscalTotals,
         theme,
         `TOTAL EMPRESA FISCAL: ${fiscalKey}`,
@@ -519,7 +445,7 @@ const buildConsolidatedTableBody = (
   return rows;
 };
 
-const buildTableHeader = (theme, isFiscal = false) => {
+const buildConsolidatedTableHeader = (theme) => {
   const firstRow = [
     {
       content: "N°",
@@ -538,6 +464,11 @@ const buildTableHeader = (theme, isFiscal = false) => {
     },
     {
       content: "FECHA\nDE INGRESO",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "TIPO\nCONTRATO",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -566,17 +497,6 @@ const buildTableHeader = (theme, isFiscal = false) => {
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
-  ];
-
-  if (isFiscal) {
-    firstRow.push({
-      content: "APORTE\nCNS 10%",
-      rowSpan: 2,
-      styles: { halign: "center", valign: "middle" },
-    });
-  }
-
-  firstRow.push(
     {
       content: "DESCUENTOS",
       colSpan: 3,
@@ -591,8 +511,8 @@ const buildTableHeader = (theme, isFiscal = false) => {
       content: "LÍQUIDO\nPAGABLE",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
-    }
-  );
+    },
+  ];
 
   const secondRow = [
     {
@@ -657,34 +577,29 @@ const drawHeader = async (
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(...theme.primary);
-
   doc.text(titleText, centerX, 12.5, { align: "center" });
 
   doc.setFontSize(7.6);
   doc.setTextColor(...theme.mutedText);
-
   doc.text(subtitle, centerX, 17, { align: "center" });
 
   doc.setFillColor(...theme.primary);
-
   doc.roundedRect(centerX - 12, 19.5, 24, 1.1, 0.5, 0.5, "F");
 
   // Última actualización
   drawUpdateMetadataBox(doc, 232, 7.5, 55, 15.5, theme, timestamp);
 };
 
-export const exportPayrollPdf = async ({
+export const exportConsolidatedPayrollPdf = async ({
   payrolls = [],
   company = null,
   periodMonth = new Date().getMonth() + 1,
   periodYear = new Date().getFullYear(),
-  payrollType = "contract",
   totals = null,
 }) => {
   const companyName = company?.name || "";
   const companyTaxId = company?.taxId || "";
   const theme = getPayrollTheme(companyName);
-  const payrollLabels = PAYROLL_LABELS[payrollType] || PAYROLL_LABELS.contract;
   const monthName = MONTH_NAMES[periodMonth] || "";
   const subtitle = `CORRESPONDIENTE AL MES DE ${monthName.toUpperCase()} ${periodYear}`;
   const timestamp = getFormattedUpdateTimestamp();
@@ -695,33 +610,31 @@ export const exportPayrollPdf = async ({
     format: "a4",
   });
 
-  const isFiscalPayroll = payrollType === "contract";
-
   const autoTableConfig = {
     theme: "grid",
     headStyles: {
       fillColor: theme.primary,
       textColor: theme.white,
       fontStyle: "bold",
-      fontSize: 6.5,
+      fontSize: 6.4,
       cellPadding: {
         top: 1.8,
         bottom: 1.8,
-        left: 1.2,
-        right: 1.2,
+        left: 1.0,
+        right: 1.0,
       },
       lineWidth: 0.15,
       lineColor: theme.white,
     },
 
     bodyStyles: {
-      fontSize: 6.5,
+      fontSize: 6.4,
       textColor: theme.text,
       cellPadding: {
         top: 1.6,
         bottom: 1.6,
-        left: 1.2,
-        right: 1.2,
+        left: 1.0,
+        right: 1.0,
       },
       lineWidth: 0.1,
       lineColor: theme.border,
@@ -731,161 +644,55 @@ export const exportPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    columnStyles: isFiscalPayroll
-      ? {
-          0: { cellWidth: 7, halign: "center" },
-          1: { cellWidth: 39, halign: "left" },
-          2: { cellWidth: 28, halign: "left" },
-          3: { cellWidth: 15, halign: "center" },
-          4: { cellWidth: 16, halign: "right" },
-          5: { cellWidth: 10, halign: "center" },
-          6: { cellWidth: 16, halign: "right" },
-          7: { cellWidth: 16, halign: "right" },
-          8: { cellWidth: 15, halign: "right" },
-          9: { cellWidth: 17, halign: "right", fontStyle: "bold" },
-          10: { cellWidth: 16, halign: "right" },
-          11: { cellWidth: 16, halign: "right" },
-          12: { cellWidth: 15, halign: "right" },
-          13: { cellWidth: 15, halign: "right" },
-          14: { cellWidth: 16, halign: "right" },
-          15: { cellWidth: 20, halign: "right", fontStyle: "bold" },
-        }
-      : {
-          0: { cellWidth: 8, halign: "center" },
-          1: { cellWidth: 42, halign: "left" },
-          2: { cellWidth: 32, halign: "left" },
-          3: { cellWidth: 16, halign: "center" },
-          4: { cellWidth: 17, halign: "right" },
-          5: { cellWidth: 11, halign: "center" },
-          6: { cellWidth: 17, halign: "right" },
-          7: { cellWidth: 17, halign: "right" },
-          8: { cellWidth: 16, halign: "right" },
-          9: { cellWidth: 18, halign: "right", fontStyle: "bold" },
-          10: { cellWidth: 16, halign: "right" },
-          11: { cellWidth: 16, halign: "right" },
-          12: { cellWidth: 15, halign: "right" },
-          13: { cellWidth: 16, halign: "right" },
-          14: { cellWidth: 20, halign: "right", fontStyle: "bold" },
-        },
+    // 16 columnas con ancho total = 277mm (márgenes de 10mm a cada lado en A4 landscape de 297mm)
+    columnStyles: {
+      0: { cellWidth: 7, halign: "center" },   // N°
+      1: { cellWidth: 38, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 28, halign: "left" },     // CARGO
+      3: { cellWidth: 15, halign: "center" },   // FECHA DE INGRESO
+      4: { cellWidth: 15, halign: "center" },   // TIPO CONTRATO
+      5: { cellWidth: 16, halign: "right" },    // HABER BÁSICO
+      6: { cellWidth: 10, halign: "center" },   // DÍAS TRAB.
+      7: { cellWidth: 16, halign: "right" },    // SUELDO BÁSICO
+      8: { cellWidth: 15, halign: "right" },    // ANTIGÜEDAD
+      9: { cellWidth: 15, halign: "right" },    // OTROS BONOS
+      10: { cellWidth: 17, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      11: { cellWidth: 16, halign: "right" },   // GESTORA (AFP)
+      12: { cellWidth: 15, halign: "right" },   // PERM. / FALTAS
+      13: { cellWidth: 15, halign: "right" },   // ANTICIPOS
+      14: { cellWidth: 16, halign: "right" },   // TOTAL DESC.
+      15: { cellWidth: 23, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+    },
 
     didParseCell: (data) => {
-      const liquidColIndex = isFiscalPayroll ? 15 : 14;
-      if (data.section === "head" && data.column.index === liquidColIndex) {
+      // Columna 15 es Líquido Pagable
+      if (data.section === "head" && data.column.index === 15) {
         data.cell.styles.fillColor = theme.primaryDark;
       }
     },
   };
 
-  if (payrollType === "contract") {
-    // Agrupar empleados por ciudad para la Planilla Fiscal
-    const groupsByCity = {};
-    payrolls.forEach((p) => {
-      const cityName = (p.cityName || "SIN CIUDAD").trim().toUpperCase();
-      if (!groupsByCity[cityName]) {
-        groupsByCity[cityName] = [];
-      }
-      groupsByCity[cityName].push(p);
-    });
+  await drawHeader(
+    doc,
+    companyName,
+    companyTaxId,
+    theme,
+    "PLANILLA CONSOLIDADA DE SUELDOS",
+    subtitle,
+    timestamp
+  );
 
-    const sortedCities = Object.keys(groupsByCity).sort((a, b) =>
-      a.localeCompare(b, "es", { sensitivity: "base" })
-    );
+  const body = buildConsolidatedTableBody(payrolls, theme, companyName);
+  const overallTotals = totals || calculatePayrollTotals(payrolls);
+  body.push(buildConsolidatedTotalsRow(overallTotals, theme, "TOTAL GENERAL", "general"));
 
-    for (let i = 0; i < sortedCities.length; i++) {
-      const cityName = sortedCities[i];
-      const cityPayrolls = groupsByCity[cityName];
-
-      if (i > 0) {
-        doc.addPage();
-      }
-
-      const cityTitle = `PLANILLA FISCAL DE SUELDOS - ${cityName}`;
-      const cityLocation =
-        cityName && cityName !== "SIN CIUDAD"
-          ? `${cityName} - Bolivia`
-          : COMPANY_LOCATION;
-      await drawHeader(
-        doc,
-        companyName,
-        companyTaxId,
-        theme,
-        cityTitle,
-        subtitle,
-        timestamp,
-        cityLocation
-      );
-
-      const cityTotals = cityPayrolls.reduce(
-        (acc, row) => ({
-          baseSalary: acc.baseSalary + Number(row.baseSalary || 0),
-          earnedSalary: acc.earnedSalary + Number(row.earnedSalary || 0),
-          seniorityBonus: acc.seniorityBonus + Number(row.seniorityBonus || 0),
-          otherBonuses: acc.otherBonuses + Number(row.otherBonuses || 0),
-          grossPay: acc.grossPay + Number(row.grossPay || 0),
-          afpDeduction: acc.afpDeduction + Number(row.afpDeduction || 0),
-          absenceDeduction: acc.absenceDeduction + Number(row.absenceDeduction || 0),
-          advanceDeduction: acc.advanceDeduction + Number(row.advanceDeduction || 0),
-          totalDeductions: acc.totalDeductions + Number(row.totalDeductions || 0),
-          netSalary: acc.netSalary + Number(row.netSalary || 0),
-        }),
-        {
-          baseSalary: 0,
-          earnedSalary: 0,
-          seniorityBonus: 0,
-          otherBonuses: 0,
-          grossPay: 0,
-          afpDeduction: 0,
-          absenceDeduction: 0,
-          advanceDeduction: 0,
-          totalDeductions: 0,
-          netSalary: 0,
-        }
-      );
-
-      const sortedEmployees = [...cityPayrolls].sort((a, b) =>
-        getEmployeeFullName(a).localeCompare(getEmployeeFullName(b), "es", {
-          sensitivity: "base",
-        })
-      );
-
-      const body = sortedEmployees.map((employee, idx) =>
-        buildEmployeeTableRow(employee, idx + 1, theme, true)
-      );
-
-      body.push(buildTotalsRow(cityTotals, theme, "TOTAL GENERAL", "general", true));
-
-      autoTable(doc, {
-        startY: 26,
-        margin: { top: 26, bottom: 12, left: 10, right: 10 },
-        head: buildTableHeader(theme, true),
-        body,
-        ...autoTableConfig,
-      });
-    }
-  } else {
-    // Planilla Consolidada (ordenada por Empresa Fiscal, Categorías Centrales y Sucursales)
-    await drawHeader(
-      doc,
-      companyName,
-      companyTaxId,
-      theme,
-      payrollLabels.title,
-      subtitle,
-      timestamp
-    );
-
-    const body = buildConsolidatedTableBody(payrolls, theme, companyName);
-    const overallTotals = totals || calculatePayrollTotals(payrolls);
-    body.push(buildTotalsRow(overallTotals, theme, "TOTAL GENERAL", "general"));
-
-    autoTable(doc, {
-      startY: 26,
-      margin: { top: 26, bottom: 12, left: 10, right: 10 },
-      head: buildTableHeader(theme),
-      body,
-      ...autoTableConfig,
-    });
-  }
+  autoTable(doc, {
+    startY: 26,
+    margin: { top: 26, bottom: 12, left: 10, right: 10 },
+    head: buildConsolidatedTableHeader(theme),
+    body,
+    ...autoTableConfig,
+  });
 
   // Footer en todas las páginas
   const totalPages = doc.internal.getNumberOfPages();
@@ -899,7 +706,7 @@ export const exportPayrollPdf = async ({
     doc.setFontSize(6.5);
     doc.setTextColor(...theme.mutedText);
     doc.text(
-      `${companyName} • ${payrollLabels.name} • ${monthName} ${periodYear}`,
+      `${companyName} • Planilla Consolidada • ${monthName} ${periodYear}`,
       10,
       205.2
     );
@@ -914,10 +721,9 @@ export const exportPayrollPdf = async ({
     .toLowerCase();
 
   const fileName =
-    `${sanitizedCompanyName}_` +
-    `${payrollType === "contract" ? "fiscal" : "consolidado"}_` +
-    `${periodYear}_` +
-    `${String(periodMonth).padStart(2, "0")}.pdf`;
+    `${sanitizedCompanyName}_consolidado_${periodYear}_${String(
+      periodMonth
+    ).padStart(2, "0")}.pdf`;
 
   doc.save(fileName);
 };

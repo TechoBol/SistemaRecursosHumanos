@@ -455,8 +455,8 @@ export const CollapsibleCard = styled.div`
 `;
 
 export const CollapsibleHeader = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
   padding: 16px 20px;
@@ -465,9 +465,13 @@ export const CollapsibleHeader = styled.div`
   user-select: none;
   &:hover { background: #fafafa; }
 
-  @media (max-width: 700px) {
-    grid-template-columns: minmax(0, 1fr);
+  @media (max-width: 1000px) {
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+  }
+
+  @media (max-width: 700px) {
     padding: 16px;
   }
 `;
@@ -480,7 +484,8 @@ export const CollapsibleTitle = styled.h3`
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 `;
 
 export const CollapsibleActions = styled.div`
@@ -489,9 +494,8 @@ export const CollapsibleActions = styled.div`
   gap: 12px;
   min-width: 0;
 
-  @media (max-width: 700px) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+  @media (max-width: 1000px) {
+    justify-content: space-between;
     width: 100%;
     align-items: end;
   }
