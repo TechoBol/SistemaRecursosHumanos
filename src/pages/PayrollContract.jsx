@@ -6,7 +6,7 @@ import DataTable from "../components/table/DataTable";
 import PayrollDetailModal from "../components/modals/PayrollDetailModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
-import { exportPayrollPdf } from "../utils/payrollPdfGenerator";
+import { exportFiscalPayrollPdf } from "../utils/fiscalPayrollPdfGenerator";
 import { exportPaymentSlipsPdf } from "../utils/paymentSlipPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
@@ -238,7 +238,7 @@ const PayrollContract = () => {
       setIsGeneratingPdf(true);
       setTimeout(async () => {
         try {
-          await exportPayrollPdf({
+          await exportFiscalPayrollPdf({
             payrolls: filteredRows,
             company: activeCompany,
             periodMonth: selectedMonth,
@@ -322,7 +322,7 @@ const PayrollContract = () => {
       },
       {
         field: "employeeType",
-        headerName: "Tipo empleado",
+        headerName: "Tipo contrato",
         minWidth: 125,
       },
       {
