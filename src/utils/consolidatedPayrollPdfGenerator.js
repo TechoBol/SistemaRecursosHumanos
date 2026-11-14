@@ -53,9 +53,8 @@ const loadImage = (src) =>
 
 const getEmployeeFullName = (employee) => {
   if (employee.employeeLastNames) {
-    return `${employee.employeeLastNames} ${
-      employee.employeeFirstNames || ""
-    }`.trim();
+    return `${employee.employeeLastNames} ${employee.employeeFirstNames || ""
+      }`.trim();
   }
   return employee.employeeName || "-";
 };
@@ -125,8 +124,77 @@ const sortEmployeesByName = (employees = []) =>
     })
   );
 
-/** FILA DE EMPLEADO (CONSOLIDADA: incluye columna Tipo Contrato) */
-const buildConsolidatedEmployeeTableRow = (employee, index, theme) => {
+/** Formatear fecha a DD/MM/AAAA */
+const formatSlashDate = (dateVal) => {
+  if (!dateVal) return "";
+  const str = typeof dateVal === "string" ? dateVal.split("T")[0] : "";
+  const parts = str.split("-");
+  if (parts.length === 3) {
+    return `${parts[2].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[0]}`;
+  }
+  return str;
+};
+
+/**
+ * Construir el texto detallado de observaciones (faltas, permisos, anticipos)
+ */
+const buildEmployeeObservations = (employeeId, incidentsMap, advancesMap) => {
+  const empIncidents = incidentsMap[employeeId] || [];
+  const empAdvances = advancesMap[employeeId] || [];
+  const lines = [];
+
+  // Faltas y Permisos
+  empIncidents.forEach((inc) => {
+    const isAbsence =
+      inc.type === "absence" ||
+      inc.type === "ABSENCE" ||
+      String(inc.type).toLowerCase().includes("falta");
+    const isPermission =
+      inc.type === "permission" ||
+      inc.type === "PERMISSION" ||
+      String(inc.type).toLowerCase().includes("permiso");
+
+    if (isAbsence || isPermission) {
+      const label = isAbsence ? "Falta" : "Permiso";
+      const isHalf =
+        inc.duration === "halfDay" ||
+        inc.durationType === "HALF_DAY" ||
+        String(inc.duration).toLowerCase().includes("half");
+      const dayText = isHalf ? "0.5 dia" : "1 dia";
+      const dateFormatted = formatSlashDate(inc.date || inc.incidentDate);
+      lines.push(`${label} de ${dayText} en ${dateFormatted}`);
+    }
+  });
+
+  // Anticipos
+  empAdvances.forEach((adv) => {
+    const isDebt =
+      adv.type === "debt" ||
+      adv.type === "DEBT" ||
+      String(adv.type).toLowerCase().includes("deuda");
+    const advConcept = isDebt ? "reposicion" : "adelanto";
+    const amountFormatted = formatMoneyPdf(adv.amount);
+    const dateFormatted = formatSlashDate(adv.date || adv.advanceDate);
+    lines.push(`Anticipo (${advConcept}) Bs ${amountFormatted} en ${dateFormatted}`);
+  });
+
+  return lines.length > 0 ? lines.join("\n") : "-";
+};
+
+/** FILA DE EMPLEADO (CONSOLIDADA: incluye columna Tipo Contrato y columna Observaciones) */
+const buildConsolidatedEmployeeTableRow = (
+  employee,
+  index,
+  theme,
+  incidentsMap,
+  advancesMap
+) => {
+  const observationsText = buildEmployeeObservations(
+    employee.employeeId,
+    incidentsMap,
+    advancesMap
+  );
+
   return [
     {
       content: String(index),
@@ -171,6 +239,14 @@ const buildConsolidatedEmployeeTableRow = (employee, index, theme) => {
     {
       content: formatMoneyPdf(employee.grossPay),
       styles: { halign: "right", fontStyle: "bold" },
+    },
+    {
+      content: observationsText,
+      styles: {
+        halign: "left",
+        fontSize: 5.2,
+        textColor: observationsText === "-" ? [148, 163, 184] : [51, 65, 85],
+      },
     },
     {
       content: formatMoneyPdf(employee.afpDeduction),
@@ -236,19 +312,19 @@ const buildConsolidatedTotalsRow = (
 
   const netSalaryStyle = isGeneral
     ? {
-        ...baseStyle,
-        fillColor: theme.liquidHighlightBg,
-        textColor: theme.liquidHighlightText,
-        fontSize: 7.2,
-      }
+      ...baseStyle,
+      fillColor: theme.liquidHighlightBg,
+      textColor: theme.liquidHighlightText,
+      fontSize: 7.2,
+    }
     : isFiscalDivision
-    ? {
+      ? {
         ...baseStyle,
         fillColor: theme.liquidHighlightBg,
         textColor: theme.primaryDark,
         fontSize: 6.6,
       }
-    : {
+      : {
         ...baseStyle,
         textColor: theme.primaryDark,
       };
@@ -284,6 +360,10 @@ const buildConsolidatedTotalsRow = (
       styles: { ...baseStyle, textColor: theme.primaryDark },
     },
     {
+      content: "",
+      styles: { fillColor: rowFillColor },
+    },
+    {
       content: formatMoneyPdf(totals.afpDeduction),
       styles: baseStyle,
     },
@@ -309,7 +389,9 @@ const buildConsolidatedTotalsRow = (
 const buildConsolidatedTableBody = (
   payrolls,
   theme,
-  consolidatedCompanyName
+  consolidatedCompanyName,
+  incidentsMap,
+  advancesMap
 ) => {
   const consolidatedKey = getCompanyKey(consolidatedCompanyName);
   const orderedFiscalKeys = getFiscalOrderForConsolidated(consolidatedKey);
@@ -337,11 +419,11 @@ const buildConsolidatedTableBody = (
     const fiscalPayrolls = payrollsByFiscal[fiscalKey] || [];
     if (fiscalPayrolls.length === 0) return;
 
-    // Header del Grupo Principal (Empresa Fiscal) - 16 columnas en total
+    // Header del Grupo Principal (Empresa Fiscal) - 17 columnas en total
     rows.push([
       {
         content: `  EMPRESA FISCAL: ${fiscalKey}`,
-        colSpan: 16,
+        colSpan: 17,
         styles: {
           halign: "left",
           fontStyle: "bold",
@@ -403,7 +485,7 @@ const buildConsolidatedTableBody = (
       rows.push([
         {
           content: `    ${division.title.toUpperCase()}`,
-          colSpan: 16,
+          colSpan: 17,
           styles: {
             halign: "left",
             fontStyle: "bold",
@@ -416,7 +498,15 @@ const buildConsolidatedTableBody = (
       ]);
 
       division.payrolls.forEach((emp) => {
-        rows.push(buildConsolidatedEmployeeTableRow(emp, index++, theme));
+        rows.push(
+          buildConsolidatedEmployeeTableRow(
+            emp,
+            index++,
+            theme,
+            incidentsMap,
+            advancesMap
+          )
+        );
       });
 
       const divisionTotals = calculatePayrollTotals(division.payrolls);
@@ -494,6 +584,11 @@ const buildConsolidatedTableHeader = (theme) => {
     },
     {
       content: "TOTAL\nGANADO",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "OBSERVACIONES",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -596,6 +691,8 @@ export const exportConsolidatedPayrollPdf = async ({
   periodMonth = new Date().getMonth() + 1,
   periodYear = new Date().getFullYear(),
   totals = null,
+  incidents = [],
+  advances = [],
 }) => {
   const companyName = company?.name || "";
   const companyTaxId = company?.taxId || "";
@@ -603,6 +700,25 @@ export const exportConsolidatedPayrollPdf = async ({
   const monthName = MONTH_NAMES[periodMonth] || "";
   const subtitle = `CORRESPONDIENTE AL MES DE ${monthName.toUpperCase()} ${periodYear}`;
   const timestamp = getFormattedUpdateTimestamp();
+
+  // Mapear incidencias y anticipos por employeeId para acceso O(1)
+  const incidentsMap = {};
+  if (Array.isArray(incidents)) {
+    incidents.forEach((inc) => {
+      const empId = inc.employeeId;
+      if (!incidentsMap[empId]) incidentsMap[empId] = [];
+      incidentsMap[empId].push(inc);
+    });
+  }
+
+  const advancesMap = {};
+  if (Array.isArray(advances)) {
+    advances.forEach((adv) => {
+      const empId = adv.employeeId;
+      if (!advancesMap[empId]) advancesMap[empId] = [];
+      advancesMap[empId].push(adv);
+    });
+  }
 
   const doc = new jsPDF({
     orientation: "landscape",
@@ -616,25 +732,25 @@ export const exportConsolidatedPayrollPdf = async ({
       fillColor: theme.primary,
       textColor: theme.white,
       fontStyle: "bold",
-      fontSize: 6.4,
+      fontSize: 6.2,
       cellPadding: {
-        top: 1.8,
-        bottom: 1.8,
-        left: 1.0,
-        right: 1.0,
+        top: 1.6,
+        bottom: 1.6,
+        left: 0.8,
+        right: 0.8,
       },
       lineWidth: 0.15,
       lineColor: theme.white,
     },
 
     bodyStyles: {
-      fontSize: 6.4,
+      fontSize: 6.0,
       textColor: theme.text,
       cellPadding: {
-        top: 1.6,
-        bottom: 1.6,
-        left: 1.0,
-        right: 1.0,
+        top: 1.4,
+        bottom: 1.4,
+        left: 0.8,
+        right: 0.8,
       },
       lineWidth: 0.1,
       lineColor: theme.border,
@@ -644,29 +760,30 @@ export const exportConsolidatedPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    // 16 columnas con ancho total = 277mm (márgenes de 10mm a cada lado en A4 landscape de 297mm)
+    // 17 columnas con ancho total = 277mm (márgenes de 10mm en A4 apaisada de 297mm)
     columnStyles: {
-      0: { cellWidth: 7, halign: "center" },   // N°
-      1: { cellWidth: 38, halign: "left" },     // APELLIDOS Y NOMBRES
-      2: { cellWidth: 28, halign: "left" },     // CARGO
-      3: { cellWidth: 15, halign: "center" },   // FECHA DE INGRESO
-      4: { cellWidth: 15, halign: "center" },   // TIPO CONTRATO
-      5: { cellWidth: 16, halign: "right" },    // HABER BÁSICO
-      6: { cellWidth: 10, halign: "center" },   // DÍAS TRAB.
-      7: { cellWidth: 16, halign: "right" },    // SUELDO BÁSICO
-      8: { cellWidth: 15, halign: "right" },    // ANTIGÜEDAD
-      9: { cellWidth: 15, halign: "right" },    // OTROS BONOS
-      10: { cellWidth: 17, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
-      11: { cellWidth: 16, halign: "right" },   // GESTORA (AFP)
-      12: { cellWidth: 15, halign: "right" },   // PERM. / FALTAS
-      13: { cellWidth: 15, halign: "right" },   // ANTICIPOS
-      14: { cellWidth: 16, halign: "right" },   // TOTAL DESC.
-      15: { cellWidth: 23, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      0: { cellWidth: 6, halign: "center" },   // N°
+      1: { cellWidth: 34, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 24, halign: "left" },     // CARGO
+      3: { cellWidth: 14, halign: "center" },   // FECHA DE INGRESO
+      4: { cellWidth: 14, halign: "center" },   // TIPO CONTRATO
+      5: { cellWidth: 14, halign: "right" },    // HABER BÁSICO
+      6: { cellWidth: 9, halign: "center" },    // DÍAS TRAB.
+      7: { cellWidth: 14, halign: "right" },    // SUELDO BÁSICO
+      8: { cellWidth: 13, halign: "right" },    // ANTIGÜEDAD
+      9: { cellWidth: 13, halign: "right" },    // OTROS BONOS
+      10: { cellWidth: 15, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      11: { cellWidth: 32, halign: "left" },    // OBSERVACIONES (FALTAS / PERMISOS / ANTICIPOS)
+      12: { cellWidth: 14, halign: "right" },   // GESTORA (AFP)
+      13: { cellWidth: 13, halign: "right" },   // PERM. / FALTAS
+      14: { cellWidth: 13, halign: "right" },   // ANTICIPOS
+      15: { cellWidth: 14, halign: "right" },   // TOTAL DESC.
+      16: { cellWidth: 17, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
     },
 
     didParseCell: (data) => {
-      // Columna 15 es Líquido Pagable
-      if (data.section === "head" && data.column.index === 15) {
+      // Columna 16 es Líquido Pagable
+      if (data.section === "head" && data.column.index === 16) {
         data.cell.styles.fillColor = theme.primaryDark;
       }
     },
@@ -682,7 +799,13 @@ export const exportConsolidatedPayrollPdf = async ({
     timestamp
   );
 
-  const body = buildConsolidatedTableBody(payrolls, theme, companyName);
+  const body = buildConsolidatedTableBody(
+    payrolls,
+    theme,
+    companyName,
+    incidentsMap,
+    advancesMap
+  );
   const overallTotals = totals || calculatePayrollTotals(payrolls);
   body.push(buildConsolidatedTotalsRow(overallTotals, theme, "TOTAL GENERAL", "general"));
 

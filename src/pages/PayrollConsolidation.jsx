@@ -5,6 +5,9 @@ import DataTable from "../components/table/DataTable";
 import PayrollDetailModal from "../components/modals/PayrollDetailModal";
 import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
+import { useLoginStore } from "../components/store/loginStore";
+import { getAllAttendanceIncidentsApi } from "../services/AttendanceIncidentService";
+import { getAllEmployeeAdvancesApi } from "../services/EmployeeAdvanceService";
 import { exportConsolidatedPayrollPdf } from "../utils/consolidatedPayrollPdfGenerator";
 import { errorToast, successToast } from "../services/toasts";
 import {
@@ -72,6 +75,7 @@ const formatNetSalary = (amount) => {
 
 const PayrollConsolidation = () => {
   const navigate = useNavigate();
+  const { token } = useLoginStore();
   const { companies } = useCompanies();
   const [activeCompanyId, setActiveCompanyId] = useState(null);
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -185,6 +189,23 @@ const PayrollConsolidation = () => {
 
     try {
       setIsGeneratingPdf(true);
+
+      // Cargar incidencias y anticipos del periodo seleccionado para el resumen en el PDF
+      let incidents = [];
+      let advances = [];
+      if (token) {
+        try {
+          const [incRes, advRes] = await Promise.all([
+            getAllAttendanceIncidentsApi(token, { year: selectedYear, month: selectedMonth }),
+            getAllEmployeeAdvancesApi(token, { year: selectedYear, month: selectedMonth }),
+          ]);
+          if (Array.isArray(incRes)) incidents = incRes;
+          if (Array.isArray(advRes)) advances = advRes;
+        } catch (fetchErr) {
+          console.warn("No se pudieron cargar detalles de incidencias/anticipos:", fetchErr);
+        }
+      }
+
       setTimeout(async () => {
         try {
           await exportConsolidatedPayrollPdf({
@@ -193,6 +214,8 @@ const PayrollConsolidation = () => {
             periodMonth: selectedMonth,
             periodYear: selectedYear,
             totals,
+            incidents,
+            advances,
           });
           successToast("PDF generado exitosamente.");
         } catch (err) {
