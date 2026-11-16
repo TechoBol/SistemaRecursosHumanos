@@ -461,7 +461,7 @@ const buildConsolidatedTableBody = (
         .map((item) => item.payroll);
       if (emps.length > 0) {
         divisionSections.push({
-          title: cat.name,
+          title: cat.title || cat.name || "",
           payrolls: sortEmployeesByName(emps),
         });
       }
