@@ -55,6 +55,7 @@ import {
 import { useEmployeeBonuses } from "../../hooks/useEmployeeBonuses";
 import EmployeeBonusModal from "../../components/modals/EmployeeBonusModal";
 import { useLoginStore } from "../../components/store/loginStore";
+import { usePermissions } from "../../hooks/usePermissions";
 import { getEmployeeSalarySummaryApi } from "../../services/PayrollService";
 
 const MONTH_NAMES = [
@@ -96,6 +97,7 @@ const formatNetSalaryCurrency = (amount = 0) =>
 
 const SalaryInformation = ({ employee }) => {
   const { token } = useLoginStore();
+  const { canModify } = usePermissions();
   const { bonuses = [], addBonus, updateBonus, deleteBonus } = useEmployeeBonuses(employee?.id);
 
   const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
@@ -210,10 +212,12 @@ const SalaryInformation = ({ employee }) => {
             <TabDescription>Información general del mes actual</TabDescription>
           </div>
 
-          <ActionButton type="button" onClick={handleOpenAddBonus}>
-            <Plus size={17} />
-            Agregar otros bonos
-          </ActionButton>
+          {canModify && (
+            <ActionButton type="button" onClick={handleOpenAddBonus}>
+              <Plus size={17} />
+              Agregar otros bonos
+            </ActionButton>
+          )}
         </TabHeader>
 
         <SummaryGrid $columns={3}>
@@ -278,25 +282,27 @@ const SalaryInformation = ({ employee }) => {
                     <DetailInfo>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <DetailLabel>{bonus.name}</DetailLabel>
-                        <TableActions style={{ width: "auto", height: "auto" }}>
-                          <TableActionButton
-                            type="button"
-                            title="Editar bono"
-                            onClick={() => handleEditBonus(bonusRaw)}
-                            style={{ width: "26px", height: "26px" }}
-                          >
-                            <Pencil size={15} />
-                          </TableActionButton>
-                          <TableActionButton
-                            type="button"
-                            $danger
-                            title="Eliminar bono"
-                            onClick={() => handleDeleteBonus(bonus.id)}
-                            style={{ width: "26px", height: "26px" }}
-                          >
-                            <Trash2 size={15} />
-                          </TableActionButton>
-                        </TableActions>
+                        {canModify && (
+                          <TableActions style={{ width: "auto", height: "auto" }}>
+                            <TableActionButton
+                              type="button"
+                              title="Editar bono"
+                              onClick={() => handleEditBonus(bonusRaw)}
+                              style={{ width: "26px", height: "26px" }}
+                            >
+                              <Pencil size={15} />
+                            </TableActionButton>
+                            <TableActionButton
+                              type="button"
+                              $danger
+                              title="Eliminar bono"
+                              onClick={() => handleDeleteBonus(bonus.id)}
+                              style={{ width: "26px", height: "26px" }}
+                            >
+                              <Trash2 size={15} />
+                            </TableActionButton>
+                          </TableActions>
+                        )}
                       </div>
                       <DetailDescription>
                         Bono extra mensual — Base: {formatCurrency(bonus.amount)}

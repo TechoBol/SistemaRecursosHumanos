@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -43,6 +44,7 @@ import {
 } from "../ui/layout/Sidebar.styles";
 import { useLoginStore } from "../store/loginStore";
 import useAuthentication from "../../hooks/useAuthentication";
+import { usePermissions } from "../../hooks/usePermissions";
 import logoMenu from "../../assets/logo-menu.png";
 
 const MENU_ITEMS = [
@@ -72,6 +74,16 @@ const Sidebar = ({
   const navigate = useNavigate();
   const { fullName } = useLoginStore();
   const { logOut } = useAuthentication();
+  const { canAccessUsers } = usePermissions();
+
+  const visibleMenuItems = useMemo(() => {
+    return MENU_ITEMS.filter((item) => {
+      if (item.id === "usuarios" && !canAccessUsers) {
+        return false;
+      }
+      return true;
+    });
+  }, [canAccessUsers]);
 
   const closeMobileMenu = () => {
     if (window.innerWidth <= 768) {
@@ -193,7 +205,7 @@ const Sidebar = ({
         </SidebarHeader>
 
         <Navigation>
-          {MENU_ITEMS.map((item) =>
+          {visibleMenuItems.map((item) =>
             item.children
               ? renderGroupItem(item)
               : renderSimpleItem(item),

@@ -56,6 +56,7 @@ import {
   MobileHeaderLeft,
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
+import { usePermissions } from "../../hooks/usePermissions";
 import AdvanceModal from "../../components/modals/AdvanceModal";
 import { useEmployeeAdvances } from "../../hooks/useEmployeeAdvances";
 
@@ -89,6 +90,7 @@ const parseRecordDate = (dateStr) => {
 
 const AdvancesInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
+  const { canModify } = usePermissions();
   const { advances: records = [], addAdvance, updateAdvance, deleteAdvance } = useEmployeeAdvances(employee?.id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -253,36 +255,39 @@ const AdvancesInformation = ({ employee }) => {
     }
   };
 
-  const renderMobileMenu = (record) => (
-    <IncidentMenu>
-      <IncidentMenuButton title="Opciones">
-        <MoreVertical size={20} />
-      </IncidentMenuButton>
-      <IncidentMenuList>
-        <IncidentMenuAction
-          type="button"
-          onClick={(e) => {
-            closeMenu(e);
-            handleOpenEditModal(record);
-          }}
-        >
-          <Pencil size={14} />
-          Editar
-        </IncidentMenuAction>
-        <IncidentMenuAction
-          type="button"
-          $variant="danger"
-          onClick={(e) => {
-            closeMenu(e);
-            handleDeleteRecord(record.id);
-          }}
-        >
-          <Trash2 size={14} />
-          Eliminar
-        </IncidentMenuAction>
-      </IncidentMenuList>
-    </IncidentMenu>
-  );
+  const renderMobileMenu = (record) => {
+    if (!canModify) return null;
+    return (
+      <IncidentMenu>
+        <IncidentMenuButton title="Opciones">
+          <MoreVertical size={20} />
+        </IncidentMenuButton>
+        <IncidentMenuList>
+          <IncidentMenuAction
+            type="button"
+            onClick={(e) => {
+              closeMenu(e);
+              handleOpenEditModal(record);
+            }}
+          >
+            <Pencil size={14} />
+            Editar
+          </IncidentMenuAction>
+          <IncidentMenuAction
+            type="button"
+            $variant="danger"
+            onClick={(e) => {
+              closeMenu(e);
+              handleDeleteRecord(record.id);
+            }}
+          >
+            <Trash2 size={14} />
+            Eliminar
+          </IncidentMenuAction>
+        </IncidentMenuList>
+      </IncidentMenu>
+    );
+  };
 
   const renderAdvanceItem = (record) => {
     const { day, month } = parseRecordDate(record.date);
@@ -309,23 +314,25 @@ const AdvancesInformation = ({ employee }) => {
           <IncidentValueBlock>
             <IncidentDiscount>Bs {formatCurrency(record.amount)}</IncidentDiscount>
           </IncidentValueBlock>
-          <IncidentActions>
-            <IncidentActionButton
-              type="button"
-              title="Editar"
-              onClick={() => handleOpenEditModal(record)}
-            >
-              <Pencil size={16} />
-            </IncidentActionButton>
-            <IncidentActionButton
-              type="button"
-              $variant="danger"
-              title="Eliminar"
-              onClick={() => handleDeleteRecord(record.id)}
-            >
-              <Trash2 size={16} />
-            </IncidentActionButton>
-          </IncidentActions>
+          {canModify && (
+            <IncidentActions>
+              <IncidentActionButton
+                type="button"
+                title="Editar"
+                onClick={() => handleOpenEditModal(record)}
+              >
+                <Pencil size={16} />
+              </IncidentActionButton>
+              <IncidentActionButton
+                type="button"
+                $variant="danger"
+                title="Eliminar"
+                onClick={() => handleDeleteRecord(record.id)}
+              >
+                <Trash2 size={16} />
+              </IncidentActionButton>
+            </IncidentActions>
+          )}
         </DesktopOnly>
 
         {/* Mobile View */}
@@ -359,10 +366,12 @@ const AdvancesInformation = ({ employee }) => {
             <SectionTitle>Registros del mes actual</SectionTitle>
             <TabDescription>Anticipos de sueldo del mes actual</TabDescription>
           </div>
-          <ActionButton type="button" onClick={handleOpenCreateModal}>
-            <Plus size={17} />
-            Registrar anticipo
-          </ActionButton>
+          {canModify && (
+            <ActionButton type="button" onClick={handleOpenCreateModal}>
+              <Plus size={17} />
+              Registrar anticipo
+            </ActionButton>
+          )}
         </TabHeader>
 
         <SummaryGrid $columns={2}>
@@ -387,9 +396,11 @@ const AdvancesInformation = ({ employee }) => {
             <EmptyState>
               <Banknote size={48} strokeWidth={1.6} />
               <strong>No hay anticipos registrados este mes</strong>
-              <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
-                + Registrar el primero
-              </EmptyStateAction>
+              {canModify && (
+                <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
+                  + Registrar el primero
+                </EmptyStateAction>
+              )}
             </EmptyState>
           ) : (
             currentMonthRecords.map(renderAdvanceItem)

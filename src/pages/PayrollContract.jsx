@@ -8,6 +8,7 @@ import { useCompanies } from "../hooks/useCompanies";
 import { usePayrolls } from "../hooks/usePayrolls";
 import { exportFiscalPayrollPdf } from "../utils/fiscalPayrollPdfGenerator";
 import { exportPaymentSlipsPdf } from "../utils/paymentSlipPdfGenerator";
+import { usePermissions } from "../hooks/usePermissions";
 import { errorToast, successToast } from "../services/toasts";
 import {
   ActionPrimaryButton,
@@ -83,6 +84,7 @@ const PayrollContract = () => {
   const [selectedPayrollForCalculation, setSelectedPayrollForCalculation] = useState(null);
   const [isCalculationModalOpen, setIsCalculationModalOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const { canFinalizePayroll } = usePermissions();
 
   // Anios disponibles
   const availableYears = useMemo(() => {
@@ -602,31 +604,33 @@ const PayrollContract = () => {
               )}
             </ActionSecondaryButton>
 
-            <ActionPrimaryButton
-              type="button"
-              onClick={handleFinalizePayroll}
-              disabled={isLoading || isPayrollFinalized || !canFinalize}
-              $isFinalized={isPayrollFinalized}
-              title={
-                isPayrollFinalized
-                  ? "La planilla de este mes ya se encuentra finalizada y cerrada."
-                  : !canFinalize
-                  ? "Se habilita a partir del último día del mes correspondiente"
-                  : "Finalizar y cerrar definitivamente la planilla de este mes"
-              }
-            >
-              {isPayrollFinalized ? (
-                <>
-                  <CheckCircle2 size={18} />
-                  <span>Planilla Finalizada</span>
-                </>
-              ) : (
-                <>
-                  <Lock size={18} />
-                  <span>Finalizar planilla</span>
-                </>
-              )}
-            </ActionPrimaryButton>
+            {canFinalizePayroll && (
+              <ActionPrimaryButton
+                type="button"
+                onClick={handleFinalizePayroll}
+                disabled={isLoading || isPayrollFinalized || !canFinalize}
+                $isFinalized={isPayrollFinalized}
+                title={
+                  isPayrollFinalized
+                    ? "La planilla de este mes ya se encuentra finalizada y cerrada."
+                    : !canFinalize
+                    ? "Se habilita a partir del último día del mes correspondiente"
+                    : "Finalizar y cerrar definitivamente la planilla de este mes"
+                }
+              >
+                {isPayrollFinalized ? (
+                  <>
+                    <CheckCircle2 size={18} />
+                    <span>Planilla Finalizada</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={18} />
+                    <span>Finalizar planilla</span>
+                  </>
+                )}
+              </ActionPrimaryButton>
+            )}
           </ChipFilters>
         </FiltersWrapper>
 

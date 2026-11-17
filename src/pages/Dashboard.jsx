@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useEmployees } from "../hooks/useEmployees";
+import { usePermissions } from "../hooks/usePermissions";
 import { getEmployeeStatus, getContractStatus } from "../utils/dateUtils";
 import {
   DashboardContainer,
@@ -169,6 +170,7 @@ const EVENT_LEGEND = {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { employees, isLoading } = useEmployees();
+  const { canViewBirthdays } = usePermissions();
 
   const today = useMemo(() => normalizeDateOnly(new Date()), []);
 
@@ -363,14 +365,16 @@ const Dashboard = () => {
     };
 
     activeEmployees.forEach((emp) => {
-      // 1. Cumpleaños
-      const birth = parseDateOnly(emp.birthDate);
-      if (birth && birth.getMonth() === calendarMonth.month) {
-        addEvent(birth.getDate(), {
-          type: "cumple",
-          emp,
-          text: `Cumple ${calendarMonth.year - birth.getFullYear()} años`,
-        });
+      // 1. Cumpleaños (solo si el rol tiene permiso de ver cumpleaños)
+      if (canViewBirthdays) {
+        const birth = parseDateOnly(emp.birthDate);
+        if (birth && birth.getMonth() === calendarMonth.month) {
+          addEvent(birth.getDate(), {
+            type: "cumple",
+            emp,
+            text: `Cumple ${calendarMonth.year - birth.getFullYear()} años`,
+          });
+        }
       }
 
       // 2. Aniversarios
@@ -408,7 +412,7 @@ const Dashboard = () => {
     });
 
     return eventsByDay;
-  }, [activeEmployees, calendarMonth]);
+  }, [activeEmployees, calendarMonth, canViewBirthdays]);
 
   const handleMonthStep = (step) => {
     const next = new Date(calendarMonth.year, calendarMonth.month + step, 1);
@@ -482,25 +486,27 @@ const Dashboard = () => {
           <KpiHint>Colaboradores registrados</KpiHint>
         </KpiCard>
 
-        <KpiCard
-          $variant="violet"
-          onClick={() => {
-            const el = document.getElementById("sec-cumpleanios");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
-          title="Ver cumpleaños del mes"
-        >
-          <KpiIconWrapper className="kpi-ic">
-            <Cake size={20} />
-          </KpiIconWrapper>
-          <KpiLabel>Cumpleaños del mes</KpiLabel>
-          <KpiValue>{birthdaysData.mes.length}</KpiValue>
-          <KpiHint>
-            {birthdaysData.hoy.length
-              ? `${birthdaysData.hoy.length} celebrando hoy`
-              : "Ninguno hoy"}
-          </KpiHint>
-        </KpiCard>
+        {canViewBirthdays && (
+          <KpiCard
+            $variant="violet"
+            onClick={() => {
+              const el = document.getElementById("sec-cumpleanios");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+            title="Ver cumpleaños del mes"
+          >
+            <KpiIconWrapper className="kpi-ic">
+              <Cake size={20} />
+            </KpiIconWrapper>
+            <KpiLabel>Cumpleaños del mes</KpiLabel>
+            <KpiValue>{birthdaysData.mes.length}</KpiValue>
+            <KpiHint>
+              {birthdaysData.hoy.length
+                ? `${birthdaysData.hoy.length} celebrando hoy`
+                : "Ninguno hoy"}
+            </KpiHint>
+          </KpiCard>
+        )}
 
         <KpiCard
           $variant="red"
@@ -541,8 +547,8 @@ const Dashboard = () => {
 
       {/* FILA 1: CALENDARIO INTERACTIVO + CUMPLEAÑOS */}
       <DashboardGrid>
-        {/* CALENDARIO (SPAN 8) */}
-        <Card className="span-8">
+        {/* CALENDARIO (SPAN 8 SI HAY CUMPLEAÑOS, SPAN 12 SI NO HAY) */}
+        <Card className={canViewBirthdays ? "span-8" : "span-12"}>
           <CardHeader>
             <CardTitleGroup>
               <CardTitle>
@@ -581,25 +587,27 @@ const Dashboard = () => {
 
           {/* Filtros de eventos de leyenda */}
           <CalendarLegend>
-            {Object.entries(EVENT_LEGEND).map(([typeKey, legendInfo]) => {
-              const active = activeEventTypes[typeKey];
-              return (
-                <LegendFilter
-                  key={typeKey}
-                  type="button"
-                  $active={active}
-                  onClick={() =>
-                    setActiveEventTypes((prev) => ({
-                      ...prev,
-                      [typeKey]: !prev[typeKey],
-                    }))
-                  }
-                >
-                  <LegendDot $color={active ? legendInfo.color : "#cbd5e1"} />
-                  <span>{legendInfo.label}</span>
-                </LegendFilter>
-              );
-            })}
+            {Object.entries(EVENT_LEGEND)
+              .filter(([typeKey]) => canViewBirthdays || typeKey !== "cumple")
+              .map(([typeKey, legendInfo]) => {
+                const active = activeEventTypes[typeKey];
+                return (
+                  <LegendFilter
+                    key={typeKey}
+                    type="button"
+                    $active={active}
+                    onClick={() =>
+                      setActiveEventTypes((prev) => ({
+                        ...prev,
+                        [typeKey]: !prev[typeKey],
+                      }))
+                    }
+                  >
+                    <LegendDot $color={active ? legendInfo.color : "#cbd5e1"} />
+                    <span>{legendInfo.label}</span>
+                  </LegendFilter>
+                );
+              })}
           </CalendarLegend>
 
           <CalendarWrapper>
@@ -694,104 +702,106 @@ const Dashboard = () => {
         </Card>
 
         {/* CUMPLEAÑOS (SPAN 4) */}
-        <Card id="sec-cumpleanios" className="span-4">
-          <CardHeader>
-            <CardTitleGroup>
-              <CardTitle>Cumpleaños</CardTitle>
-              <CardSubtitle>
-                {capitalizeWords(MONTH_NAMES[today.getMonth()])}: {birthdaysData.mes.length}{" "}
-                {birthdaysData.mes.length === 1 ? "persona" : "personas"}
-              </CardSubtitle>
-            </CardTitleGroup>
+        {canViewBirthdays && (
+          <Card id="sec-cumpleanios" className="span-4">
+            <CardHeader>
+              <CardTitleGroup>
+                <CardTitle>Cumpleaños</CardTitle>
+                <CardSubtitle>
+                  {capitalizeWords(MONTH_NAMES[today.getMonth()])}: {birthdaysData.mes.length}{" "}
+                  {birthdaysData.mes.length === 1 ? "persona" : "personas"}
+                </CardSubtitle>
+              </CardTitleGroup>
 
-            <SegmentGroup>
-              <SegmentButton
-                type="button"
-                $active={birthdayFilter === "hoy"}
-                onClick={() => setBirthdayFilter("hoy")}
-              >
-                Hoy
-                <SegmentCount $active={birthdayFilter === "hoy"}>
-                  {birthdaysData.hoy.length}
-                </SegmentCount>
-              </SegmentButton>
-              <SegmentButton
-                type="button"
-                $active={birthdayFilter === "semana"}
-                onClick={() => setBirthdayFilter("semana")}
-              >
-                7 días
-                <SegmentCount $active={birthdayFilter === "semana"}>
-                  {birthdaysData.semana.length}
-                </SegmentCount>
-              </SegmentButton>
-              <SegmentButton
-                type="button"
-                $active={birthdayFilter === "mes"}
-                onClick={() => setBirthdayFilter("mes")}
-              >
-                Mes
-                <SegmentCount $active={birthdayFilter === "mes"}>
-                  {birthdaysData.mes.length}
-                </SegmentCount>
-              </SegmentButton>
-            </SegmentGroup>
-          </CardHeader>
+              <SegmentGroup>
+                <SegmentButton
+                  type="button"
+                  $active={birthdayFilter === "hoy"}
+                  onClick={() => setBirthdayFilter("hoy")}
+                >
+                  Hoy
+                  <SegmentCount $active={birthdayFilter === "hoy"}>
+                    {birthdaysData.hoy.length}
+                  </SegmentCount>
+                </SegmentButton>
+                <SegmentButton
+                  type="button"
+                  $active={birthdayFilter === "semana"}
+                  onClick={() => setBirthdayFilter("semana")}
+                >
+                  7 días
+                  <SegmentCount $active={birthdayFilter === "semana"}>
+                    {birthdaysData.semana.length}
+                  </SegmentCount>
+                </SegmentButton>
+                <SegmentButton
+                  type="button"
+                  $active={birthdayFilter === "mes"}
+                  onClick={() => setBirthdayFilter("mes")}
+                >
+                  Mes
+                  <SegmentCount $active={birthdayFilter === "mes"}>
+                    {birthdaysData.mes.length}
+                  </SegmentCount>
+                </SegmentButton>
+              </SegmentGroup>
+            </CardHeader>
 
-          {birthdaysData[birthdayFilter].length === 0 ? (
-            <EmptyState>
-              {birthdayFilter === "hoy"
-                ? "Nadie cumple años hoy."
-                : birthdayFilter === "semana"
-                ? "Nadie cumple años en los próximos 7 días."
-                : "Nadie cumple años este mes."}
-            </EmptyState>
-          ) : (
-            <ItemsList className="scrollable">
-              {birthdaysData[birthdayFilter].map((item) => {
-                const initials = getInitials(item.emp.firstNames, item.emp.lastNames);
-                const colors = getAvatarColor(item.emp.firstNames);
-                const isPassed = item.diff < 0;
-                const activeContract = getActiveContract(item.emp);
-                const branchName =
-                  activeContract?.branch?.name || item.emp?.branch?.name || "Sin sucursal";
+            {birthdaysData[birthdayFilter].length === 0 ? (
+              <EmptyState>
+                {birthdayFilter === "hoy"
+                  ? "Nadie cumple años hoy."
+                  : birthdayFilter === "semana"
+                  ? "Nadie cumple años en los próximos 7 días."
+                  : "Nadie cumple años este mes."}
+              </EmptyState>
+            ) : (
+              <ItemsList className="scrollable">
+                {birthdaysData[birthdayFilter].map((item) => {
+                  const initials = getInitials(item.emp.firstNames, item.emp.lastNames);
+                  const colors = getAvatarColor(item.emp.firstNames);
+                  const isPassed = item.diff < 0;
+                  const activeContract = getActiveContract(item.emp);
+                  const branchName =
+                    activeContract?.branch?.name || item.emp?.branch?.name || "Sin sucursal";
 
-                return (
-                  <ItemRow
-                    key={item.emp.id}
-                    $dim={isPassed}
-                    onClick={() => navigate(`/empleados/${item.emp.id}`)}
-                    title="Ver detalle del empleado"
-                  >
-                    <Avatar $bg={colors.bg} $fg={colors.fg}>
-                      {initials}
-                    </Avatar>
-                    <ItemMain>
-                      <ItemName>
-                        {formatNameTitle(`${item.emp.lastNames} ${item.emp.firstNames}`)}
-                      </ItemName>
-                      <ItemMeta>Sucursal: {capitalizeWords(branchName)}</ItemMeta>
-                    </ItemMain>
-                    <ItemRight>
-                      <ItemDate>{formatShortDate(item.date)}</ItemDate>
-                      <ChipBadge
-                        $variant={
-                          item.diff === 0
-                            ? "violet-soft"
-                            : isPassed
-                            ? "gray"
-                            : "violet-soft"
-                        }
-                      >
-                        {isPassed ? "Ya pasó" : getRelativeDaysText(item.diff)}
-                      </ChipBadge>
-                    </ItemRight>
-                  </ItemRow>
-                );
-              })}
-            </ItemsList>
-          )}
-        </Card>
+                  return (
+                    <ItemRow
+                      key={item.emp.id}
+                      $dim={isPassed}
+                      onClick={() => navigate(`/empleados/${item.emp.id}`)}
+                      title="Ver detalle del empleado"
+                    >
+                      <Avatar $bg={colors.bg} $fg={colors.fg}>
+                        {initials}
+                      </Avatar>
+                      <ItemMain>
+                        <ItemName>
+                          {formatNameTitle(`${item.emp.lastNames} ${item.emp.firstNames}`)}
+                        </ItemName>
+                        <ItemMeta>Sucursal: {capitalizeWords(branchName)}</ItemMeta>
+                      </ItemMain>
+                      <ItemRight>
+                        <ItemDate>{formatShortDate(item.date)}</ItemDate>
+                        <ChipBadge
+                          $variant={
+                            item.diff === 0
+                              ? "violet-soft"
+                              : isPassed
+                              ? "gray"
+                              : "violet-soft"
+                          }
+                        >
+                          {isPassed ? "Ya pasó" : getRelativeDaysText(item.diff)}
+                        </ChipBadge>
+                      </ItemRight>
+                    </ItemRow>
+                  );
+                })}
+              </ItemsList>
+            )}
+          </Card>
+        )}
       </DashboardGrid>
 
       {/* FILA 2: CONTRATOS POR VENCER + HITOS DE ANTIGÜEDAD */}

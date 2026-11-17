@@ -42,6 +42,7 @@ import BranchModal from "../components/modals/BranchModal";
 import { useBranches } from "../hooks/useBranches";
 import { useCities } from "../hooks/useCities";
 import { useCompanies } from "../hooks/useCompanies";
+import { usePermissions } from "../hooks/usePermissions";
 
 const BRANCH_COLUMNS = `
   minmax(320px, 1.6fr)
@@ -54,6 +55,7 @@ const Branches = () => {
   const { branches, isLoading, createBranch, updateBranch, deleteBranch } = useBranches();
   const { cities, isLoading: isCitiesLoading } = useCities();
   const { companies, isLoading: isCompaniesLoading } = useCompanies();
+  const { canModify } = usePermissions();
 
   const [searchValue, setSearchValue] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
@@ -155,13 +157,15 @@ const Branches = () => {
                 onChange={(event) => setSearchValue(event.target.value)}
               />
             </SearchContainer>
-            <AddButton
-              type="button"
-              onClick={handleAddBranch}
-            >
-              <Plus size={18} />
-              Añadir sucursal
-            </AddButton>
+            {canModify && (
+              <AddButton
+                type="button"
+                onClick={handleAddBranch}
+              >
+                <Plus size={18} />
+                Añadir sucursal
+              </AddButton>
+            )}
           </PageActions>
         </PageHeader>
 
@@ -225,28 +229,30 @@ const Branches = () => {
                       </CatalogBadgeList>
                     </CatalogColumn>
 
-                    <CatalogActions>
-                      <CatalogActionButton
-                        type="button"
-                        title="Editar sucursal"
-                        aria-label={`Editar sucursal ${branch.name}`}
-                        onClick={() => handleEditBranch(branch)}
-                      >
-                        <Pencil size={19} />
-                      </CatalogActionButton>
-
-                      {branch.isActive !== false && (
+                    {canModify && (
+                      <CatalogActions>
                         <CatalogActionButton
                           type="button"
-                          $danger
-                          title="Eliminar sucursal"
-                          aria-label={`Eliminar sucursal ${branch.name}`}
-                          onClick={() => handleDeleteBranch(branch)}
+                          title="Editar sucursal"
+                          aria-label={`Editar sucursal ${branch.name}`}
+                          onClick={() => handleEditBranch(branch)}
                         >
-                          <Trash2 size={19} color="#FF2B2B" />
+                          <Pencil size={19} />
                         </CatalogActionButton>
-                      )}
-                    </CatalogActions>
+
+                        {branch.isActive !== false && (
+                          <CatalogActionButton
+                            type="button"
+                            $danger
+                            title="Eliminar sucursal"
+                            aria-label={`Eliminar sucursal ${branch.name}`}
+                            onClick={() => handleDeleteBranch(branch)}
+                          >
+                            <Trash2 size={19} color="#FF2B2B" />
+                          </CatalogActionButton>
+                        )}
+                      </CatalogActions>
+                    )}
                   </CatalogRow>
                 ))}
               </CatalogList>

@@ -38,6 +38,7 @@ import {
 import JobTitleModal from "../components/modals/JobTitleModal";
 import { useJobTitles } from "../hooks/useJobTitles";
 import { useAreas } from "../hooks/useAreas";
+import { usePermissions } from "../hooks/usePermissions";
 
 const BRANCH_COLUMNS = `
   minmax(320px, 1fr)
@@ -56,6 +57,7 @@ const getJobTitleIcon = (name) => {
 const JobTitles = () => {
   const { jobTitles, isLoading, createJobTitle, updateJobTitle, deleteJobTitle } = useJobTitles();
   const { areas, isLoading: isAreasLoading } = useAreas();
+  const { canModify } = usePermissions();
   const [searchValue, setSearchValue] = useState("");
   const [isJobTitleModalOpen, setIsJobTitleModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -145,13 +147,15 @@ const JobTitles = () => {
                 }
               />
             </SearchContainer>
-            <AddButton
-              type="button"
-              onClick={handleAddJobTitle}
-            >
-              <Plus size={18} />
-              Agregar cargo
-            </AddButton>
+            {canModify && (
+              <AddButton
+                type="button"
+                onClick={handleAddJobTitle}
+              >
+                <Plus size={18} />
+                Agregar cargo
+              </AddButton>
+            )}
           </PageActions>
         </PageHeader>
 
@@ -190,28 +194,30 @@ const JobTitles = () => {
                       </CatalogBadgeList>
                     </CatalogColumn>
 
-                    <CatalogActions>
-                      <CatalogActionButton
-                        type="button"
-                        title="Editar cargo"
-                        aria-label={`Editar cargo ${jobTitle.name}`}
-                        onClick={() => handleEditJobTitle(jobTitle)}
-                      >
-                        <Pencil size={19} />
-                      </CatalogActionButton>
-
-                      {jobTitle.isActive !== false && (
+                    {canModify && (
+                      <CatalogActions>
                         <CatalogActionButton
                           type="button"
-                          $danger
-                          title="Eliminar cargo"
-                          aria-label={`Eliminar cargo ${jobTitle.name}`}
-                          onClick={() => handleDeleteJobTitle(jobTitle)}
+                          title="Editar cargo"
+                          aria-label={`Editar cargo ${jobTitle.name}`}
+                          onClick={() => handleEditJobTitle(jobTitle)}
                         >
-                          <Trash2 size={19} color="#FF2B2B" />
+                          <Pencil size={19} />
                         </CatalogActionButton>
-                      )}
-                    </CatalogActions>
+
+                        {jobTitle.isActive !== false && (
+                          <CatalogActionButton
+                            type="button"
+                            $danger
+                            title="Eliminar cargo"
+                            aria-label={`Eliminar cargo ${jobTitle.name}`}
+                            onClick={() => handleDeleteJobTitle(jobTitle)}
+                          >
+                            <Trash2 size={19} color="#FF2B2B" />
+                          </CatalogActionButton>
+                        )}
+                      </CatalogActions>
+                    )}
                   </CatalogRow>
                 ))}
               </CatalogList>

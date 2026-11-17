@@ -40,6 +40,7 @@ import { useCompanies } from "../../hooks/useCompanies";
 import { useBranches } from "../../hooks/useBranches";
 import { useAreas } from "../../hooks/useAreas";
 import { useJobTitles } from "../../hooks/useJobTitles";
+import { usePermissions } from "../../hooks/usePermissions";
 import { successToast } from "../../services/toasts";
 import AdvancesInformation from "./AdvancesInformation";
 import MemorandumsInformation from "./MemorandumsInformation";
@@ -103,6 +104,7 @@ const EmployeeDetail = () => {
   const { branches } = useBranches();
   const { areas } = useAreas();
   const { jobTitles } = useJobTitles();
+  const { canModify } = usePermissions();
   const [employee, setEmployee] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("personal");
@@ -324,12 +326,14 @@ const EmployeeDetail = () => {
                 </ContactSection>
 
                 <ContactActionGroup>
-                  <ActionButton
-                    type="button"
-                    onClick={() => setIsEmployeeModalOpen(true)}
-                  >
-                    Editar
-                  </ActionButton>
+                  {canModify && (
+                    <ActionButton
+                      type="button"
+                      onClick={() => setIsEmployeeModalOpen(true)}
+                    >
+                      Editar
+                    </ActionButton>
+                  )}
 
                   <SecondaryButton
                     type="button"

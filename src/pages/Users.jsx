@@ -23,11 +23,13 @@ import UserModal from "../components/modals/UserModal";
 import DataTable from "../components/table/DataTable";
 import { useUsers } from "../hooks/useUsers";
 import { useRoles } from "../hooks/useRoles";
+import { usePermissions } from "../hooks/usePermissions";
 import { successToast } from "../services/toasts";
 
 const Users = () => {
   const { users, isLoading, createUser, updateUser, deleteUser } = useUsers();
   const { roles } = useRoles();
+  const { canManageUsers } = usePermissions();
   const [searchValue, setSearchValue] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -142,45 +144,49 @@ const Users = () => {
           </span>
         ),
       },
-      {
-        field: "actions",
-        headerName: "Acciones",
-        width: 140,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: ({ row }) => (
-          <TableActions>
-            <TableActionButton
-              type="button"
-              title="Editar usuario"
-              aria-label={`Editar a ${row.firstName} ${row.lastName}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleOpenEditModal(row);
-              }}
-            >
-              <Pencil size={19} />
-            </TableActionButton>
+      ...(canManageUsers
+        ? [
+            {
+              field: "actions",
+              headerName: "Acciones",
+              width: 140,
+              sortable: false,
+              filterable: false,
+              disableColumnMenu: true,
+              renderCell: ({ row }) => (
+                <TableActions>
+                  <TableActionButton
+                    type="button"
+                    title="Editar usuario"
+                    aria-label={`Editar a ${row.firstName} ${row.lastName}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOpenEditModal(row);
+                    }}
+                  >
+                    <Pencil size={19} />
+                  </TableActionButton>
 
-            {row.isActive && (
-              <TableActionButton
-                type="button"
-                title="Eliminar usuario"
-                aria-label={`Desactivar a ${row.firstName} ${row.lastName}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleDeleteUser(row);
-                }}
-              >
-                <Trash2 size={19} color="#FF2B2B" />
-              </TableActionButton>
-            )}
-          </TableActions>
-        ),
-      },
+                  {row.isActive && (
+                    <TableActionButton
+                      type="button"
+                      title="Eliminar usuario"
+                      aria-label={`Desactivar a ${row.firstName} ${row.lastName}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteUser(row);
+                      }}
+                    >
+                      <Trash2 size={19} color="#FF2B2B" />
+                    </TableActionButton>
+                  )}
+                </TableActions>
+              ),
+            },
+          ]
+        : []),
     ],
-    [],
+    [canManageUsers],
   );
 
   return (
@@ -201,13 +207,15 @@ const Users = () => {
                 }
               />
             </SearchContainer>
-            <AddButton
-              type="button"
-              onClick={handleOpenCreateModal}
-            >
-              <UserPlus size={18} />
-              Registrar usuario
-            </AddButton>
+            {canManageUsers && (
+              <AddButton
+                type="button"
+                onClick={handleOpenCreateModal}
+              >
+                <UserPlus size={18} />
+                Registrar usuario
+              </AddButton>
+            )}
           </PageActions>
         </PageHeader>
 
