@@ -39,6 +39,7 @@ import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
 import { useAreas } from "../hooks/useAreas";
 import { useJobTitles } from "../hooks/useJobTitles";
+import { useCities } from "../hooks/useCities";
 import { usePermissions } from "../hooks/usePermissions";
 import { successToast } from "../services/toasts";
 
@@ -49,6 +50,7 @@ const Employees = () => {
   const { branches } = useBranches();
   const { areas } = useAreas();
   const { jobTitles } = useJobTitles();
+  const { cities } = useCities();
   const { canModify } = usePermissions();
 
   const [searchValue, setSearchValue] = useState("");
@@ -404,6 +406,7 @@ const Employees = () => {
         branches={branches}
         areas={areas}
         jobTitles={jobTitles}
+        cities={cities}
         onClose={handleCloseModal}
         onSubmit={handleSubmitEmployee}
       />

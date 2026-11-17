@@ -45,6 +45,7 @@ const INITIAL_CONTRACT = {
   contractJobTitleId: "",
   consolidatedCompanyId: "",
   employeeType: "Fiscal",
+  cityId: "",
   branchId: "",
   areaId: "",
   jobTitleId: "",
@@ -70,6 +71,7 @@ const EmployeeModal = ({
   branches = [],
   areas = [],
   jobTitles = [],
+  cities = [],
   onClose,
   onSubmit,
 }) => {
@@ -126,6 +128,7 @@ const EmployeeModal = ({
           contractJobTitleId: c.contractJobTitleId ? String(c.contractJobTitleId) : "",
           consolidatedCompanyId: c.consolidatedCompanyId ? String(c.consolidatedCompanyId) : "",
           employeeType: c.contractType === "CONSULTING" ? "Consultor" : c.contractType === "PROMOTER" ? "Promotor" : "Fiscal",
+          cityId: c.cityId ? String(c.cityId) : "",
           branchId: c.branchId ? String(c.branchId) : "",
           areaId: c.areaId ? String(c.areaId) : "",
           jobTitleId: c.jobTitleId ? String(c.jobTitleId) : "",
@@ -226,6 +229,7 @@ const EmployeeModal = ({
     contracts.forEach((c, idx) => {
       if (!c.contractCompanyId) nextErrors[`contract_${idx}_contractCompanyId`] = "Selecciona la empresa contratante.";
       if (!c.contractJobTitleId) nextErrors[`contract_${idx}_contractJobTitleId`] = "Selecciona el cargo del contrato.";
+      if (!c.cityId) nextErrors[`contract_${idx}_cityId`] = "Selecciona la ciudad del contrato.";
       if (!c.consolidatedCompanyId) nextErrors[`contract_${idx}_consolidatedCompanyId`] = "Selecciona la empresa consolidada.";
       if (!c.branchId) nextErrors[`contract_${idx}_branchId`] = "Selecciona una sucursal.";
       if (!c.areaId) nextErrors[`contract_${idx}_areaId`] = "Selecciona un área.";
@@ -259,7 +263,7 @@ const EmployeeModal = ({
           nextErrors[`contract_${pastContract.originalIndex}_endDate`] =
             "Asigne una fecha de fin a este contrato anterior.";
           setValidationError(
-            "No pueden existir dos o más contratos sin fecha de fin de contrato. Por favor, asigne una fecha de fin a los contratos más antiguos."
+            "No pueden existir dos o más contratos sin fecha de fin. Por favor, asigne una fecha de fin a los contratos anteriores."
           );
         }
       }
@@ -305,6 +309,7 @@ const EmployeeModal = ({
       // Compatibilidad con endpoints simples
       contractCompanyId: primaryContract.contractCompanyId,
       contractJobTitleId: primaryContract.contractJobTitleId,
+      cityId: primaryContract.cityId ? Number(primaryContract.cityId) : null,
       consolidatedCompanyId: primaryContract.consolidatedCompanyId,
       employeeType: primaryContract.employeeType,
       branchId: primaryContract.branchId,
@@ -320,6 +325,7 @@ const EmployeeModal = ({
           id: c.id,
           contractCompanyId: c.contractCompanyId,
           contractJobTitleId: c.contractJobTitleId,
+          cityId: c.cityId ? Number(c.cityId) : null,
           consolidatedCompanyId: c.consolidatedCompanyId,
           employeeType: c.employeeType,
           branchId: c.branchId,
@@ -517,14 +523,14 @@ const EmployeeModal = ({
                   statusInfo.variant === "warning"
                     ? "#fef3c7"
                     : isActive
-                    ? "#dcfce7"
-                    : "#e2e8f0";
+                      ? "#dcfce7"
+                      : "#e2e8f0";
                 const badgeColor =
                   statusInfo.variant === "warning"
                     ? "#92400e"
                     : isActive
-                    ? "#166534"
-                    : "#475569";
+                      ? "#166534"
+                      : "#475569";
 
                 return (
                   <ModalAccordionCard key={c.id || idx} $highlighted={isActive}>
@@ -549,7 +555,7 @@ const EmployeeModal = ({
 
                     {isExpanded && (
                       <ModalAccordionBody>
-                        <FormGrid $columns={3}>
+                        <FormGrid $columns={4}>
                           <FormField>
                             <FormLabel htmlFor={`contractCompanyId_${idx}`}>Empresa de contrato</FormLabel>
                             <FormSelect
@@ -607,6 +613,28 @@ const EmployeeModal = ({
                             )}
                           </FormField>
 
+                          <FormField>
+                            <FormLabel htmlFor={`cityId_${idx}`}>Ciudad contrato</FormLabel>
+                            <FormSelect
+                              id={`cityId_${idx}`}
+                              value={c.cityId || ""}
+                              onChange={(e) => handleContractChange(idx, "cityId", e.target.value)}
+                              $invalid={Boolean(errors[`contract_${idx}_cityId`])}
+                            >
+                              <option value="">Seleccionar</option>
+                              {cities.map((city) => (
+                                <option key={city.id} value={city.id}>
+                                  {city.name}
+                                </option>
+                              ))}
+                            </FormSelect>
+                            {errors[`contract_${idx}_cityId`] && (
+                              <FormErrorText>{errors[`contract_${idx}_cityId`]}</FormErrorText>
+                            )}
+                          </FormField>
+                        </FormGrid>
+
+                        <FormGrid $columns={3}>
                           <FormField>
                             <FormLabel htmlFor={`consolidatedCompanyId_${idx}`}>Empresa consolidada</FormLabel>
                             <FormSelect
