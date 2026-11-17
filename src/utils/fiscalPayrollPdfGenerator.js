@@ -414,7 +414,9 @@ const drawHeader = async (
   doc.roundedRect(centerX - 12, 19.5, 24, 1.1, 0.5, 0.5, "F");
 
   // Última actualización
-  drawUpdateMetadataBox(doc, 232, 7.5, 55, 15.5, theme, timestamp);
+  const updateBoxWidth = 55;
+  const updateBoxX = pageWidth - 10 - updateBoxWidth;
+  drawUpdateMetadataBox(doc, updateBoxX, 7.5, updateBoxWidth, 15.5, theme, timestamp);
 };
 
 export const exportFiscalPayrollPdf = async ({
@@ -434,7 +436,7 @@ export const exportFiscalPayrollPdf = async ({
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
-    format: "a4",
+    format: "legal",
   });
 
   const autoTableConfig = {
@@ -443,25 +445,27 @@ export const exportFiscalPayrollPdf = async ({
       fillColor: theme.primary,
       textColor: theme.white,
       fontStyle: "bold",
-      fontSize: 6.5,
+      fontSize: 6.8,
+      overflow: "linebreak",
       cellPadding: {
-        top: 1.8,
-        bottom: 1.8,
-        left: 1.2,
-        right: 1.2,
+        top: 2,
+        bottom: 2,
+        left: 1.5,
+        right: 1.5,
       },
       lineWidth: 0.15,
       lineColor: theme.white,
     },
 
     bodyStyles: {
-      fontSize: 6.5,
+      fontSize: 6.8,
       textColor: theme.text,
+      overflow: "linebreak",
       cellPadding: {
-        top: 1.6,
-        bottom: 1.6,
-        left: 1.2,
-        right: 1.2,
+        top: 1.8,
+        bottom: 1.8,
+        left: 1.5,
+        right: 1.5,
       },
       lineWidth: 0.1,
       lineColor: theme.border,
@@ -471,23 +475,24 @@ export const exportFiscalPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
+    // 16 columnas con ancho total = 335.6mm (márgenes de 10mm en Legal apaisada de 355.6mm)
     columnStyles: {
-      0: { cellWidth: 7, halign: "center" },
-      1: { cellWidth: 39, halign: "left" },
-      2: { cellWidth: 28, halign: "left" },
-      3: { cellWidth: 15, halign: "center" },
-      4: { cellWidth: 16, halign: "right" },
-      5: { cellWidth: 10, halign: "center" },
-      6: { cellWidth: 16, halign: "right" },
-      7: { cellWidth: 16, halign: "right" },
-      8: { cellWidth: 15, halign: "right" },
-      9: { cellWidth: 17, halign: "right", fontStyle: "bold" },
-      10: { cellWidth: 16, halign: "right" },
-      11: { cellWidth: 16, halign: "right" },
-      12: { cellWidth: 15, halign: "right" },
-      13: { cellWidth: 15, halign: "right" },
-      14: { cellWidth: 16, halign: "right" },
-      15: { cellWidth: 20, halign: "right", fontStyle: "bold" },
+      0: { cellWidth: 8, halign: "center" },    // N°
+      1: { cellWidth: 47, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 34, halign: "left" },     // CARGO
+      3: { cellWidth: 17, halign: "center" },   // FECHA DE INGRESO
+      4: { cellWidth: 18, halign: "right" },    // HABER BÁSICO
+      5: { cellWidth: 11, halign: "center" },   // DÍAS TRAB.
+      6: { cellWidth: 18, halign: "right" },    // SUELDO BÁSICO
+      7: { cellWidth: 24, halign: "right" },    // ANTIGÜEDAD (espacio amplio para que entre sin cortar palabra)
+      8: { cellWidth: 20, halign: "right" },    // OTROS BONOS
+      9: { cellWidth: 20, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      10: { cellWidth: 18, halign: "right" },   // CNS 10%
+      11: { cellWidth: 18, halign: "right" },   // GESTORA
+      12: { cellWidth: 18, halign: "right" },   // PERM. / FALTAS
+      13: { cellWidth: 18, halign: "right" },   // ANTICIPOS
+      14: { cellWidth: 18, halign: "right" },   // TOTAL DESC.
+      15: { cellWidth: 22.6, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
     },
 
     didParseCell: (data) => {
@@ -587,21 +592,26 @@ export const exportFiscalPayrollPdf = async ({
 
   // Footer en todas las páginas
   const totalPages = doc.internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const footerLineY = pageHeight - 14.5;
+  const footerTextY = pageHeight - 10.8;
+  const contentRight = pageWidth - 10;
 
   for (let page = 1; page <= totalPages; page++) {
     doc.setPage(page);
     doc.setDrawColor(...theme.border);
     doc.setLineWidth(0.25);
-    doc.line(10, 201.5, 287, 201.5);
+    doc.line(10, footerLineY, contentRight, footerLineY);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.5);
     doc.setTextColor(...theme.mutedText);
     doc.text(
       `${companyName} • Planilla Fiscal • ${monthName} ${periodYear}`,
       10,
-      205.2
+      footerTextY
     );
-    doc.text(`Página ${page} de ${totalPages}`, 287, 205.2, {
+    doc.text(`Página ${page} de ${totalPages}`, contentRight, footerTextY, {
       align: "right",
     });
   }
