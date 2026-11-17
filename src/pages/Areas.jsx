@@ -34,6 +34,7 @@ import {
 import Swal from "sweetalert2";
 import AreaModal from "../components/modals/AreaModal";
 import { useAreas } from "../hooks/useAreas";
+import { usePermissions } from "../hooks/usePermissions";
 
 const BRANCH_COLUMNS = `
   minmax(0, 1fr)
@@ -50,6 +51,7 @@ const getAreaIcon = (name) => {
 
 const Areas = () => {
   const { areas, isLoading, createArea, updateArea, deleteArea } = useAreas();
+  const { canModify } = usePermissions();
   const [searchValue, setSearchValue] = useState("");
   const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -132,13 +134,15 @@ const Areas = () => {
                 }
               />
             </SearchContainer>
-            <AddButton
-              type="button"
-              onClick={handleAddArea}
-            >
-              <Plus size={18} />
-              Agregar área
-            </AddButton>
+            {canModify && (
+              <AddButton
+                type="button"
+                onClick={handleAddArea}
+              >
+                <Plus size={18} />
+                Agregar área
+              </AddButton>
+            )}
           </PageActions>
         </PageHeader>
 
@@ -165,28 +169,30 @@ const Areas = () => {
                       </CatalogInfo>
                     </CatalogMain>
 
-                    <CatalogActions>
-                      <CatalogActionButton
-                        type="button"
-                        title="Editar área"
-                        aria-label={`Editar área ${area.name}`}
-                        onClick={() => handleEditArea(area)}
-                      >
-                        <Pencil size={19} />
-                      </CatalogActionButton>
-
-                      {area.isActive !== false && (
+                    {canModify && (
+                      <CatalogActions>
                         <CatalogActionButton
                           type="button"
-                          $danger
-                          title="Eliminar área"
-                          aria-label={`Eliminar área ${area.name}`}
-                          onClick={() => handleDeleteArea(area)}
+                          title="Editar área"
+                          aria-label={`Editar área ${area.name}`}
+                          onClick={() => handleEditArea(area)}
                         >
-                          <Trash2 size={19} color="#FF2B2B" />
+                          <Pencil size={19} />
                         </CatalogActionButton>
-                      )}
-                    </CatalogActions>
+
+                        {area.isActive !== false && (
+                          <CatalogActionButton
+                            type="button"
+                            $danger
+                            title="Eliminar área"
+                            aria-label={`Eliminar área ${area.name}`}
+                            onClick={() => handleDeleteArea(area)}
+                          >
+                            <Trash2 size={19} color="#FF2B2B" />
+                          </CatalogActionButton>
+                        )}
+                      </CatalogActions>
+                    )}
                   </CatalogRow>
                 ))}
               </CatalogList>

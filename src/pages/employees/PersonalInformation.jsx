@@ -69,6 +69,7 @@ import EmergencyContactModal from "../../components/modals/EmergencyContactModal
 import DocumentModal from "../../components/modals/DocumentModal";
 import { useEmergencyContacts } from "../../hooks/useEmergencyContacts";
 import { useEmployeeDocuments } from "../../hooks/useEmployeeDocuments";
+import { usePermissions } from "../../hooks/usePermissions";
 
 const formatDate = (dateValue) => {
   if (!dateValue) {
@@ -89,6 +90,7 @@ const closeDetailsMenu = (event) => {
 };
 
 const PersonalInformation = ({ employee }) => {
+  const { canModify } = usePermissions();
   // Hook de contactos
   const { contacts, addContact, updateContact, deleteContact } = useEmergencyContacts(employee.id);
   // Hook de documentos de empleado
@@ -200,10 +202,12 @@ const PersonalInformation = ({ employee }) => {
             </DocTypeInfo>
           </DocTypeMeta>
 
-          <UploadButton as="button" type="button" onClick={() => handleOpenUploadModal(docType, title)}>
-            <Upload size={15} />
-            Añadir archivos
-          </UploadButton>
+          {canModify && (
+            <UploadButton as="button" type="button" onClick={() => handleOpenUploadModal(docType, title)}>
+              <Upload size={15} />
+              Añadir archivos
+            </UploadButton>
+          )}
         </DocTypeHeader>
 
         {hasFiles && (
@@ -228,13 +232,15 @@ const PersonalInformation = ({ employee }) => {
                     >
                       <Eye size={16} />
                     </IconButton>
-                    <IconButton
-                      type="button"
-                      onClick={() => handleDeleteDoc(doc.id)}
-                      title="Eliminar"
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
+                    {canModify && (
+                      <IconButton
+                        type="button"
+                        onClick={() => handleDeleteDoc(doc.id)}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    )}
                   </FileItemRight>
                 </FileItem>
               );
@@ -245,41 +251,44 @@ const PersonalInformation = ({ employee }) => {
     );
   };
 
-  const renderContactMenu = (contact) => (
-    <ContactMenu>
-      <ContactMenuButton
-        aria-label={`Opciones del contacto ${contact.fullName}`}
-        title="Opciones"
-      >
-        <MoreVertical size={20} />
-      </ContactMenuButton>
-
-      <ContactMenuList>
-        <ContactMenuItem
-          type="button"
-          onClick={(event) => {
-            closeDetailsMenu(event);
-            handleOpenEditContact(contact);
-          }}
+  const renderContactMenu = (contact) => {
+    if (!canModify) return null;
+    return (
+      <ContactMenu>
+        <ContactMenuButton
+          aria-label={`Opciones del contacto ${contact.fullName}`}
+          title="Opciones"
         >
-          <Pencil size={16} />
-          Editar
-        </ContactMenuItem>
+          <MoreVertical size={20} />
+        </ContactMenuButton>
 
-        <ContactMenuItem
-          type="button"
-          $danger
-          onClick={(event) => {
-            closeDetailsMenu(event);
-            handleDeleteContact(contact.id);
-          }}
-        >
-          <Trash2 size={16} />
-          Eliminar
-        </ContactMenuItem>
-      </ContactMenuList>
-    </ContactMenu>
-  );
+        <ContactMenuList>
+          <ContactMenuItem
+            type="button"
+            onClick={(event) => {
+              closeDetailsMenu(event);
+              handleOpenEditContact(contact);
+            }}
+          >
+            <Pencil size={16} />
+            Editar
+          </ContactMenuItem>
+
+          <ContactMenuItem
+            type="button"
+            $danger
+            onClick={(event) => {
+              closeDetailsMenu(event);
+              handleDeleteContact(contact.id);
+            }}
+          >
+            <Trash2 size={16} />
+            Eliminar
+          </ContactMenuItem>
+        </ContactMenuList>
+      </ContactMenu>
+    );
+  };
 
   const renderEmergencyContacts =
     () => {
@@ -440,14 +449,16 @@ const PersonalInformation = ({ employee }) => {
           <InformationSection>
             <SectionHeader>
               <SectionTitle>Contactos de emergencia</SectionTitle>
-              <AddButton
-                type="button"
-                title="Añadir contacto de emergencia"
-                aria-label="Añadir contacto de emergencia"
-                onClick={handleOpenAddContact}
-              >
-                <Plus size={19} />
-              </AddButton>
+              {canModify && (
+                <AddButton
+                  type="button"
+                  title="Añadir contacto de emergencia"
+                  aria-label="Añadir contacto de emergencia"
+                  onClick={handleOpenAddContact}
+                >
+                  <Plus size={19} />
+                </AddButton>
+              )}
             </SectionHeader>
 
             <EmergencyCard>

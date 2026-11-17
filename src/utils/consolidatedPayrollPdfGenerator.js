@@ -682,7 +682,9 @@ const drawHeader = async (
   doc.roundedRect(centerX - 12, 19.5, 24, 1.1, 0.5, 0.5, "F");
 
   // Última actualización
-  drawUpdateMetadataBox(doc, 232, 7.5, 55, 15.5, theme, timestamp);
+  const updateBoxWidth = 55;
+  const updateBoxX = pageWidth - 10 - updateBoxWidth;
+  drawUpdateMetadataBox(doc, updateBoxX, 7.5, updateBoxWidth, 15.5, theme, timestamp);
 };
 
 export const exportConsolidatedPayrollPdf = async ({
@@ -723,7 +725,7 @@ export const exportConsolidatedPayrollPdf = async ({
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
-    format: "a4",
+    format: "legal",
   });
 
   const autoTableConfig = {
@@ -732,25 +734,27 @@ export const exportConsolidatedPayrollPdf = async ({
       fillColor: theme.primary,
       textColor: theme.white,
       fontStyle: "bold",
-      fontSize: 6.2,
+      fontSize: 6.5,
+      overflow: "linebreak",
       cellPadding: {
-        top: 1.6,
-        bottom: 1.6,
-        left: 0.8,
-        right: 0.8,
+        top: 1.8,
+        bottom: 1.8,
+        left: 1.0,
+        right: 1.0,
       },
       lineWidth: 0.15,
       lineColor: theme.white,
     },
 
     bodyStyles: {
-      fontSize: 6.0,
+      fontSize: 6.3,
       textColor: theme.text,
+      overflow: "linebreak",
       cellPadding: {
-        top: 1.4,
-        bottom: 1.4,
-        left: 0.8,
-        right: 0.8,
+        top: 1.6,
+        bottom: 1.6,
+        left: 1.0,
+        right: 1.0,
       },
       lineWidth: 0.1,
       lineColor: theme.border,
@@ -760,25 +764,25 @@ export const exportConsolidatedPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    // 17 columnas con ancho total = 277mm (márgenes de 10mm en A4 apaisada de 297mm)
+    // 17 columnas con ancho total = 335.6mm (márgenes de 10mm en Legal apaisada de 355.6mm)
     columnStyles: {
-      0: { cellWidth: 6, halign: "center" },   // N°
-      1: { cellWidth: 34, halign: "left" },     // APELLIDOS Y NOMBRES
-      2: { cellWidth: 24, halign: "left" },     // CARGO
-      3: { cellWidth: 14, halign: "center" },   // FECHA DE INGRESO
-      4: { cellWidth: 14, halign: "center" },   // TIPO CONTRATO
-      5: { cellWidth: 14, halign: "right" },    // HABER BÁSICO
-      6: { cellWidth: 9, halign: "center" },    // DÍAS TRAB.
-      7: { cellWidth: 14, halign: "right" },    // SUELDO BÁSICO
-      8: { cellWidth: 13, halign: "right" },    // ANTIGÜEDAD
-      9: { cellWidth: 13, halign: "right" },    // OTROS BONOS
-      10: { cellWidth: 15, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
-      11: { cellWidth: 32, halign: "left" },    // OBSERVACIONES (FALTAS / PERMISOS / ANTICIPOS)
-      12: { cellWidth: 14, halign: "right" },   // GESTORA (AFP)
-      13: { cellWidth: 13, halign: "right" },   // PERM. / FALTAS
-      14: { cellWidth: 13, halign: "right" },   // ANTICIPOS
-      15: { cellWidth: 14, halign: "right" },   // TOTAL DESC.
-      16: { cellWidth: 17, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      0: { cellWidth: 7, halign: "center" },    // N°
+      1: { cellWidth: 41, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 29, halign: "left" },     // CARGO
+      3: { cellWidth: 16, halign: "center" },   // FECHA DE INGRESO
+      4: { cellWidth: 16, halign: "center" },   // TIPO CONTRATO
+      5: { cellWidth: 16, halign: "right" },    // HABER BÁSICO
+      6: { cellWidth: 10, halign: "center" },   // DÍAS TRAB.
+      7: { cellWidth: 16, halign: "right" },    // SUELDO BÁSICO
+      8: { cellWidth: 24, halign: "right" },    // ANTIGÜEDAD (espacio amplio para que entre sin cortar palabra)
+      9: { cellWidth: 19, halign: "right" },    // OTROS BONOS
+      10: { cellWidth: 18, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      11: { cellWidth: 38, halign: "left" },    // OBSERVACIONES (FALTAS / PERMISOS / ANTICIPOS)
+      12: { cellWidth: 16, halign: "right" },   // GESTORA (AFP)
+      13: { cellWidth: 15, halign: "right" },   // PERM. / FALTAS
+      14: { cellWidth: 15, halign: "right" },   // ANTICIPOS
+      15: { cellWidth: 16, halign: "right" },   // TOTAL DESC.
+      16: { cellWidth: 19.6, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
     },
 
     didParseCell: (data) => {
@@ -819,21 +823,26 @@ export const exportConsolidatedPayrollPdf = async ({
 
   // Footer en todas las páginas
   const totalPages = doc.internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const footerLineY = pageHeight - 14.5;
+  const footerTextY = pageHeight - 10.8;
+  const contentRight = pageWidth - 10;
 
   for (let page = 1; page <= totalPages; page++) {
     doc.setPage(page);
     doc.setDrawColor(...theme.border);
     doc.setLineWidth(0.25);
-    doc.line(10, 201.5, 287, 201.5);
+    doc.line(10, footerLineY, contentRight, footerLineY);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.5);
     doc.setTextColor(...theme.mutedText);
     doc.text(
       `${companyName} • Planilla Consolidada • ${monthName} ${periodYear}`,
       10,
-      205.2
+      footerTextY
     );
-    doc.text(`Página ${page} de ${totalPages}`, 287, 205.2, {
+    doc.text(`Página ${page} de ${totalPages}`, contentRight, footerTextY, {
       align: "right",
     });
   }

@@ -39,6 +39,8 @@ import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
 import { useAreas } from "../hooks/useAreas";
 import { useJobTitles } from "../hooks/useJobTitles";
+import { useCities } from "../hooks/useCities";
+import { usePermissions } from "../hooks/usePermissions";
 import { successToast } from "../services/toasts";
 
 const Employees = () => {
@@ -48,6 +50,8 @@ const Employees = () => {
   const { branches } = useBranches();
   const { areas } = useAreas();
   const { jobTitles } = useJobTitles();
+  const { cities } = useCities();
+  const { canModify } = usePermissions();
 
   const [searchValue, setSearchValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -263,29 +267,33 @@ const Employees = () => {
         disableColumnMenu: true,
         renderCell: ({ row }) => (
           <TableActions>
-            <TableActionButton
-              type="button"
-              title="Editar empleado"
-              aria-label={`Editar a ${row.firstNames} ${row.lastNames}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleEditEmployee(row);
-              }}
-            >
-              <Pencil size={19} />
-            </TableActionButton>
-            <TableActionButton
-              type="button"
-              title="Eliminar empleado"
-              aria-label={`Eliminar a ${row.firstNames} ${row.lastNames}`}
-              style={{ color: "#ef4444" }}
-              onClick={(event) => {
-                event.stopPropagation();
-                handleDeleteEmployee(row);
-              }}
-            >
-              <Trash2 size={19} />
-            </TableActionButton>
+            {canModify && (
+              <>
+                <TableActionButton
+                  type="button"
+                  title="Editar empleado"
+                  aria-label={`Editar a ${row.firstNames} ${row.lastNames}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleEditEmployee(row);
+                  }}
+                >
+                  <Pencil size={19} />
+                </TableActionButton>
+                <TableActionButton
+                  type="button"
+                  title="Eliminar empleado"
+                  aria-label={`Eliminar a ${row.firstNames} ${row.lastNames}`}
+                  style={{ color: "#ef4444" }}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleDeleteEmployee(row);
+                  }}
+                >
+                  <Trash2 size={19} />
+                </TableActionButton>
+              </>
+            )}
             <TableActionButton
               type="button"
               title="Ver detalle"
@@ -301,7 +309,7 @@ const Employees = () => {
         ),
       },
     ],
-    [],
+    [canModify],
   );
 
   return (
@@ -322,13 +330,15 @@ const Employees = () => {
                 }
               />
             </SearchContainer>
-            <AddButton
-              type="button"
-              onClick={handleAddEmployee}
-            >
-              <Plus size={19} />
-              Añadir empleado
-            </AddButton>
+            {canModify && (
+              <AddButton
+                type="button"
+                onClick={handleAddEmployee}
+              >
+                <Plus size={19} />
+                Añadir empleado
+              </AddButton>
+            )}
           </PageActions>
         </PageHeader>
 
@@ -396,6 +406,7 @@ const Employees = () => {
         branches={branches}
         areas={areas}
         jobTitles={jobTitles}
+        cities={cities}
         onClose={handleCloseModal}
         onSubmit={handleSubmitEmployee}
       />

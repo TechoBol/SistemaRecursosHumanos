@@ -57,6 +57,7 @@ import {
   MobileHeaderLeft,
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
+import { usePermissions } from "../../hooks/usePermissions";
 import VacationModal from "../../components/modals/VacationModal";
 import { useVacations } from "../../hooks/useVacations";
 
@@ -88,6 +89,7 @@ const parseRecordDate = (dateStr) => {
 
 const VacationsInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
+  const { canModify } = usePermissions();
   const { vacations: records = [], addVacation, updateVacation, deleteVacation } = useVacations(employee?.id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("create");
@@ -262,36 +264,39 @@ const VacationsInformation = ({ employee }) => {
     }
   };
 
-  const renderMobileMenu = (record) => (
-    <IncidentMenu>
-      <IncidentMenuButton title="Opciones">
-        <MoreVertical size={20} />
-      </IncidentMenuButton>
-      <IncidentMenuList>
-        <IncidentMenuAction
-          type="button"
-          onClick={(e) => {
-            closeMenu(e);
-            handleOpenEditModal(record);
-          }}
-        >
-          <Pencil size={14} />
-          Editar
-        </IncidentMenuAction>
-        <IncidentMenuAction
-          type="button"
-          $variant="danger"
-          onClick={(e) => {
-            closeMenu(e);
-            handleDeleteRecord(record.id);
-          }}
-        >
-          <Trash2 size={14} />
-          Eliminar
-        </IncidentMenuAction>
-      </IncidentMenuList>
-    </IncidentMenu>
-  );
+  const renderMobileMenu = (record) => {
+    if (!canModify) return null;
+    return (
+      <IncidentMenu>
+        <IncidentMenuButton title="Opciones">
+          <MoreVertical size={20} />
+        </IncidentMenuButton>
+        <IncidentMenuList>
+          <IncidentMenuAction
+            type="button"
+            onClick={(e) => {
+              closeMenu(e);
+              handleOpenEditModal(record);
+            }}
+          >
+            <Pencil size={14} />
+            Editar
+          </IncidentMenuAction>
+          <IncidentMenuAction
+            type="button"
+            $variant="danger"
+            onClick={(e) => {
+              closeMenu(e);
+              handleDeleteRecord(record.id);
+            }}
+          >
+            <Trash2 size={14} />
+            Eliminar
+          </IncidentMenuAction>
+        </IncidentMenuList>
+      </IncidentMenu>
+    );
+  };
 
   const renderVacationItem = (record) => {
     const { day, month } = parseRecordDate(record.startDate);
@@ -320,23 +325,25 @@ const VacationsInformation = ({ employee }) => {
               {isMoney ? `Bs ${formatCurrency(record.amount)}` : `${record.days} ${record.days === 1 ? "día" : "días"}`}
             </IncidentDiscount>
           </IncidentValueBlock>
-          <IncidentActions>
-            <IncidentActionButton
-              type="button"
-              title="Editar"
-              onClick={() => handleOpenEditModal(record)}
-            >
-              <Pencil size={16} />
-            </IncidentActionButton>
-            <IncidentActionButton
-              type="button"
-              $variant="danger"
-              title="Eliminar"
-              onClick={() => handleDeleteRecord(record.id)}
-            >
-              <Trash2 size={16} />
-            </IncidentActionButton>
-          </IncidentActions>
+          {canModify && (
+            <IncidentActions>
+              <IncidentActionButton
+                type="button"
+                title="Editar"
+                onClick={() => handleOpenEditModal(record)}
+              >
+                <Pencil size={16} />
+              </IncidentActionButton>
+              <IncidentActionButton
+                type="button"
+                $variant="danger"
+                title="Eliminar"
+                onClick={() => handleDeleteRecord(record.id)}
+              >
+                <Trash2 size={16} />
+              </IncidentActionButton>
+            </IncidentActions>
+          )}
         </DesktopOnly>
 
         {/* Mobile View */}
@@ -372,10 +379,12 @@ const VacationsInformation = ({ employee }) => {
             <SectionTitle>Registros del mes actual</SectionTitle>
             <TabDescription>Vacaciones registradas del mes actual</TabDescription>
           </div>
-          <ActionButton type="button" onClick={handleOpenCreateModal}>
-            <Plus size={17} />
-            Registrar vacación
-          </ActionButton>
+          {canModify && (
+            <ActionButton type="button" onClick={handleOpenCreateModal}>
+              <Plus size={17} />
+              Registrar vacación
+            </ActionButton>
+          )}
         </TabHeader>
 
         <SummaryGrid $columns={3}>
@@ -400,9 +409,11 @@ const VacationsInformation = ({ employee }) => {
             <EmptyState>
               <Sun size={48} strokeWidth={1.6} />
               <strong>No hay vacaciones registradas este mes</strong>
-              <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
-                + Registrar la primera
-              </EmptyStateAction>
+              {canModify && (
+                <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
+                  + Registrar la primera
+                </EmptyStateAction>
+              )}
             </EmptyState>
           ) : (
             currentMonthRecords.map(renderVacationItem)

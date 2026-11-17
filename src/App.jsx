@@ -3,7 +3,7 @@ import { ThemeProvider } from "styled-components";
 import AppLayout from "./components/layout/AppLayout";
 import { GlobalStyles } from "./components/ui/GlobalStyles";
 import { theme } from "./components/ui/Theme";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { ProtectedRoute, SuperAdminRoute } from "./routes/ProtectedRoute";
 // PAGES
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -38,7 +38,9 @@ const App = () => {
             <Route path="sucursales" element={<Branches />} />
             <Route path="areas" element={<Areas />} />
             <Route path="cargos" element={<JobTitles />} />
-            <Route path="usuarios" element={<Users />} />
+            <Route element={<SuperAdminRoute />}>
+              <Route path="usuarios" element={<Users />} />
+            </Route>
             <Route path="configuracion" element={<Settings />} />
           </Route>
         </Route>

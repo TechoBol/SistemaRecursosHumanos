@@ -56,6 +56,7 @@ import {
   MobileHeaderLeft,
 } from "../../components/ui/employees/EmployeeTabs.styles";
 import { useLoginStore } from "../../components/store/loginStore";
+import { usePermissions } from "../../hooks/usePermissions";
 import PermissionAbsenceModal from "../../components/modals/PermissionAbsenceModal";
 import { useAttendanceIncidents } from "../../hooks/useAttendanceIncidents";
 
@@ -89,6 +90,7 @@ const parseRecordDate = (dateStr) => {
 
 const PermissionsInformation = ({ employee }) => {
   const { fullName } = useLoginStore();
+  const { canModify } = usePermissions();
   const activeContract = employee?.contracts?.find((c) => c.isActive);
   const baseSalary = activeContract ? Number(activeContract.baseSalary) : null;
   const { incidents: records = [], addIncident, updateIncident, deleteIncident } = useAttendanceIncidents(employee?.id);
@@ -273,36 +275,39 @@ const PermissionsInformation = ({ employee }) => {
     }
   };
 
-  const renderMobileMenu = (record) => (
-    <IncidentMenu>
-      <IncidentMenuButton title="Opciones">
-        <MoreVertical size={20} />
-      </IncidentMenuButton>
-      <IncidentMenuList>
-        <IncidentMenuAction
-          type="button"
-          onClick={(e) => {
-            closeMenu(e);
-            handleOpenEditModal(record);
-          }}
-        >
-          <Pencil size={14} />
-          Editar
-        </IncidentMenuAction>
-        <IncidentMenuAction
-          type="button"
-          $variant="danger"
-          onClick={(e) => {
-            closeMenu(e);
-            handleDeleteRecord(record.id);
-          }}
-        >
-          <Trash2 size={14} />
-          Eliminar
-        </IncidentMenuAction>
-      </IncidentMenuList>
-    </IncidentMenu>
-  );
+  const renderMobileMenu = (record) => {
+    if (!canModify) return null;
+    return (
+      <IncidentMenu>
+        <IncidentMenuButton title="Opciones">
+          <MoreVertical size={20} />
+        </IncidentMenuButton>
+        <IncidentMenuList>
+          <IncidentMenuAction
+            type="button"
+            onClick={(e) => {
+              closeMenu(e);
+              handleOpenEditModal(record);
+            }}
+          >
+            <Pencil size={14} />
+            Editar
+          </IncidentMenuAction>
+          <IncidentMenuAction
+            type="button"
+            $variant="danger"
+            onClick={(e) => {
+              closeMenu(e);
+              handleDeleteRecord(record.id);
+            }}
+          >
+            <Trash2 size={14} />
+            Eliminar
+          </IncidentMenuAction>
+        </IncidentMenuList>
+      </IncidentMenu>
+    );
+  };
 
   /* card de registro */
   const renderIncidentItem = (record) => {
@@ -330,23 +335,25 @@ const PermissionsInformation = ({ employee }) => {
               {record.discount > 0 ? `-Bs ${formatCurrency(record.discount)}` : "Bs 0.00"}
             </IncidentDiscount>
           </IncidentValueBlock>
-          <IncidentActions>
-            <IncidentActionButton
-              type="button"
-              title="Editar"
-              onClick={() => handleOpenEditModal(record)}
-            >
-              <Pencil size={16} />
-            </IncidentActionButton>
-            <IncidentActionButton
-              type="button"
-              $variant="danger"
-              title="Eliminar"
-              onClick={() => handleDeleteRecord(record.id)}
-            >
-              <Trash2 size={16} />
-            </IncidentActionButton>
-          </IncidentActions>
+          {canModify && (
+            <IncidentActions>
+              <IncidentActionButton
+                type="button"
+                title="Editar"
+                onClick={() => handleOpenEditModal(record)}
+              >
+                <Pencil size={16} />
+              </IncidentActionButton>
+              <IncidentActionButton
+                type="button"
+                $variant="danger"
+                title="Eliminar"
+                onClick={() => handleDeleteRecord(record.id)}
+              >
+                <Trash2 size={16} />
+              </IncidentActionButton>
+            </IncidentActions>
+          )}
         </DesktopOnly>
 
         {/* Mobile View */}
@@ -383,10 +390,12 @@ const PermissionsInformation = ({ employee }) => {
             <TabDescription>Permisos y faltas del mes actual</TabDescription>
           </div>
 
-          <ActionButton type="button" onClick={handleOpenCreateModal}>
-            <Plus size={17} />
-            Registrar
-          </ActionButton>
+          {canModify && (
+            <ActionButton type="button" onClick={handleOpenCreateModal}>
+              <Plus size={17} />
+              Registrar
+            </ActionButton>
+          )}
         </TabHeader>
 
         <SummaryGrid $columns={3}>
@@ -415,9 +424,11 @@ const PermissionsInformation = ({ employee }) => {
             <EmptyState>
               <CalendarX2 size={48} strokeWidth={1.6} />
               <strong>No hay permisos o faltas registrados este mes</strong>
-              <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
-                + Registrar el primero
-              </EmptyStateAction>
+              {canModify && (
+                <EmptyStateAction type="button" onClick={handleOpenCreateModal}>
+                  + Registrar el primero
+                </EmptyStateAction>
+              )}
             </EmptyState>
           ) : (
             currentMonthRecords.map(renderIncidentItem)
