@@ -475,24 +475,25 @@ export const exportFiscalPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    // 16 columnas con ancho total = 335.6mm (márgenes de 10mm en Legal apaisada de 355.6mm)
+    // 16 columnas con ancho total = 335.6mm (márgenes exactos de 10mm en Legal apaisada de 355.6mm)
+    // Alineado exactamente con el margen derecho del recuadro de actualización (X = 345.6mm)
     columnStyles: {
-      0: { cellWidth: 8, halign: "center" },    // N°
-      1: { cellWidth: 47, halign: "left" },     // APELLIDOS Y NOMBRES
-      2: { cellWidth: 34, halign: "left" },     // CARGO
-      3: { cellWidth: 17, halign: "center" },   // FECHA DE INGRESO
-      4: { cellWidth: 18, halign: "right" },    // HABER BÁSICO
-      5: { cellWidth: 11, halign: "center" },   // DÍAS TRAB.
-      6: { cellWidth: 18, halign: "right" },    // SUELDO BÁSICO
-      7: { cellWidth: 24, halign: "right" },    // ANTIGÜEDAD (espacio amplio para que entre sin cortar palabra)
-      8: { cellWidth: 20, halign: "right" },    // OTROS BONOS
-      9: { cellWidth: 20, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
-      10: { cellWidth: 18, halign: "right" },   // CNS 10%
-      11: { cellWidth: 18, halign: "right" },   // GESTORA
-      12: { cellWidth: 18, halign: "right" },   // PERM. / FALTAS
-      13: { cellWidth: 18, halign: "right" },   // ANTICIPOS
-      14: { cellWidth: 18, halign: "right" },   // TOTAL DESC.
-      15: { cellWidth: 22.6, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      0: { cellWidth: 8, halign: "center" },      // N°
+      1: { cellWidth: 49, halign: "left" },       // APELLIDOS Y NOMBRES
+      2: { cellWidth: 35.5, halign: "left" },     // CARGO
+      3: { cellWidth: 17, halign: "center" },     // FECHA DE INGRESO
+      4: { cellWidth: 18, halign: "right" },      // HABER BÁSICO
+      5: { cellWidth: 11, halign: "center" },     // DÍAS TRAB.
+      6: { cellWidth: 18, halign: "right" },      // SUELDO BÁSICO
+      7: { cellWidth: 24, halign: "right" },      // ANTIGÜEDAD (espacio amplio sin cortar palabra)
+      8: { cellWidth: 20, halign: "right" },      // OTROS BONOS
+      9: { cellWidth: 21, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      10: { cellWidth: 18, halign: "right" },     // CNS 10%
+      11: { cellWidth: 18, halign: "right" },     // GESTORA
+      12: { cellWidth: 18, halign: "right" },     // PERM. / FALTAS
+      13: { cellWidth: 18, halign: "right" },     // ANTICIPOS
+      14: { cellWidth: 18, halign: "right" },     // TOTAL DESC.
+      15: { cellWidth: 24.1, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
     },
 
     didParseCell: (data) => {

@@ -588,7 +588,7 @@ const buildConsolidatedTableHeader = (theme) => {
       styles: { halign: "center", valign: "middle" },
     },
     {
-      content: "OBSERVACIONES",
+      content: "OBSERVACIONES\n(FALTAS / PERMISOS / ANTICIPOS)",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -764,25 +764,26 @@ export const exportConsolidatedPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    // 17 columnas con ancho total = 335.6mm (márgenes de 10mm en Legal apaisada de 355.6mm)
+    // 17 columnas con ancho total = 335.6mm (márgenes exactos de 10mm en Legal apaisada de 355.6mm)
+    // Alineado exactamente con el margen derecho del recuadro de actualización (X = 345.6mm)
     columnStyles: {
-      0: { cellWidth: 7, halign: "center" },    // N°
-      1: { cellWidth: 41, halign: "left" },     // APELLIDOS Y NOMBRES
-      2: { cellWidth: 29, halign: "left" },     // CARGO
-      3: { cellWidth: 16, halign: "center" },   // FECHA DE INGRESO
-      4: { cellWidth: 16, halign: "center" },   // TIPO CONTRATO
-      5: { cellWidth: 16, halign: "right" },    // HABER BÁSICO
-      6: { cellWidth: 10, halign: "center" },   // DÍAS TRAB.
-      7: { cellWidth: 16, halign: "right" },    // SUELDO BÁSICO
-      8: { cellWidth: 24, halign: "right" },    // ANTIGÜEDAD (espacio amplio para que entre sin cortar palabra)
-      9: { cellWidth: 19, halign: "right" },    // OTROS BONOS
+      0: { cellWidth: 7, halign: "center" },      // N°
+      1: { cellWidth: 42.5, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 30, halign: "left" },       // CARGO
+      3: { cellWidth: 16, halign: "center" },     // FECHA DE INGRESO
+      4: { cellWidth: 16, halign: "center" },     // TIPO CONTRATO
+      5: { cellWidth: 16, halign: "right" },      // HABER BÁSICO
+      6: { cellWidth: 10, halign: "center" },     // DÍAS TRAB.
+      7: { cellWidth: 16, halign: "right" },      // SUELDO BÁSICO
+      8: { cellWidth: 24, halign: "right" },      // ANTIGÜEDAD (espacio amplio sin cortar palabra)
+      9: { cellWidth: 19, halign: "right" },      // OTROS BONOS
       10: { cellWidth: 18, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
-      11: { cellWidth: 38, halign: "left" },    // OBSERVACIONES (FALTAS / PERMISOS / ANTICIPOS)
-      12: { cellWidth: 16, halign: "right" },   // GESTORA (AFP)
-      13: { cellWidth: 15, halign: "right" },   // PERM. / FALTAS
-      14: { cellWidth: 15, halign: "right" },   // ANTICIPOS
-      15: { cellWidth: 16, halign: "right" },   // TOTAL DESC.
-      16: { cellWidth: 19.6, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      11: { cellWidth: 39, halign: "left" },      // OBSERVACIONES (FALTAS / PERMISOS / ANTICIPOS)
+      12: { cellWidth: 16, halign: "right" },     // GESTORA (AFP)
+      13: { cellWidth: 15, halign: "right" },     // PERM. / FALTAS
+      14: { cellWidth: 15, halign: "right" },     // ANTICIPOS
+      15: { cellWidth: 16, halign: "right" },     // TOTAL DESC.
+      16: { cellWidth: 20.1, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
     },
 
     didParseCell: (data) => {
@@ -821,10 +822,158 @@ export const exportConsolidatedPayrollPdf = async ({
     ...autoTableConfig,
   });
 
+  // ==========================================
+  // RESUMEN POR TIPO DE CONTRATO Y FIRMA
+  // ==========================================
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const bottomMarginLimit = pageHeight - 18; // Dejar espacio para el footer
+  const summaryBoxHeight = 36; // Altura aproximada requerida para el bloque de resumen y firma
+
+  // Si no hay suficiente espacio en la página actual tras la tabla, agregar nueva página
+  if (doc.lastAutoTable.finalY + summaryBoxHeight + 6 > bottomMarginLimit) {
+    doc.addPage();
+    await drawHeader(
+      doc,
+      companyName,
+      companyTaxId,
+      theme,
+      "PLANILLA CONSOLIDADA DE SUELDOS",
+      subtitle,
+      timestamp
+    );
+    doc.lastAutoTable = { finalY: 28 };
+  }
+
+  const summaryStartY = (doc.lastAutoTable?.finalY || 28) + 5;
+
+  // Calcular totales de líquido pagable por tipo de trabajador
+  const netByContractType = {
+    CONSULTOR: 0,
+    PROMOTOR: 0,
+    FISCAL: 0,
+  };
+
+  payrolls.forEach((p) => {
+    const rawType = (p.employeeType || "Fiscal").trim().toUpperCase();
+    const net = Number(p.netSalary || 0);
+    if (rawType.includes("CONSULT")) {
+      netByContractType.CONSULTOR += net;
+    } else if (rawType.includes("PROMOT")) {
+      netByContractType.PROMOTOR += net;
+    } else {
+      netByContractType.FISCAL += net;
+    }
+  });
+
+  const totalNet =
+    netByContractType.CONSULTOR +
+    netByContractType.PROMOTOR +
+    netByContractType.FISCAL;
+
+  // Tabla / Recuadro de Resumen de Líquido Pagable (a la derecha)
+  const summaryWidth = 92;
+  const summaryX = pageWidth - 10 - summaryWidth;
+
+  autoTable(doc, {
+    startY: summaryStartY,
+    margin: { left: summaryX },
+    tableWidth: summaryWidth,
+    theme: "plain",
+    head: [
+      [
+        {
+          content: "RESUMEN DE LÍQUIDO PAGABLE",
+          colSpan: 2,
+          styles: {
+            fontStyle: "bold",
+            textColor: theme.primaryDark,
+            fontSize: 7.2,
+            fillColor: theme.liquidHighlightBg,
+            cellPadding: { top: 2.2, bottom: 2.2, left: 3, right: 3 },
+          },
+        },
+      ],
+    ],
+    body: [
+      [
+        { content: "FISCAL", styles: { halign: "left", fontSize: 6.8, fontStyle: "bold", textColor: theme.text } },
+        { content: formatNetSalaryPdf(netByContractType.FISCAL), styles: { halign: "right", fontSize: 6.8, textColor: theme.text } },
+      ],
+      [
+        { content: "CONSULTOR", styles: { halign: "left", fontSize: 6.8, fontStyle: "bold", textColor: theme.text } },
+        { content: formatNetSalaryPdf(netByContractType.CONSULTOR), styles: { halign: "right", fontSize: 6.8, textColor: theme.text } },
+      ],
+      [
+        { content: "PROMOTOR", styles: { halign: "left", fontSize: 6.8, fontStyle: "bold", textColor: theme.text } },
+        { content: formatNetSalaryPdf(netByContractType.PROMOTOR), styles: { halign: "right", fontSize: 6.8, textColor: theme.text } },
+      ],
+      [
+        {
+          content: "TOTAL LÍQUIDO PAGABLE",
+          styles: {
+            halign: "left",
+            fontSize: 7.2,
+            fontStyle: "bold",
+            textColor: theme.primaryDark,
+            fillColor: theme.liquidHighlightBg,
+            cellPadding: { top: 2.4, bottom: 2.4, left: 3, right: 3 },
+          },
+        },
+        {
+          content: formatNetSalaryPdf(totalNet),
+          styles: {
+            halign: "right",
+            fontSize: 7.5,
+            fontStyle: "bold",
+            textColor: theme.primaryDark,
+            fillColor: theme.liquidHighlightBg,
+            cellPadding: { top: 2.4, bottom: 2.4, left: 3, right: 3 },
+          },
+        },
+      ],
+    ],
+    styles: {
+      lineWidth: 0.15,
+      lineColor: theme.borderSoft,
+      cellPadding: { top: 1.8, bottom: 1.8, left: 3, right: 3 },
+    },
+    tableLineColor: theme.borderSoft,
+    tableLineWidth: 0.25,
+  });
+
+  // Firma del Gerente General (a la izquierda)
+  const summaryFinalY = doc.lastAutoTable.finalY;
+  const signatureY = summaryStartY + (summaryFinalY - summaryStartY) / 2 + 3;
+  const signatureWidth = 75;
+  const signatureX = 35; // Centrado hacia el tercio izquierdo
+
+  doc.setDrawColor(...theme.primaryDark);
+  doc.setLineWidth(0.25);
+  doc.line(signatureX, signatureY, signatureX + signatureWidth, signatureY);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...theme.primaryDark);
+  doc.text(
+    "RAMIRO LIMA HUARACHI",
+    signatureX + signatureWidth / 2,
+    signatureY + 4.5,
+    { align: "center" }
+  );
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7.2);
+  doc.setTextColor(...theme.text);
+  doc.text(
+    "Gerente General",
+    signatureX + signatureWidth / 2,
+    signatureY + 8.2,
+    { align: "center" }
+  );
+
   // Footer en todas las páginas
   const totalPages = doc.internal.getNumberOfPages();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const footerLineY = pageHeight - 14.5;
   const footerTextY = pageHeight - 10.8;
   const contentRight = pageWidth - 10;
