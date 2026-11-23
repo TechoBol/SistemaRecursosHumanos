@@ -46,9 +46,8 @@ const loadImage = (src) =>
 
 const getEmployeeFullName = (employee) => {
   if (employee.employeeLastNames) {
-    return `${employee.employeeLastNames} ${
-      employee.employeeFirstNames || ""
-    }`.trim();
+    return `${employee.employeeLastNames} ${employee.employeeFirstNames || ""
+      }`.trim();
   }
   return employee.employeeName || "-";
 };
@@ -108,7 +107,7 @@ const drawUpdateMetadataBox = (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.2);
   doc.setTextColor(...theme.text);
-  doc.text(`${timestamp.dateLine} ${timestamp.timeLine}`, textX + genLabelWidth + 2.0, lineY);
+  doc.text(`${timestamp.dateLine}   ${timestamp.timeLine}`, textX + genLabelWidth + 2.0, lineY);
 };
 
 /**
@@ -544,6 +543,7 @@ const drawHeader = async (
   cityName
 ) => {
   const companyName = company?.name || "";
+  const companyLegalName = company?.legalName || companyName;
   const companyTaxId = company?.taxId || "";
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -557,7 +557,7 @@ const drawHeader = async (
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(15, 23, 42);
-  doc.text(companyName, companyTextX, 11.5);
+  doc.text(companyLegalName, companyTextX, 11.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.2);
   doc.setTextColor(...theme.mutedText);
@@ -566,11 +566,7 @@ const drawHeader = async (
     doc.text(`NIT ${companyTaxId}`, companyTextX, 15.2);
   }
 
-  const cityLocation =
-    cityName && cityName !== "SIN CIUDAD"
-      ? `${cityName} - Bolivia`
-      : COMPANY_LOCATION;
-  doc.text(cityLocation, companyTextX, 18.8);
+  doc.text(COMPANY_LOCATION, companyTextX, 18.8);
 
   // Título principal (centrado entre el bloque de la empresa y los datos de contacto)
   const titleCenterX = 172;

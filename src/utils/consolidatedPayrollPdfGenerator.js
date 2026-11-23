@@ -643,7 +643,8 @@ const drawHeader = async (
   titleText,
   subtitle,
   timestamp,
-  locationText = COMPANY_LOCATION
+  locationText = COMPANY_LOCATION,
+  companyLegalName = ""
 ) => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
@@ -654,10 +655,12 @@ const drawHeader = async (
   // Datos de la empresa
   const companyTextX = 25;
 
+  const displayName = companyLegalName || companyName;
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(15, 23, 42);
-  doc.text(companyName, companyTextX, 12.5);
+  doc.text(displayName, companyTextX, 12.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.2);
   doc.setTextColor(...theme.mutedText);
@@ -697,6 +700,7 @@ export const exportConsolidatedPayrollPdf = async ({
   advances = [],
 }) => {
   const companyName = company?.name || "";
+  const companyLegalName = company?.legalName || companyName;
   const companyTaxId = company?.taxId || "";
   const theme = getPayrollTheme(companyName);
   const monthName = MONTH_NAMES[periodMonth] || "";
@@ -801,7 +805,9 @@ export const exportConsolidatedPayrollPdf = async ({
     theme,
     "PLANILLA CONSOLIDADA DE SUELDOS",
     subtitle,
-    timestamp
+    timestamp,
+    COMPANY_LOCATION,
+    companyLegalName
   );
 
   const body = buildConsolidatedTableBody(
@@ -840,7 +846,9 @@ export const exportConsolidatedPayrollPdf = async ({
       theme,
       "PLANILLA CONSOLIDADA DE SUELDOS",
       subtitle,
-      timestamp
+      timestamp,
+      COMPANY_LOCATION,
+      companyLegalName
     );
     doc.lastAutoTable = { finalY: 28 };
   }
