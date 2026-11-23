@@ -81,34 +81,201 @@ const drawUpdateMetadataBox = (
   doc.setLineWidth(0.25);
   doc.roundedRect(x, y, width, height, 1.8, 1.8, "FD");
 
-  const iconX = x + 3.2;
-  const iconY = y + 4;
+  const iconX = x + 3.0;
+  const iconY = y + 2.0;
 
   doc.setDrawColor(...theme.primary);
   doc.setLineWidth(0.45);
-  doc.roundedRect(iconX, iconY, 5.2, 5.5, 0.5, 0.5, "D");
+  doc.roundedRect(iconX, iconY, 4.4, 4.5, 0.5, 0.5, "D");
 
   doc.setFillColor(...theme.primary);
-  doc.rect(iconX, iconY, 5.2, 1.8, "F");
+  doc.rect(iconX, iconY, 4.4, 1.4, "F");
 
   doc.setFillColor(...theme.white);
-  doc.circle(iconX + 1.4, iconY + 0.9, 0.35, "F");
-  doc.circle(iconX + 3.8, iconY + 0.9, 0.35, "F");
+  doc.circle(iconX + 1.2, iconY + 0.7, 0.3, "F");
+  doc.circle(iconX + 3.2, iconY + 0.7, 0.3, "F");
 
-  const textX = x + 10.5;
+  const textX = x + 9.5;
+  const lineY = y + 5.2;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.2);
+  doc.setFontSize(6.0);
   doc.setTextColor(...theme.mutedText);
-  doc.text("Generado:", textX, y + 4.8);
+  doc.text("Generado:", textX, lineY);
+
+  const genLabelWidth = doc.getTextWidth("Generado:");
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.8);
-  doc.setTextColor(...theme.text);
-  doc.text(timestamp.dateLine, textX, y + 8.8);
   doc.setFontSize(6.2);
-  doc.setTextColor(...theme.mutedText);
-  doc.text(timestamp.timeLine, textX, y + 12.6);
+  doc.setTextColor(...theme.text);
+  doc.text(`${timestamp.dateLine} ${timestamp.timeLine}`, textX + genLabelWidth + 2.0, lineY);
+};
+
+/**
+ * Dibuja los datos de contacto de la empresa (Dirección, Correo, Teléfono)
+ * debajo del recuadro de fecha de generación.
+ */
+const drawCompanyContactInfo = (doc, x, y, width, theme, company) => {
+  const address = company?.address || "Av. América Nº 1485, Zona Cala Cala";
+  const email = company?.email || "contacto@techo-bol.com.bo";
+
+  let phonesText = "";
+  if (Array.isArray(company?.phones) && company.phones.length > 0) {
+    phonesText = company.phones.map((p) => p.phone).filter(Boolean).join(" - ");
+  }
+  if (!phonesText) {
+    phonesText = company?.phone || "(4) 425 8725";
+  }
+
+  const items = [
+    { label: "Dirección:", val: address, type: "pin" },
+    { label: "Correo:", val: email, type: "mail" },
+    { label: "Teléfono:", val: phonesText, type: "phone" },
+  ];
+
+  let currentY = y;
+  items.forEach((item) => {
+    const iconX = x + 0.5;
+    const iconCenterY = currentY - 0.9;
+
+    doc.setFillColor(...theme.primary);
+    doc.setDrawColor(...theme.primary);
+
+    if (item.type === "pin") {
+      // Pin icon
+      doc.circle(iconX + 1.2, iconCenterY - 0.7, 1.0, "F");
+      doc.triangle(
+        iconX + 0.3,
+        iconCenterY - 0.5,
+        iconX + 2.1,
+        iconCenterY - 0.5,
+        iconX + 1.2,
+        iconCenterY + 1.2,
+        "F"
+      );
+      doc.setFillColor(...theme.white);
+      doc.circle(iconX + 1.2, iconCenterY - 0.7, 0.4, "F");
+    } else if (item.type === "mail") {
+      // Mail icon
+      doc.setLineWidth(0.35);
+      doc.roundedRect(iconX, iconCenterY - 1.2, 2.6, 2.0, 0.3, 0.3, "D");
+      doc.line(iconX, iconCenterY - 1.2, iconX + 1.3, iconCenterY - 0.2);
+      doc.line(iconX + 2.6, iconCenterY - 1.2, iconX + 1.3, iconCenterY - 0.2);
+    } else if (item.type === "phone") {
+      // Phone icon
+      doc.setLineWidth(0.4);
+      doc.roundedRect(iconX + 0.4, iconCenterY - 1.3, 1.8, 2.4, 0.4, 0.4, "D");
+      doc.line(iconX + 0.8, iconCenterY + 0.6, iconX + 1.8, iconCenterY + 0.6);
+    }
+
+    const textX = x + 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.0);
+    doc.setTextColor(...theme.primaryDark);
+    doc.text(item.label, textX, currentY);
+
+    const labelWidth = doc.getTextWidth(item.label);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.0);
+    doc.setTextColor(...theme.text);
+
+    const availableValWidth = width - 4 - labelWidth - 1;
+    const trimmedVal = doc.splitTextToSize(item.val, availableValWidth)[0] || item.val;
+    doc.text(trimmedVal, textX + labelWidth + 1.2, currentY);
+
+    currentY += 4.2;
+  });
+};
+
+/**
+ * Dibuja el recuadro central con:
+ * - Nº Identificador Empleador ante el Ministerio de Trabajo (ROE)
+ * - Nº de Empleador (Caja de Salud)
+ */
+const drawEmployerRegistrationBox = (
+  doc,
+  x,
+  y,
+  width,
+  height,
+  theme,
+  roeNumber,
+  healthInsuranceNumber
+) => {
+  // Contenedor principal con fondo muy suave y borde redondeado
+  doc.setFillColor(252, 254, 255);
+  doc.setDrawColor(...theme.borderSoft);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(x, y, width, height, 2.0, 2.0, "FD");
+
+  // --- DIVISIÓN INTERNA EN 2 SECCIONES ---
+  const contentLeft = x + 5;
+  const contentWidth = width - 10;
+  const halfW = contentWidth / 2;
+
+  // Línea divisoria central
+  const dividerX = contentLeft + halfW;
+  doc.setDrawColor(...theme.borderSoft);
+  doc.setLineWidth(0.2);
+  doc.line(dividerX, y + 2.2, dividerX, y + height - 2.2);
+
+  // SECCIÓN 1: MINISTERIO DE TRABAJO
+  const sec1TextX = contentLeft;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(5.8);
+  doc.setTextColor(...theme.primaryDark);
+  doc.text("Nº IDENTIFICADOR EMPLEADOR ANTE EL", sec1TextX, y + 4.2);
+  doc.text("MINISTERIO DE TRABAJO:", sec1TextX, y + 7.8);
+
+  // Chip para el valor ROE
+  const badge1W = 27;
+  const badge1H = 6.0;
+  const badge1X = dividerX - badge1W - 3.5;
+  const badge1Y = y + (height - badge1H) / 2;
+
+  doc.setFillColor(...theme.liquidHighlightBg);
+  doc.setDrawColor(...theme.borderSoft);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(badge1X, badge1Y, badge1W, badge1H, 1.2, 1.2, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.2);
+  doc.setTextColor(...theme.primaryDark);
+  doc.text(
+    roeNumber || "-",
+    badge1X + badge1W / 2,
+    badge1Y + 4.1,
+    { align: "center" }
+  );
+
+  // SECCIÓN 2: CAJA DE SALUD
+  const sec2TextX = dividerX + 4;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(5.8);
+  doc.setTextColor(...theme.primaryDark);
+  doc.text("Nº DE EMPLEADOR", sec2TextX, y + 4.2);
+  doc.text("(CAJA DE SALUD):", sec2TextX, y + 7.8);
+
+  // Chip para el valor Caja de Salud
+  const badge2W = 27;
+  const badge2H = 6.0;
+  const badge2X = x + width - badge2W - 4.5;
+  const badge2Y = y + (height - badge2H) / 2;
+
+  doc.setFillColor(...theme.liquidHighlightBg);
+  doc.setDrawColor(...theme.borderSoft);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(badge2X, badge2Y, badge2W, badge2H, 1.2, 1.2, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.2);
+  doc.setTextColor(...theme.primaryDark);
+  doc.text(
+    healthInsuranceNumber || "-",
+    badge2X + badge2W / 2,
+    badge2Y + 4.1,
+    { align: "center" }
+  );
 };
 
 const sortEmployeesByName = (employees = []) =>
@@ -369,54 +536,97 @@ const buildFiscalTableHeader = (theme) => {
 
 const drawHeader = async (
   doc,
-  companyName,
-  companyTaxId,
+  company,
   theme,
   titleText,
   subtitle,
   timestamp,
-  locationText = COMPANY_LOCATION
+  cityName
 ) => {
+  const companyName = company?.name || "";
+  const companyTaxId = company?.taxId || "";
   const pageWidth = doc.internal.pageSize.getWidth();
   const centerX = pageWidth / 2;
 
   // Logo real de la empresa
   await drawCompanyLogo(doc, companyName);
 
-  // Datos de la empresa
+  // Datos de la empresa (lado izquierdo)
   const companyTextX = 25;
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(15, 23, 42);
-  doc.text(companyName, companyTextX, 12.5);
+  doc.text(companyName, companyTextX, 11.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.2);
   doc.setTextColor(...theme.mutedText);
 
   if (companyTaxId) {
-    doc.text(`NIT ${companyTaxId}`, companyTextX, 16.5);
+    doc.text(`NIT ${companyTaxId}`, companyTextX, 15.2);
   }
 
-  doc.text(locationText, companyTextX, 20.5);
+  const cityLocation =
+    cityName && cityName !== "SIN CIUDAD"
+      ? `${cityName} - Bolivia`
+      : COMPANY_LOCATION;
+  doc.text(cityLocation, companyTextX, 18.8);
 
-  // Título principal
+  // Título principal (centrado entre el bloque de la empresa y los datos de contacto)
+  const titleCenterX = 172;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(12.5);
   doc.setTextColor(...theme.primary);
-  doc.text(titleText, centerX, 12.5, { align: "center" });
+  doc.text(titleText, titleCenterX, 10.5, { align: "center" });
 
-  doc.setFontSize(7.6);
+  doc.setFontSize(7.2);
   doc.setTextColor(...theme.mutedText);
-  doc.text(subtitle, centerX, 17, { align: "center" });
+  doc.text(subtitle, titleCenterX, 14.5, { align: "center" });
 
-  doc.setFillColor(...theme.primary);
-  doc.roundedRect(centerX - 12, 19.5, 24, 1.1, 0.5, 0.5, "F");
+  // Buscar Nº de Empleador (Caja de Salud) para esta ciudad
+  let healthInsuranceNumber = "";
+  if (Array.isArray(company?.healthInsurances) && company.healthInsurances.length > 0) {
+    const match = company.healthInsurances.find(
+      (hi) =>
+        hi.city?.name?.trim().toLowerCase() === cityName?.trim().toLowerCase()
+    );
+    if (match) {
+      healthInsuranceNumber = match.employerNumber;
+    }
+  }
 
-  // Última actualización
-  const updateBoxWidth = 55;
+  const roeNumber = company?.roeNumber || "";
+
+  // Recuadro central: Ministerio de Trabajo y Caja de Salud (sin ícono de maletín)
+  const regBoxX = 82;
+  const regBoxY = 16.5;
+  const regBoxW = 180;
+  const regBoxH = 10.5;
+  drawEmployerRegistrationBox(
+    doc,
+    regBoxX,
+    regBoxY,
+    regBoxW,
+    regBoxH,
+    theme,
+    roeNumber,
+    healthInsuranceNumber
+  );
+
+  // Lado derecho: Recuadro compacto de Generado (fecha y hora al lado)
+  const updateBoxWidth = 72;
   const updateBoxX = pageWidth - 10 - updateBoxWidth;
-  drawUpdateMetadataBox(doc, updateBoxX, 7.5, updateBoxWidth, 15.5, theme, timestamp);
+  drawUpdateMetadataBox(doc, updateBoxX, 6.0, updateBoxWidth, 8.2, theme, timestamp);
+
+  // Datos de contacto (Dirección, Correo, Teléfono) con mayor separación vertical del recuadro
+  drawCompanyContactInfo(
+    doc,
+    updateBoxX,
+    18.5,
+    updateBoxWidth,
+    theme,
+    company
+  );
 };
 
 export const exportFiscalPayrollPdf = async ({
@@ -527,20 +737,15 @@ export const exportFiscalPayrollPdf = async ({
     }
 
     const cityTitle = `PLANILLA FISCAL DE SUELDOS - ${cityName}`;
-    const cityLocation =
-      cityName && cityName !== "SIN CIUDAD"
-        ? `${cityName} - Bolivia`
-        : COMPANY_LOCATION;
 
     await drawHeader(
       doc,
-      companyName,
-      companyTaxId,
+      company,
       theme,
       cityTitle,
       subtitle,
       timestamp,
-      cityLocation
+      cityName
     );
 
     const cityTotals = cityPayrolls.reduce(
@@ -583,8 +788,8 @@ export const exportFiscalPayrollPdf = async ({
     body.push(buildFiscalTotalsRow(cityTotals, theme, "TOTAL GENERAL"));
 
     autoTable(doc, {
-      startY: 26,
-      margin: { top: 26, bottom: 12, left: 10, right: 10 },
+      startY: 32,
+      margin: { top: 32, bottom: 12, left: 10, right: 10 },
       head: buildFiscalTableHeader(theme),
       body,
       ...autoTableConfig,
