@@ -254,7 +254,15 @@ const Dashboard = () => {
         diff: b.thisMonthDiff,
         age: b.age,
       }))
-      .sort((a, b) => a.date.getDate() - b.date.getDate());
+      .sort((a, b) => {
+        const aUpcoming = a.diff >= 0;
+        const bUpcoming = b.diff >= 0;
+        // Primero los que aún no pasaron (hoy y futuros)
+        if (aUpcoming && !bUpcoming) return -1;
+        if (!aUpcoming && bUpcoming) return 1;
+        // Dentro de cada grupo, ordenar cronológicamente por día
+        return a.date.getDate() - b.date.getDate();
+      });
 
     return { hoy: hoyList, semana: semanaList, mes: mesList };
   }, [activeEmployees, today]);
@@ -429,8 +437,8 @@ const Dashboard = () => {
     setSelectedDay(today.getDate());
   };
 
-  // Días de la cuadrícula del calendario
-  const firstDayOfMonth = (new Date(calendarMonth.year, calendarMonth.month, 1).getDay() + 6) % 7; // Lunes = 0
+  // Días de la cuadrícula del calendario (Domingo = 0, correspondiente a SHORT_DAYS que empieza en DOM)
+  const firstDayOfMonth = new Date(calendarMonth.year, calendarMonth.month, 1).getDay();
   const daysInMonth = new Date(calendarMonth.year, calendarMonth.month + 1, 0).getDate();
   const calendarCells = useMemo(() => {
     const totalSlots = Math.ceil((firstDayOfMonth + daysInMonth) / 7) * 7;
