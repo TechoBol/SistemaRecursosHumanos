@@ -79,6 +79,9 @@ const EmployeeModal = ({
     firstName: "",
     lastName: "",
     ci: "",
+    ciExtension: "",
+    nationality: "BOLIVIANA",
+    gender: "",
     birthDate: "",
     email: "",
     phone: "",
@@ -107,6 +110,9 @@ const EmployeeModal = ({
         firstName: employee.firstNames ?? "",
         lastName: employee.lastNames ?? "",
         ci: employee.documentNumber ?? "",
+        ciExtension: employee.ciExtension ?? "",
+        nationality: employee.nationality ?? "",
+        gender: employee.gender ?? "",
         birthDate: employee.birthDate ? employee.birthDate.split("T")[0] : "",
         email: employee.email ?? "",
         phone: employee.phone ?? "",
@@ -149,6 +155,9 @@ const EmployeeModal = ({
         firstName: "",
         lastName: "",
         ci: "",
+        ciExtension: "",
+        nationality: "BOLIVIANA",
+        gender: "",
         birthDate: "",
         email: "",
         phone: "",
@@ -408,19 +417,44 @@ const EmployeeModal = ({
                 </FormField>
 
                 <FormField>
-                  <FormLabel htmlFor="ci">CI</FormLabel>
-                  <FormInput
-                    id="ci"
-                    name="ci"
-                    value={personalData.ci}
-                    onChange={handlePersonalChange}
-                    $invalid={Boolean(errors.ci)}
-                  />
-                  {errors.ci && <FormErrorText>{errors.ci}</FormErrorText>}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: "10px" }}>
+                    <div>
+                      <FormLabel htmlFor="ci">CI</FormLabel>
+                      <FormInput
+                        id="ci"
+                        name="ci"
+                        value={personalData.ci}
+                        onChange={handlePersonalChange}
+                        $invalid={Boolean(errors.ci)}
+                      />
+                      {errors.ci && <FormErrorText>{errors.ci}</FormErrorText>}
+                    </div>
+                    <div>
+                      <FormLabel htmlFor="ciExtension">Expedido</FormLabel>
+                      <FormSelect
+                        id="ciExtension"
+                        name="ciExtension"
+                        value={personalData.ciExtension}
+                        onChange={handlePersonalChange}
+                      >
+                        <option value=""></option>
+                        <option value="CB">CB</option>
+                        <option value="LP">LP</option>
+                        <option value="SC">SC</option>
+                        <option value="OR">OR</option>
+                        <option value="PT">PT</option>
+                        <option value="TJ">TJ</option>
+                        <option value="CH">CH</option>
+                        <option value="BE">BE</option>
+                        <option value="PD">PD</option>
+                        <option value="EXT">EXT</option>
+                      </FormSelect>
+                    </div>
+                  </div>
                 </FormField>
               </FormGrid>
 
-              <FormGrid>
+              <FormGrid $columns={4}>
                 <FormField>
                   <FormLabel htmlFor="birthDate">Fecha de nacimiento</FormLabel>
                   <InputIconContainer>
@@ -447,6 +481,31 @@ const EmployeeModal = ({
                 </FormField>
 
                 <FormField>
+                  <FormLabel htmlFor="nationality">Nacionalidad</FormLabel>
+                  <FormInput
+                    id="nationality"
+                    name="nationality"
+                    value={personalData.nationality}
+                    onChange={handlePersonalChange}
+                    placeholder=""
+                  />
+                </FormField>
+
+                <FormField>
+                  <FormLabel htmlFor="gender">Sexo</FormLabel>
+                  <FormSelect
+                    id="gender"
+                    name="gender"
+                    value={personalData.gender}
+                    onChange={handlePersonalChange}
+                  >
+                    <option value="">Seleccionar</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Masculino">Masculino</option>
+                  </FormSelect>
+                </FormField>
+
+                <FormField>
                   <FormLabel htmlFor="phone">Teléfono</FormLabel>
                   <FormInput
                     id="phone"
@@ -457,7 +516,9 @@ const EmployeeModal = ({
                     autoComplete="tel"
                   />
                 </FormField>
+              </FormGrid>
 
+              <FormGrid $columns={2}>
                 <FormField>
                   <FormLabel htmlFor="email">Correo</FormLabel>
                   <FormInput
