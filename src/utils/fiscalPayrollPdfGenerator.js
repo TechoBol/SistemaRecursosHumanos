@@ -287,6 +287,15 @@ const sortEmployeesByName = (employees = []) =>
 /** FILA DE EMPLEADO (FISCAL) */
 const buildFiscalEmployeeTableRow = (employee, index, theme) => {
   const cns = Number(employee.grossPay || 0) * 0.1;
+  const ciFull = employee.employeeDocumentNumber
+    ? `${employee.employeeDocumentNumber}${employee.employeeCiExtension ? ` ${employee.employeeCiExtension}` : ""}`
+    : "-";
+  const nationality = (employee.employeeNationality || "BOLIVIANA").toUpperCase();
+  const birthDate = employee.employeeBirthDate ? formatDatePdf(employee.employeeBirthDate) : "-";
+  const gender = employee.employeeGender
+    ? (employee.employeeGender.toUpperCase().startsWith("F") ? "F" : "M")
+    : "-";
+
   return [
     {
       content: String(index),
@@ -295,6 +304,22 @@ const buildFiscalEmployeeTableRow = (employee, index, theme) => {
     {
       content: getEmployeeFullName(employee).toUpperCase(),
       styles: { halign: "left" },
+    },
+    {
+      content: ciFull,
+      styles: { halign: "center" },
+    },
+    {
+      content: nationality,
+      styles: { halign: "center" },
+    },
+    {
+      content: birthDate,
+      styles: { halign: "center" },
+    },
+    {
+      content: gender,
+      styles: { halign: "center" },
     },
     {
       content: (employee.contractJobTitleName || "-").toUpperCase(),
@@ -356,10 +381,14 @@ const buildFiscalEmployeeTableRow = (employee, index, theme) => {
         textColor: theme.primaryDark,
       },
     },
+    {
+      content: "",
+      styles: { halign: "center" },
+    },
   ];
 };
 
-/** FILAS DE TOTALES (FISCAL: colSpan 4) */
+/** FILAS DE TOTALES (FISCAL: colSpan 8) */
 const buildFiscalTotalsRow = (
   totals,
   theme,
@@ -384,7 +413,7 @@ const buildFiscalTotalsRow = (
   return [
     {
       content: label,
-      colSpan: 4,
+      colSpan: 8,
       styles: { ...baseStyle, textColor: theme.primaryDark },
     },
     {
@@ -435,6 +464,10 @@ const buildFiscalTotalsRow = (
       content: formatNetSalaryPdf(totals.netSalary),
       styles: netSalaryStyle,
     },
+    {
+      content: "",
+      styles: { fillColor: theme.totalsBg },
+    },
   ];
 };
 
@@ -447,6 +480,26 @@ const buildFiscalTableHeader = (theme) => {
     },
     {
       content: "APELLIDOS Y NOMBRES",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "CI",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "NAC.",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "FECHA DE\nNACIMIENTO",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "SEXO\nF/M",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -466,7 +519,7 @@ const buildFiscalTableHeader = (theme) => {
       styles: { halign: "center", valign: "middle" },
     },
     {
-      content: "DÍAS\nTRAB.",
+      content: "DÍAS\nTRAB",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -502,6 +555,11 @@ const buildFiscalTableHeader = (theme) => {
     },
     {
       content: "LÍQUIDO\nPAGABLE",
+      rowSpan: 2,
+      styles: { halign: "center", valign: "middle" },
+    },
+    {
+      content: "FIRMA",
       rowSpan: 2,
       styles: { halign: "center", valign: "middle" },
     },
@@ -681,30 +739,35 @@ export const exportFiscalPayrollPdf = async ({
       fillColor: [253, 254, 255],
     },
 
-    // 16 columnas con ancho total = 335.6mm (márgenes exactos de 10mm en Legal apaisada de 355.6mm)
+    // 21 columnas con ancho total = 335.6mm (márgenes exactos de 10mm en Legal apaisada de 355.6mm)
     // Alineado exactamente con el margen derecho del recuadro de actualización (X = 345.6mm)
     columnStyles: {
-      0: { cellWidth: 8, halign: "center" },      // N°
-      1: { cellWidth: 49, halign: "left" },       // APELLIDOS Y NOMBRES
-      2: { cellWidth: 35.5, halign: "left" },     // CARGO
-      3: { cellWidth: 17, halign: "center" },     // FECHA DE INGRESO
-      4: { cellWidth: 18, halign: "right" },      // HABER BÁSICO
-      5: { cellWidth: 11, halign: "center" },     // DÍAS TRAB.
-      6: { cellWidth: 18, halign: "right" },      // SUELDO BÁSICO
-      7: { cellWidth: 24, halign: "right" },      // ANTIGÜEDAD (espacio amplio sin cortar palabra)
-      8: { cellWidth: 20, halign: "right" },      // OTROS BONOS
-      9: { cellWidth: 21, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
-      10: { cellWidth: 18, halign: "right" },     // CNS 10%
-      11: { cellWidth: 18, halign: "right" },     // GESTORA
-      12: { cellWidth: 18, halign: "right" },     // PERM. / FALTAS
-      13: { cellWidth: 18, halign: "right" },     // ANTICIPOS
-      14: { cellWidth: 18, halign: "right" },     // TOTAL DESC.
-      15: { cellWidth: 24.1, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      0: { cellWidth: 7.5, halign: "center" },    // N°
+      1: { cellWidth: 35.5, halign: "left" },     // APELLIDOS Y NOMBRES
+      2: { cellWidth: 16.5, halign: "center" },   // CI
+      3: { cellWidth: 15.5, halign: "center" },   // NACIONALIDAD
+      4: { cellWidth: 18.0, halign: "center" },   // FECHA DE NACIMIENTO
+      5: { cellWidth: 10.5, halign: "center" },   // SEXO F/M
+      6: { cellWidth: 24.0, halign: "left" },     // CARGO
+      7: { cellWidth: 14.5, halign: "center" },   // FECHA DE INGRESO
+      8: { cellWidth: 15.0, halign: "right" },    // HABER BÁSICO
+      9: { cellWidth: 9.5, halign: "center" },    // DÍAS TRAB
+      10: { cellWidth: 14.5, halign: "right" },   // SUELDO BÁSICO
+      11: { cellWidth: 19.5, halign: "right" },   // ANTIGÜEDAD
+      12: { cellWidth: 15.0, halign: "right" },   // OTROS BONOS
+      13: { cellWidth: 16.5, halign: "right", fontStyle: "bold" }, // TOTAL GANADO
+      14: { cellWidth: 14.5, halign: "right" },   // CNS 10%
+      15: { cellWidth: 15.0, halign: "right" },   // GESTORA
+      16: { cellWidth: 13.5, halign: "right" },   // PERM. / FALTAS
+      17: { cellWidth: 16.5, halign: "right" },   // ANTICIPOS
+      18: { cellWidth: 14.5, halign: "right" },   // TOTAL DESC.
+      19: { cellWidth: 17.5, halign: "right", fontStyle: "bold" }, // LÍQUIDO PAGABLE
+      20: { cellWidth: 17.6, halign: "center" },  // FIRMA
     },
 
     didParseCell: (data) => {
       // Líquido pagable
-      if (data.section === "head" && data.column.index === 15) {
+      if (data.section === "head" && data.column.index === 19) {
         data.cell.styles.fillColor = theme.primaryDark;
       }
     },

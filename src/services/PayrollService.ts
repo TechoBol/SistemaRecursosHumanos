@@ -5,6 +5,10 @@ export interface PayrollItem {
   employeeId: number;
   employeeName: string;
   employeeDocumentNumber: string;
+  employeeCiExtension?: string | null;
+  employeeNationality?: string | null;
+  employeeBirthDate?: string | null;
+  employeeGender?: string | null;
   hireDate: string | null;
   employeeType: string;
   jobTitleName: string;
