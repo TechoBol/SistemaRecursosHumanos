@@ -391,7 +391,7 @@ const Employees = () => {
           loading={isLoading}
           pageSize={10}
           pageSizeOptions={[10, 25, 30, 50]}
-          height="610px"
+          minHeight="540px"
           rowHeight={72}
           columnHeaderHeight={58}
           disableColumnMenu

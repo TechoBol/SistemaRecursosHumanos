@@ -225,7 +225,7 @@ const Users = () => {
           loading={isLoading}
           pageSize={10}
           pageSizeOptions={[10, 25, 30, 50]}
-          height="610px"
+          minHeight="540px"
           rowHeight={70}
           columnHeaderHeight={56}
           disableColumnMenu

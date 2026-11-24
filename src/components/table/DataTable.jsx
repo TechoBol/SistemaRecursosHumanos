@@ -13,7 +13,8 @@ const DataTable = ({
 
   pageSize = 10,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
-  height = "560px",
+  height,
+  minHeight = "480px",
 
   getRowId,
   checkboxSelection = false,
@@ -31,7 +32,7 @@ const DataTable = ({
 }) => {
   return (
     <TableContainer>
-      <GridWrapper $height={height}>
+      <GridWrapper $height={height} $minHeight={minHeight}>
         <StyledDataGrid
           rows={rows}
           columns={columns}

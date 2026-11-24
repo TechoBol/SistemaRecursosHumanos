@@ -640,7 +640,7 @@ const PayrollContract = () => {
           loading={isLoading}
           pageSize={30}
           pageSizeOptions={[30, 50, 100]}
-          height="610px"
+          minHeight="540px"
           rowHeight={60}
           columnHeaderHeight={58}
           disableColumnMenu

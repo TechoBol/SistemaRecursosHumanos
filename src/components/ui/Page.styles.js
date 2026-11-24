@@ -4,6 +4,7 @@ import { theme } from "../ui/Theme";
 export const PageContainer = styled.main`
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 28px;
   width: 100%;
   min-width: 0;

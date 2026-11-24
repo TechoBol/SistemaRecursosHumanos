@@ -7,6 +7,8 @@ export const LayoutContainer = styled.div`
 `;
 
 export const MainContent = styled.main`
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   margin-left: ${({ $collapsed, theme }) =>
     $collapsed
@@ -21,6 +23,9 @@ export const MainContent = styled.main`
 `;
 
 export const ContentShell = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 100vh;
   padding: 32px;
   background-color: ${({ theme }) => theme.colors.background};

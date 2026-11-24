@@ -3,6 +3,9 @@ import { DataGrid } from "@mui/x-data-grid";
 import { theme } from "../Theme";
 
 export const TableContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
   min-width: 0;
   background-color: ${theme.colors.white};
@@ -11,13 +14,19 @@ export const TableContainer = styled.section`
 `;
 
 export const GridWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
   min-width: 0;
-  height: ${({ $height }) => $height};
+  min-height: ${({ $minHeight = "480px" }) => $minHeight};
+  height: ${({ $height }) => $height || "100%"};
 `;
 
 export const StyledDataGrid = styled(DataGrid)`
   && {
+    flex: 1;
+    width: 100%;
     color: ${theme.colors.text};
     font-family: inherit;
     background-color: ${theme.colors.white};
