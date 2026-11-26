@@ -10,6 +10,7 @@ import {
   CircleUserRound,
   DollarSign,
   FileSignature,
+  Gift,
   Layers3,
   Menu,
   Settings,
@@ -56,6 +57,7 @@ const MENU_ITEMS = [
     children: [
       { id: "planilla-fiscal", label: "Fiscal", path: "/planilla/fiscal", icon: FileSignature, },
       { id: "planilla-consolidada", label: "Consolidada", path: "/planilla/consolidada", icon: Layers3, },
+      { id: "planilla-aguinaldos", label: "Aguinaldos", path: "/planilla/aguinaldos", icon: Gift, },
     ],
   },
   { id: "sucursales", label: "Sucursales", path: "/sucursales", icon: Building2, },
