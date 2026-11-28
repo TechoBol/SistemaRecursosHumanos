@@ -1,11 +1,13 @@
 
 import { useMemo, useState } from "react";
-import { Calendar, Search, FileDown, Eye } from "lucide-react";
-
+import { Calendar, Search, FileDown, Eye, Lock, CheckCircle2, AlertCircle } from "lucide-react";
+import Swal from "sweetalert2";
 import DataTable from "../components/table/DataTable";
 import { useCompanies } from "../hooks/useCompanies";
-
+import { useChristmasBonuses } from "../hooks/useChristmasBonuses";
+import { usePermissions } from "../hooks/usePermissions";
 import {
+  ActionPrimaryButton,
   ActionSecondaryButton,
   ChipFilterButton,
   ChipFilters,
@@ -23,7 +25,6 @@ import {
   PeriodSelector,
   PeriodSelect,
 } from "../components/ui/Page.styles";
-
 import {
   CellStack,
   CellText,
@@ -107,7 +108,7 @@ const COLUMNS = [
     renderCell: ({ row }) => (
       <CellStack>
         <CellTitle>{row.employeeName}</CellTitle>
-        <CellText>CI: {row.employeeDocumentNumber || "-"}</CellText>
+        <CellText>CI: {row.employeeDocumentNumber || "-"}{row.employeeCiExtension ? ` ${row.employeeCiExtension}` : ""}</CellText>
       </CellStack>
     ),
   },
@@ -202,13 +203,11 @@ const COLUMNS = [
 
 const PayrollChristmasBonus = () => {
   const { companies = [] } = useCompanies();
-
+  const { canFinalizePayroll } = usePermissions();
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [searchValue, setSearchValue] = useState("");
 
-  // Seleccionar la primera empresa disponible automáticamente.
-  // No requiere un useEffect ni un estado adicional.
   const activeCompanyId =
     companies.find(
       (company) => company.id === selectedCompanyId
@@ -216,8 +215,14 @@ const PayrollChristmasBonus = () => {
     companies[0]?.id ??
     null;
 
-  // Reemplazar por useChristmasBonuses cuando exista el servicio.
-  const christmasBonuses = EMPTY_ROWS;
+  const {
+    bonuses: christmasBonuses,
+    isFinalized,
+    isAvailable,
+    noticeMessage,
+    isLoading,
+    finalizeBonuses,
+  } = useChristmasBonuses(activeCompanyId, selectedYear);
 
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
@@ -238,20 +243,55 @@ const PayrollChristmasBonus = () => {
     );
   }, [christmasBonuses, searchValue]);
 
-  // Los cálculos se implementarán posteriormente.
-  const totals = INITIAL_TOTALS;
+  const totals = useMemo(() => {
+    if (!filteredRows || filteredRows.length === 0) return INITIAL_TOTALS;
+
+    const baseSum = filteredRows.reduce((acc, r) => acc + (r.averageBaseSalary || 0), 0);
+    const senioritySum = filteredRows.reduce((acc, r) => acc + (r.averageSeniorityBonus || 0), 0);
+    const otherSum = filteredRows.reduce((acc, r) => acc + (r.averageOtherBonuses || 0), 0);
+    const grossSum = filteredRows.reduce((acc, r) => acc + (r.averageGrossPay || 0), 0);
+    const bonusSum = filteredRows.reduce((acc, r) => acc + (r.christmasBonusAmount || 0), 0);
+
+    return {
+      averageBaseSalary: baseSum,
+      averageSeniorityBonus: senioritySum,
+      averageOtherBonuses: otherSum,
+      averageGrossPay: grossSum,
+      totalChristmasBonus: bonusSum,
+      totalEmployees: filteredRows.length,
+    };
+  }, [filteredRows]);
+
+  const handleFinalize = async () => {
+    if (isFinalized || !activeCompanyId) return;
+
+    const targetCompany = companies.find((c) => c.id === activeCompanyId);
+    const companyName = targetCompany?.name || "la empresa seleccionada";
+
+    const result = await Swal.fire({
+      title: "¿Finalizar Planilla de Aguinaldos?",
+      text: `Se congelarán los cálculos y montos de aguinaldo para ${companyName} correspondiente a la gestión ${selectedYear}. Esta acción no se puede deshacer.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#2f573c",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, finalizar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      await finalizeBonuses();
+    }
+  };
 
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>
-          Planilla de Aguinaldos - {selectedYear}
-        </PageTitle>
+        <PageTitle>Planilla de Aguinaldos - {selectedYear}</PageTitle>
 
         <PageActions>
           <PeriodSelector>
             <Calendar size={16} color="#2f573c" />
-
             <PeriodSelect
               value={selectedYear}
               aria-label="Seleccionar gestión"
@@ -269,7 +309,6 @@ const PayrollChristmasBonus = () => {
 
           <SearchContainer>
             <Search size={21} />
-
             <SearchInput
               type="search"
               value={searchValue}
@@ -288,7 +327,6 @@ const PayrollChristmasBonus = () => {
             <TotalLabel $variant={variant}>
               {label}
             </TotalLabel>
-
             <TotalValue $variant={variant}>
               {isCount
                 ? totals[key]
@@ -321,17 +359,62 @@ const PayrollChristmasBonus = () => {
             <FileDown size={18} />
             <span>Exportar Planilla</span>
           </ActionSecondaryButton>
+
+          {canFinalizePayroll && isAvailable && (
+            <ActionPrimaryButton
+              type="button"
+              onClick={handleFinalize}
+              disabled={isLoading || isFinalized || filteredRows.length === 0}
+              $isFinalized={isFinalized}
+              title={
+                isFinalized
+                  ? "La planilla de aguinaldos de esta gestión ya se encuentra finalizada y registrada."
+                  : "Finalizar y registrar definitivamente la planilla de aguinaldos de este año"
+              }
+            >
+              {isFinalized ? (
+                <>
+                  <CheckCircle2 size={18} />
+                  <span>Aguinaldo Finalizado</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={18} />
+                  <span>Finalizar aguinaldo</span>
+                </>
+              )}
+            </ActionPrimaryButton>
+          )}
         </ChipFilters>
       </FiltersWrapper>
+
+      {!isAvailable && noticeMessage && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "16px 20px",
+            backgroundColor: "#fef3c7",
+            borderRadius: "12px",
+            color: "#92400e",
+            fontSize: "14px",
+            fontWeight: 500,
+          }}
+        >
+          <AlertCircle size={20} color="#b45309" />
+          <span>{noticeMessage}</span>
+        </div>
+      )}
 
       {/* Tabla de aguinaldos */}
       <DataTable
         rows={filteredRows}
         columns={COLUMNS}
-        loading={false}
+        loading={isLoading}
         pageSize={30}
         pageSizeOptions={[30, 50, 100]}
-        height="610px"
+        minHeight="540px"
         rowHeight={60}
         columnHeaderHeight={58}
         disableColumnMenu
