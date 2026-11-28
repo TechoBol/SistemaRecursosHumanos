@@ -49,9 +49,19 @@ const currencyFormatter = new Intl.NumberFormat("es-BO", {
   maximumFractionDigits: 2,
 });
 
+const singleDecimalFormatter = new Intl.NumberFormat("es-BO", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 const formatCurrency = (amount) => {
   if (amount == null) return "-";
   return currencyFormatter.format(amount);
+};
+
+const formatSingleDecimalCurrency = (amount) => {
+  if (amount == null) return "-";
+  return singleDecimalFormatter.format(amount);
 };
 
 const formatDate = (date) => {
@@ -180,7 +190,7 @@ const COLUMNS = [
     headerName: "Total ganado de aguinaldo",
     minWidth: 195,
     type: "number",
-    valueFormatter: (value) => formatCurrency(value),
+    valueFormatter: (value) => formatSingleDecimalCurrency(value),
   },
 ];
 
@@ -369,6 +379,8 @@ const PayrollChristmasBonus = () => {
             <TotalValue $variant={variant}>
               {isCount
                 ? totals[key]
+                : key === "totalChristmasBonus"
+                ? `Bs ${formatSingleDecimalCurrency(totals[key])}`
                 : `Bs ${formatCurrency(totals[key])}`}
             </TotalValue>
           </TotalCard>
