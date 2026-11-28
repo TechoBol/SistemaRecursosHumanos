@@ -141,7 +141,7 @@ const EmployeeModal = ({
           contractDate: c.hireDate ? c.hireDate.split("T")[0] : "",
           endDate: c.endDate ? c.endDate.split("T")[0] : "",
           baseSalary: c.baseSalary !== undefined ? String(c.baseSalary) : "",
-          isActive: c.isActive !== undefined ? c.isActive : !c.endDate,
+          isActive: c.isActive !== undefined ? c.isActive : true,
         }));
 
         setContracts(mappedContracts);

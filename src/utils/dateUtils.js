@@ -77,70 +77,21 @@ export const formatLongDate = (dateString) => {
   return `${day} de ${months[month - 1]} de ${year}`;
 };
 
-export const getEmployeeStatus = (employee) => {
-  if (!employee) return { label: "Finalizado", variant: "danger" };
-
-  if (employee.status === "INACTIVE" || employee.status === "TERMINATED") {
-    return { label: "Finalizado", variant: "danger" };
-  }
-
-  const activeContract = employee.contracts
-    ? employee.contracts.find((c) => c.isActive) || employee.contracts[0]
-    : null;
-
-  if (!activeContract) {
-    return { label: "Finalizado", variant: "danger" };
-  }
-
-  if (
-    activeContract.isActive === false ||
-    activeContract.status === "ENDED" ||
-    activeContract.status === "CANCELLED"
-  ) {
-    return { label: "Finalizado", variant: "danger" };
-  }
-
-  if (!activeContract.endDate) {
-    return { label: "Activo", variant: "success" };
-  }
-
-  const [endYear, endMonth, endDay] = activeContract.endDate
-    .split("T")[0]
-    .split("-")
-    .map(Number);
-
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1;
-  const currentDay = today.getDate();
-
-  const endDateNorm = new Date(endYear, endMonth - 1, endDay);
-  const todayNorm = new Date(currentYear, currentMonth - 1, currentDay);
-
-  if (endDateNorm < todayNorm) {
-    return { label: "Finalizado", variant: "danger" };
-  }
-
-  if (endYear === currentYear && endMonth === currentMonth) {
-    return { label: "Finaliza este mes", variant: "warning" };
-  }
-
-  return { label: "Activo", variant: "success" };
-};
-
 export const getContractStatus = (contract) => {
   if (!contract) return { label: "Finalizado", variant: "danger", isActive: false };
 
-  if (
-    contract.isActive === false ||
-    contract.status === "ENDED" ||
-    contract.status === "CANCELLED"
-  ) {
+  // Si fue cancelado explícitamente
+  if (contract.status === "CANCELLED") {
     return { label: "Finalizado", variant: "danger", isActive: false };
   }
 
   const rawEndDate = contract.endDate || contract.contractEndDate;
   if (!rawEndDate) {
+    // Si no tiene fecha de fin, se considera activo (indefinido) a menos que esté inactivo
+    const isExplicitlyInactive = contract.isActive === false && contract.status === "ENDED";
+    if (isExplicitlyInactive) {
+      return { label: "Finalizado", variant: "danger", isActive: false };
+    }
     return { label: "Activo", variant: "success", isActive: true };
   }
 
@@ -155,19 +106,51 @@ export const getContractStatus = (contract) => {
 
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1;
+  const currentMonth = today.getMonth() + 1; // 1-12
   const currentDay = today.getDate();
 
   const endDateNorm = new Date(endYear, endMonth - 1, endDay);
   const todayNorm = new Date(currentYear, currentMonth - 1, currentDay);
 
+  // 1. Si la fecha de fin de contrato ya pasó
   if (endDateNorm < todayNorm) {
     return { label: "Finalizado", variant: "danger", isActive: false };
   }
 
+  // 2. Si la fecha de fin es dentro del mismo mes y año vigente
   if (endYear === currentYear && endMonth === currentMonth) {
     return { label: "Finaliza este mes", variant: "warning", isActive: true };
   }
 
+  // 3. Si la fecha de fin es en meses futuros
   return { label: "Activo", variant: "success", isActive: true };
+};
+
+export const getEmployeeStatus = (employee) => {
+  if (!employee) return { label: "Finalizado", variant: "danger" };
+
+  if (employee.status === "INACTIVE" || employee.status === "TERMINATED") {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  if (!employee.contracts || employee.contracts.length === 0) {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  // Buscar el contrato más relevante: primero uno que según sus fechas esté activo
+  const sortedContracts = [...employee.contracts].sort((a, b) => {
+    const timeA = a.hireDate ? new Date(a.hireDate).getTime() : 0;
+    const timeB = b.hireDate ? new Date(b.hireDate).getTime() : 0;
+    return timeB - timeA;
+  });
+
+  const activeContract =
+    sortedContracts.find((c) => getContractStatus(c).isActive) ||
+    sortedContracts[0];
+
+  if (!activeContract) {
+    return { label: "Finalizado", variant: "danger" };
+  }
+
+  return getContractStatus(activeContract);
 };

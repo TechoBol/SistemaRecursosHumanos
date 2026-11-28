@@ -33,7 +33,7 @@ import {
 } from "../components/ui/Page.styles";
 import EmployeeModal from "../components/modals/EmployeeModal";
 import DataTable from "../components/table/DataTable";
-import { getSeniorityFull, formatLongDate, getEmployeeStatus } from "../utils/dateUtils";
+import { getSeniorityFull, formatLongDate, getEmployeeStatus, getContractStatus } from "../utils/dateUtils";
 import { useEmployees } from "../hooks/useEmployees";
 import { useCompanies } from "../hooks/useCompanies";
 import { useBranches } from "../hooks/useBranches";
@@ -115,13 +115,20 @@ const Employees = () => {
     }
   };
 
+  const getActiveContract = (emp) => {
+    if (!emp?.contracts || emp.contracts.length === 0) return null;
+    const current = emp.contracts.find((c) => getContractStatus(c).isActive);
+    if (current) return current;
+    const marked = emp.contracts.find((c) => c.isActive);
+    if (marked) return marked;
+    return emp.contracts[0];
+  };
+
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
     
     return employees.filter((employee) => {
-      const activeContract = employee.contracts
-        ? employee.contracts.find((c) => c.isActive) || employee.contracts[0]
-        : null;
+      const activeContract = getActiveContract(employee);
       
       // Filtrar por la empresa seleccionada en los chips
       let matchesCompany = true;
@@ -169,9 +176,7 @@ const Employees = () => {
         sortable: false,
         valueGetter: (_, row) => `${row.lastNames} ${row.firstNames}`.trim(),
         renderCell: ({ row }) => {
-          const activeContract = row.contracts
-            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
-            : null;
+          const activeContract = getActiveContract(row);
           const hiredText = activeContract?.hireDate
             ? `Contratado: ${formatLongDate(activeContract.hireDate)}`
             : "Sin contratación";
@@ -203,9 +208,7 @@ const Employees = () => {
         minWidth: 130,
         flex: 0.7,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts
-            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
-            : null;
+          const activeContract = getActiveContract(row);
           return activeContract?.branch?.name || "No seleccionada";
         },
       },
@@ -215,9 +218,7 @@ const Employees = () => {
         minWidth: 145,
         flex: 0.8,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts
-            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
-            : null;
+          const activeContract = getActiveContract(row);
           return activeContract?.area?.name || "No seleccionada";
         },
       },
@@ -227,9 +228,7 @@ const Employees = () => {
         minWidth: 190,
         flex: 1.1,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts
-            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
-            : null;
+          const activeContract = getActiveContract(row);
           return activeContract?.jobTitle?.name || "No seleccionado";
         },
       },
@@ -252,9 +251,7 @@ const Employees = () => {
         minWidth: 175,
         flex: 0.7,
         valueGetter: (_, row) => {
-          const activeContract = row.contracts
-            ? row.contracts.find((c) => c.isActive) || row.contracts[0]
-            : null;
+          const activeContract = getActiveContract(row);
           return getSeniorityFull(activeContract?.hireDate);
         },
       },

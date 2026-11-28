@@ -12,6 +12,7 @@ import EmployeeDetail from "./pages/employees/EmployeeDetail";
 import AbsenceControl from "./pages/AbsenceControl";
 import PayrollContract from "./pages/PayrollContract";
 import PayrollConsolidation from "./pages/PayrollConsolidation";
+import PayrollChristmasBonus from "./pages/PayrollChristmasBonus";
 import Branches from "./pages/Branches";
 import Areas from "./pages/Areas";
 import JobTitles from "./pages/JobTitles";
@@ -35,6 +36,7 @@ const App = () => {
             <Route path="control-ausencias" element={<AbsenceControl />} />
             <Route path="planilla/fiscal" element={<PayrollContract />} />
             <Route path="planilla/consolidada" element={<PayrollConsolidation />} />
+            <Route path="planilla/aguinaldos" element={<PayrollChristmasBonus />} />
             <Route path="sucursales" element={<Branches />} />
             <Route path="areas" element={<Areas />} />
             <Route path="cargos" element={<JobTitles />} />
