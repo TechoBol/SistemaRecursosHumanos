@@ -7,6 +7,8 @@ import DataTable from "../components/table/DataTable";
 import { useCompanies } from "../hooks/useCompanies";
 import { useChristmasBonuses } from "../hooks/useChristmasBonuses";
 import { usePermissions } from "../hooks/usePermissions";
+import { exportChristmasBonusPdf } from "../utils/christmasBonusPdfGenerator";
+import { successToast, errorToast } from "../services/toasts";
 import {
   ActionPrimaryButton,
   ActionSecondaryButton,
@@ -296,6 +298,31 @@ const PayrollChristmasBonus = () => {
     }
   };
 
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!filteredRows || filteredRows.length === 0) {
+      errorToast("No hay registros para generar la planilla de aguinaldos en PDF.");
+      return;
+    }
+
+    try {
+      setIsExportingPdf(true);
+      const targetCompany = companies.find((c) => c.id === activeCompanyId) || null;
+      await exportChristmasBonusPdf({
+        bonuses: filteredRows,
+        company: targetCompany,
+        periodYear: selectedYear,
+      });
+      successToast("Planilla de aguinaldos en PDF generada exitosamente.");
+    } catch (err) {
+      console.error("Error al exportar PDF de aguinaldos:", err);
+      errorToast("Ocurrió un error al generar el PDF de aguinaldos.");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   return (
     <PageContainer>
       <PageHeader>
@@ -366,10 +393,11 @@ const PayrollChristmasBonus = () => {
           <ActionSecondaryButton
             type="button"
             title="Exportar planilla de aguinaldos"
-            disabled
+            onClick={handleExportPdf}
+            disabled={isExportingPdf || isLoading || filteredRows.length === 0}
           >
             <FileDown size={18} />
-            <span>Exportar Planilla</span>
+            <span>{isExportingPdf ? "Generando PDF..." : "Exportar Planilla"}</span>
           </ActionSecondaryButton>
 
           {canFinalizePayroll && isAvailable && (

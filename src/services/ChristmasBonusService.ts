@@ -4,9 +4,16 @@ export interface ChristmasBonusItem {
   id: number;
   employeeId: number;
   contractId?: number;
+  employeeFirstNames?: string;
+  employeeLastNames?: string;
   employeeName: string;
   employeeDocumentNumber: string;
   employeeCiExtension?: string | null;
+  employeeNationality?: string | null;
+  employeeBirthDate?: string | null;
+  employeeGender?: string | null;
+  cityId?: number;
+  cityName?: string;
   contractJobTitleName: string;
   hireDate: string | null;
   employeeType: string;
