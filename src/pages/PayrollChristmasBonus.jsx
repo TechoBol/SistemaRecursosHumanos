@@ -1,6 +1,7 @@
 
 import { useMemo, useState } from "react";
-import { Calendar, Search, FileDown, Eye, Lock, CheckCircle2, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Search, FileDown, ChevronRight, Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import DataTable from "../components/table/DataTable";
 import { useCompanies } from "../hooks/useCompanies";
@@ -120,13 +121,13 @@ const COLUMNS = [
   {
     field: "hireDate",
     headerName: "Fecha de ingreso",
-    minWidth: 140,
+    minWidth: 130,
     valueFormatter: (value) => formatDate(value),
   },
   {
     field: "employeeType",
     headerName: "Tipo contrato",
-    minWidth: 130,
+    minWidth: 120,
   },
   {
     field: "averageBaseSalary",
@@ -138,7 +139,7 @@ const COLUMNS = [
   {
     field: "averageSeniorityBonus",
     headerName: "Prom. bono antigüedad",
-    minWidth: 185,
+    minWidth: 165,
     type: "number",
     valueFormatter: (value) => formatCurrency(value),
   },
@@ -152,14 +153,14 @@ const COLUMNS = [
   {
     field: "averageGrossPay",
     headerName: "Prom. total ganado",
-    minWidth: 165,
+    minWidth: 160,
     type: "number",
     valueFormatter: (value) => formatCurrency(value),
   },
   {
     field: "workedPeriod",
     headerName: "Meses y días trabajados",
-    minWidth: 200,
+    minWidth: 165,
     sortable: false,
     valueGetter: (_, row) => {
       if (row.workedMonths == null && row.workedDays == null) {
@@ -174,34 +175,15 @@ const COLUMNS = [
   },
   {
     field: "christmasBonusAmount",
-    headerName: "Total ganado después de duodécimas",
-    minWidth: 270,
+    headerName: "Total ganado de aguinaldo",
+    minWidth: 195,
     type: "number",
     valueFormatter: (value) => formatCurrency(value),
-  },
-  {
-    field: "actions",
-    headerName: "Acciones",
-    width: 100,
-    sortable: false,
-    filterable: false,
-    disableColumnMenu: true,
-    renderCell: () => (
-      <TableActions>
-        <TableActionButton
-          type="button"
-          title="Ver detalle del aguinaldo"
-          aria-label="Ver detalle del aguinaldo"
-          disabled
-        >
-          <Eye size={18} />
-        </TableActionButton>
-      </TableActions>
-    ),
   },
 ];
 
 const PayrollChristmasBonus = () => {
+  const navigate = useNavigate();
   const { companies = [] } = useCompanies();
   const { canFinalizePayroll } = usePermissions();
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
@@ -223,6 +205,36 @@ const PayrollChristmasBonus = () => {
     isLoading,
     finalizeBonuses,
   } = useChristmasBonuses(activeCompanyId, selectedYear);
+
+  const columns = useMemo(
+    () => [
+      ...COLUMNS,
+      {
+        field: "actions",
+        headerName: "Acciones",
+        width: 100,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: ({ row }) => (
+          <TableActions>
+            <TableActionButton
+              type="button"
+              title="Ver detalle del empleado"
+              aria-label={`Ver detalle del empleado ${row.employeeName}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/empleados/${row.employeeId}`);
+              }}
+            >
+              <ChevronRight size={22} />
+            </TableActionButton>
+          </TableActions>
+        ),
+      },
+    ],
+    [navigate]
+  );
 
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase();
@@ -410,7 +422,7 @@ const PayrollChristmasBonus = () => {
       {/* Tabla de aguinaldos */}
       <DataTable
         rows={filteredRows}
-        columns={COLUMNS}
+        columns={columns}
         loading={isLoading}
         pageSize={30}
         pageSizeOptions={[30, 50, 100]}
